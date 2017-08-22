@@ -3,5 +3,5 @@
 ------------------------------------------------------------------------
   
   # Load bindings directly from development tree for debug
-  afb-daemon --verbose --verbose --token="" --ldpaths=build --port=1234 --roothttp=htdocs
+  AFB_BINDER_NAME='sample' afb-daemon --verbose --verbose --token="" --ldpaths=build --port=1234 --roothttp=htdocs
 

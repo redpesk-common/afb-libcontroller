@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <sys/prctl.h>
 
 #include "ctl-binding.h"
 
@@ -356,7 +357,7 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
     int err;
 
     DispatchHandleT *dispatchHandle = calloc(1, sizeof (DispatchHandleT));
-    err = wrap_json_unpack(onloadJ, "{ss,s?s, s?o,s?o,s?o !}",
+    err = wrap_json_unpack(onloadJ, "{ss,s?s,s?o,s?o,s?o !}",
             "label", &dispatchHandle->label, "info", &dispatchHandle->info, "plugin", &pluginJ, "require", &requireJ, "actions", &actionsJ);
     if (err) {
         AFB_ERROR("DISPATCH-LOAD-CONFIG:ONLOAD Missing something label|[info]|[plugin]|[actions] in %s", json_object_get_string(onloadJ));
@@ -525,19 +526,29 @@ STATIC DispatchConfigT *DispatchLoadConfig(const char* filepath) {
     AFB_INFO("DISPATCH-LOAD-CONFIG: loading config filepath=%s", filepath);
 
     json_object *metadataJ = NULL, *onloadsJ = NULL, *controlsJ = NULL, *eventsJ = NULL;
-    err = wrap_json_unpack(controlConfigJ, "{s?o,so,s?o,s?o,s?o !}", "$schema", &ignoreJ, "metadata", &metadataJ, "onload", &onloadsJ, "controls", &controlsJ, "events", &eventsJ);
+    err = wrap_json_unpack(controlConfigJ, "{s?s,s?o,s?o,s?o,s?o !}", "$schema", &ignoreJ, "metadata", &metadataJ, "onload", &onloadsJ, "controls", &controlsJ, "events", &eventsJ);
     if (err) {
         AFB_ERROR("DISPATCH-LOAD-CONFIG Missing something metadata|[onload]|[controls]|[events] in %s", json_object_get_string(controlConfigJ));
         goto OnErrorExit;
     }
+    
+        
 
     DispatchConfigT *controlConfig = calloc(1, sizeof (DispatchConfigT));
     if (metadataJ) {
-        err = wrap_json_unpack(metadataJ, "{ss,s?s,ss !}", "label", &controlConfig->label, "info", &controlConfig->info, "version", &controlConfig->version);
+        const char*ctlname=NULL;
+        err = wrap_json_unpack(metadataJ, "{ss,s?s,s?s,ss !}", "label", &controlConfig->label, "version", &controlConfig->version, "name", &ctlname, "info", &controlConfig->info);
         if (err) {
             AFB_ERROR("DISPATCH-LOAD-CONFIG:METADATA Missing something label|version|[label] in %s", json_object_get_string(metadataJ));
             goto OnErrorExit;
         }
+        
+        // if ctlname is provided change process name now
+        if (ctlname) {
+            err= prctl(PR_SET_NAME, ctlname,NULL,NULL,NULL);
+            if (err) AFB_WARNING("Fail to set Process Name to:%s",ctlname);
+        }
+
     }
 
     if (onloadsJ) {

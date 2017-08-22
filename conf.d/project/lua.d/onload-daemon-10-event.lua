@@ -19,16 +19,16 @@
 --]]
 
 -- Create event on Lua script load
-local MyEventHandle=AFB:evtmake("MyTestEvent")
+_MyContext={}
 
--- Call count time every delay/ms
-local function Timer_Test_CB (timer, context)
+-- WARNING: call back are global and should start with '_'
+function _Timer_Test_CB (timer, context)
 
    local evtinfo= AFB:timerget(timer)
-   print ("timer=", Dump_Table(evtinfo))
+   printf ("[-- _Timer_Test_C --] evtInfo=%s", Dump_Table(evtinfo))
 
    --send an event an event with count as value
-   AFB:evtpush (MyEventHandle, {["label"]= evtinfo["label"], ["count"]=evtinfo["count"], ["info"]=context["info"]})
+   AFB:evtpush (_MyContext["event"], {["label"]= evtinfo["label"], ["count"]=evtinfo["count"], ["info"]=context["info"]})
 
    -- note when timerCB return!=0 timer is kill
    return 0
@@ -36,33 +36,38 @@ local function Timer_Test_CB (timer, context)
 end
 
 -- sendback event depending on count and delay
-function _Simple_Timer_Test (request, args)
+function _Simple_Timer_Test (request, client)
 
     local context = {
         ["info"]="My 1st private Event",
     }
 
+    -- if event does not exit create it now.
+    if (_MyContext["event"] == nil) then
+      _MyContext["event"]= AFB:evtmake(client["label"])
+    end  
+
     -- if delay not defined default is 5s
-    if (args["delay"]==nil) then args["delay"]=5000 end
+    if (client["delay"]==nil) then client["delay"]=5000 end
 
     -- if count is not defined default is 10
-    if (args["count"]==nil) then args["count"]=10 end
+    if (client["count"]==nil) then client["count"]=10 end
 
-    -- we could use directly args but it is a sample
+    -- we could use directly client but it is a sample
     local myTimer = {
-       ["label"]=args["label"],
-       ["delay"]=args["delay"],
-       ["count"]=args["count"],
+       ["label"]=client["label"],
+       ["delay"]=client["delay"],
+       ["count"]=client["count"],
     }
     AFB:notice ("Test_Timer myTimer=%s", myTimer)
 
     -- subscribe to event
-    AFB:subscribe (request, MyEventHandle)
+    AFB:subscribe (request, _MyContext["event"])
 
     -- settimer take a table with delay+count as input (count==0 means infinite)
-    AFB:timerset (myTimer, "Timer_Test_CB", context)
+    AFB:timerset (myTimer, "_Timer_Test_CB", context)
 
-    -- nothing special to return send back args
+    -- nothing special to return send back 
     AFB:success (request, myTimer)
 
     return 0

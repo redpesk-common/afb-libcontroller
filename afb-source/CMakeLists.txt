@@ -63,6 +63,7 @@ PROJECT_TARGET_ADD(audio-plugin-sample)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        afb-utilities
         ${link_libraries}
     )
 

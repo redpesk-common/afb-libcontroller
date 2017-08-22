@@ -3,6 +3,7 @@
     "metadata": {
         "label": "sample-standalone-control",
         "info": "Minimal Standalone Controller Config",
+        "name": "afb-sample-controller",
         "version": "1.0"
     },
     "onload": [{
@@ -11,36 +12,32 @@
             "actions":
                     {
                         "label": "control-init",
-                        "lua": "_Control_Init"
+                        "lua": "_Sample_Controller_Init",
+                        "args": {
+                            "xxxx": 1234,
+                            "yyyy": "Bien le bonjours à vous",
+                            "zzzz": "simple-evt"
+                        }
                     }
         }],
     "controls":
             [
                 {
-                    "label": "Button-1",
+                    "label": "Button-Happy",
                     "actions": {
-                        "label": "Action on Button One",
-                        "lua": "_Button_Press",
+                        "label": "Action Happy",
+                        "lua": "_Button_Happy",
                         "args": {
-                            "button": 1
+                            "button": 5678
                         }
                     }
                 }, {
-                    "label": "Button-1",
+                    "label": "Button-UnHappy",
                     "actions": {
-                        "label": "Action on Button Two",
-                        "lua": "_Button_Press",
+                        "label": "Action Unhappy",
+                        "lua": "_Button_UnHappy",
                         "args": {
-                            "button": 2
-                        }
-                    }
-                }, {
-                    "label": "Button-1",
-                    "actions": {
-                        "label": "Action on Button Three",
-                        "lua": "_Button_Press",
-                        "args": {
-                            "button": 3
+                            "button": "abcd"
                         }
                     }
                 }

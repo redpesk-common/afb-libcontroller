@@ -47,6 +47,7 @@ set(PROJECT_APP_TEMPLATES_DIR "conf.d/app-templates")
 # ----------------------------------
 set(CMAKE_BUILD_TYPE "DEBUG")
 
+
 # Kernel selection if needed. You can choose between a
 # mandatory version to impose a minimal version.
 # Or check Kernel minimal version and just print a Warning
@@ -133,7 +134,7 @@ set(COMPILE_OPTIONS
 
 # Print a helper message when every thing is finished
 # ----------------------------------------------------
-#set(CLOSING_MESSAGE "")
+set(CLOSING_MESSAGE "Debug from ./buid: afb-daemon --port=1234 --ldpaths=. --workdir=. --roothttp=../htdocs --tracereq=common --token='' --verbose")
 set(PACKAGE_MESSAGE "Install widget file using in the target : afm-util install ${PROJECT_NAME}.wgt")
 
 # (BUG!!!) as PKG_CONFIG_PATH does not work [should be an env variable]
