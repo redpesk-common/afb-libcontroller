@@ -31,7 +31,7 @@ endif(CONTROL_SUPPORT_LUA)
 PROJECT_TARGET_ADD(control-afb)
 
     # Define project Targets
-    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE} filescan-utils.c wrap-json.c)
+    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
 
     SET_OPENAPI_FILENAME("ctl-apidef")
     # Binder exposes a unique public entry point
@@ -44,6 +44,7 @@ PROJECT_TARGET_ADD(control-afb)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
+	afb-utilities
         ${link_libraries}
     )
 
