@@ -1,7 +1,7 @@
 ###########################################################################
 # Copyright 2015, 2016, 2017 IoT.bzh
 #
-# author: Fulup Ar Foll <rfulup@iot.bzh>
+# author: Fulup Ar Foll <fulup@iot.bzh>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,57 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 
-# Do not change this file, config is located into conf.d
-include(${CMAKE_CURRENT_SOURCE_DIR}/conf.d/cmake/config.cmake)
+# Include LUA only when requested
+if(CONTROL_SUPPORT_LUA)
+   message(STATUS "Notice: LUA Controler Support Selected")
+   set(CTL_LUA_SOURCE ctl-lua.c)
+   ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA)
+   ADD_COMPILE_OPTIONS(-DCONTROL_LUA_EVENT="luaevt")
+   ADD_COMPILE_OPTIONS(-DCONTROL_LUA_PATH="${CMAKE_SOURCE_DIR}/conf.d/project/lua.d:${CMAKE_INSTALL_PREFIX}/controller-plugins/ctl-lua.d")
+else(CONTROL_SUPPORT_LUA)
+   message(STATUS "Warning: LUA Without Support ")
+endif(CONTROL_SUPPORT_LUA)
+
+# Add target to project dependency list
+PROJECT_TARGET_ADD(control-afb)
+
+    # Define project Targets
+    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE} filescan-utils.c wrap-json.c)
+
+    SET_OPENAPI_FILENAME("ctl-apidef")
+    # Binder exposes a unique public entry point
+    SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+	PREFIX "afb-"
+        LABELS "BINDINGV2"
+	LINK_FLAGS  ${BINDINGS_LINK_FLAG}
+        OUTPUT_NAME ${TARGET_NAME}
+    )
+
+    # Library dependencies (include updates automatically)
+    TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        ${link_libraries}
+    )
+
+
+PROJECT_TARGET_ADD(audio-plugin-sample)
+
+    # Define targets
+    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-plugin-sample.c)
+
+    # Alsa Plugin properties
+    SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+	PREFIX ${CTL_PLUGIN_PRE}
+        SUFFIX ${CTL_PLUGIN_EXT}
+        OUTPUT_NAME ${TARGET_NAME}
+    )
+
+    # Library dependencies (include updates automatically)
+    TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        ${link_libraries}
+    )
+
+    # installation directory
+    INSTALL(TARGETS ${TARGET_NAME}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/controler-plugins)
+
