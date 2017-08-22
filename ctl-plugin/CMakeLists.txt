@@ -27,17 +27,26 @@ else(CONTROL_SUPPORT_LUA)
    message(STATUS "Warning: LUA Without Support ")
 endif(CONTROL_SUPPORT_LUA)
 
-# Add target to project dependency list
-PROJECT_TARGET_ADD(control-afb)
 
-    # Define project Targets
-    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
+PROJECT_TARGET_ADD(audio-plugin-sample)
 
-    SET_OPENAPI_FILENAME("ctl-apidef")
-    # Binder exposes a unique public entry point
+    # Define targets
+    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-plugin-sample.c)
+
+    # Alsa Plugin properties
     SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-	PREFIX "afb-"
-        LABELS "BINDINGV2"
-	LINK_FLAGS  ${BINDINGS_LINK_FLAG}
+	PREFIX ${CTL_PLUGIN_PRE}
+        SUFFIX ${CTL_PLUGIN_EXT}
         OUTPUT_NAME ${TARGET_NAME}
     )
+
+    # Library dependencies (include updates automatically)
+    TARGET_LINK_LIBRARIES(${TARGET_NAME}
+        afb-utilities
+        ${link_libraries}
+    )
+
+    include_directories("../afb-source")
+
+
+
