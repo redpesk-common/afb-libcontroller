@@ -20,7 +20,6 @@
 #include <string.h>
 #include <time.h>
 
-#include "audio-common.h"
 #include "ctl-binding.h"
 
 
@@ -30,17 +29,17 @@
 
 
 PUBLIC void ctlapi_monitor (afb_req request) {
-    
-    // subscribe Client to event 
+
+    // subscribe Client to event
     int err = afb_req_subscribe(request, TimerEvtGet());
     if (err != 0) {
         afb_req_fail_f(request, "register-event", "Fail to subscribe binder event");
         goto OnErrorExit;
     }
-    
+
     afb_req_success(request, NULL, NULL);
 
- OnErrorExit:    
+ OnErrorExit:
     return;
 }
 
@@ -48,21 +47,21 @@ PUBLIC void ctlapi_monitor (afb_req request) {
 PUBLIC int CtlBindingInit () {
 
     int errcount=0;
-    
+
     errcount += TimerEvtInit();
     errcount += DispatchInit();
-#ifdef CONTROL_SUPPORT_LUA    
+#ifdef CONTROL_SUPPORT_LUA
     errcount += LuaLibInit();
 #endif
-    
+
     const char *profile= getenv("CONTROL_ONLOAD_PROFILE");
     if (!profile) profile=CONTROL_ONLOAD_PROFILE;
-    
+
     // now that everything is initialised execute the onload action
-    if (!errcount) 
+    if (!errcount)
         errcount += DispatchOnLoad(CONTROL_ONLOAD_PROFILE);
-    
+
     AFB_DEBUG ("Audio Policy Control Binding Done errcount=%d", errcount);
     return errcount;
 }
- 
+

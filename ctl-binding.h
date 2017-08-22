@@ -22,10 +22,9 @@
 #define AFB_BINDING_VERSION 2
 #include <afb/afb-binding.h>
 #include <json-c/json.h>
-#include <filescan-utils.h>
-#include <wrap-json.h>
 #include <systemd/sd-event.h>
-
+#include "filescan-utils.h"
+#include "wrap-json.h"
 
 #ifdef CONTROL_SUPPORT_LUA
 #include "lua.h"

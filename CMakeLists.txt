@@ -16,15 +16,6 @@
 # limitations under the License.
 ###########################################################################
 
-ADD_COMPILE_OPTIONS(-DCONTROL_ONLOAD_PROFILE="onload-default-profile")
-
-ADD_COMPILE_OPTIONS(-DCONTROL_DOSCRIPT_PRE="doscript")
-ADD_COMPILE_OPTIONS(-DCONTROL_CONFIG_PRE="onload")
-ADD_COMPILE_OPTIONS(-DCONTROL_CONFIG_POST="control")
-ADD_COMPILE_OPTIONS(-DCONTROL_CONFIG_PATH="${CMAKE_SOURCE_DIR}/conf.d/project/config.d:${CMAKE_INSTALL_PREFIX}/controller/config.d")
-ADD_COMPILE_OPTIONS(-DCTL_PLUGIN_MAGIC=2468013579)
-ADD_COMPILE_OPTIONS(-DCONTROL_PLUGIN_PATH="${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug")
-
 # Include LUA only when requested
 if(CONTROL_SUPPORT_LUA)
    message(STATUS "Notice: LUA Controler Support Selected")
@@ -40,7 +31,7 @@ endif(CONTROL_SUPPORT_LUA)
 PROJECT_TARGET_ADD(control-afb)
 
     # Define project Targets
-    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
+    ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE} filescan-utils.c wrap-json.c)
 
     SET_OPENAPI_FILENAME("ctl-apidef")
     # Binder exposes a unique public entry point
@@ -53,14 +44,13 @@ PROJECT_TARGET_ADD(control-afb)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
-        audio-common 
         ${link_libraries}
     )
 
 
 PROJECT_TARGET_ADD(audio-plugin-sample)
 
-    # Define targets 
+    # Define targets
     ADD_LIBRARY(${TARGET_NAME} MODULE ctl-plugin-sample.c)
 
     # Alsa Plugin properties
@@ -72,7 +62,6 @@ PROJECT_TARGET_ADD(audio-plugin-sample)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
-        audio-common 
         ${link_libraries}
     )
 
