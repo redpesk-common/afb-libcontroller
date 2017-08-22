@@ -67,5 +67,5 @@ PROJECT_TARGET_ADD(audio-plugin-sample)
 
     # installation directory
     INSTALL(TARGETS ${TARGET_NAME}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/controler-plugins)
+	    LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/lib/controller-plugins)
 

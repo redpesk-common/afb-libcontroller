@@ -116,13 +116,13 @@ set(COMPILE_OPTIONS
 -fPIC
 # Personal compilation options
 -DCONTROL_MAXPATH_LEN=255
--DCONTROL_ONLOAD_PROFILE="onload-default-profile"
+-DCONTROL_ONLOAD_PROFILE="onload-default"
 -DCONTROL_DOSCRIPT_PRE="doscript"
 -DCONTROL_CONFIG_PRE="onload"
 -DCONTROL_CONFIG_POST="control"
--DCONTROL_CONFIG_PATH="${CMAKE_SOURCE_DIR}/conf.d/project/config.d:${CMAKE_INSTALL_PREFIX}/controller/config.d"
+-DCONTROL_CONFIG_PATH="${CMAKE_SOURCE_DIR}/conf.d/project/json.d:${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/json.d"
 -DCTL_PLUGIN_MAGIC=2468013579
--DCONTROL_PLUGIN_PATH="${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"
+-DCONTROL_PLUGIN_PATH="${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/${PROJECT_NAME}/lib/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"
  CACHE STRING "Compilation flags")
 #set(C_COMPILE_OPTIONS "" CACHE STRING "Compilation flags for C language.")
 #set(CXX_COMPILE_OPTIONS "" CACHE STRING "Compilation flags for C++ language.")

@@ -1,7 +1,7 @@
 ###########################################################################
 # Copyright 2015, 2016, 2017 IoT.bzh
 #
-# author: Fulup Ar Foll <rfulup@iot.bzh>
+# author: Fulup Ar Foll <fulup@iot.bzh>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,7 +15,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
 
-# Do not change this file, config is located into conf.d
-include(${CMAKE_CURRENT_SOURCE_DIR}/conf.d/cmake/config.cmake)
+
+# Include any directory not starting with _
+# -----------------------------------------------------
+PROJECT_SUBDIRS_ADD(${PROJECT_SRC_DIR_PATTERN})
