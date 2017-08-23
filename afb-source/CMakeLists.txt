@@ -36,14 +36,14 @@ PROJECT_TARGET_ADD(control-afb)
     SET_OPENAPI_FILENAME("ctl-apidef")
     # Binder exposes a unique public entry point
     SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-	PREFIX "afb-"
+        PREFIX "afb-"
         LABELS "BINDINGV2"
-	LINK_FLAGS  ${BINDINGS_LINK_FLAG}
+        LINK_FLAGS  ${BINDINGS_LINK_FLAG}
         OUTPUT_NAME ${TARGET_NAME}
     )
 
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
-	    afb-utilities
-	    ${link_libraries}
+        afb-utilities
+        ${link_libraries}
     )
 
