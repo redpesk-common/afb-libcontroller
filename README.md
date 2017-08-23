@@ -19,6 +19,11 @@ Controler AAAA(AGL Advance Audio Controler) and more.
  - Dependencies: the only dependencies are audio-common for JSON-WRAP and Filescan-utils capabilities.
  - Controler relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
+## Monitoring
+ - Default test HTML page expect monitoring HTML page to be accessible from /monitoring for this to work you should
+ * place monitoring HTML pages in a well known location eg: $HOME/opt/monitoring
+ * start your binder with the alias option e.g. afb-daemon --port=1234 --alias=/monitoring:/home/fulup/opt/afb-monitoring --ldpaths=. --workdir=. --roothttp=../htdocs
+
 ## Config
 
 Configuration is loaded dynamically during startup time. The controller scans CONTROL_CONFIG_PATH for a file corresponding to pattern

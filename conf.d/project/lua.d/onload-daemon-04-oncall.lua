@@ -54,17 +54,17 @@ function _Test_Call_Async (request, args)
    }
 
    AFB:notice ("Test_Call_Async args=%s cb=Test_Async_CB", args)
-   AFB:service("alsacore","ping", "Test_Async_CB", context)
+   AFB:service("monitor","ping", "Test_Async_CB", context)
 end
 
-function _Test_Call_Sync (request, args)
+function _Simple_Monitor_Call (request, args)
 
-    AFB:notice ("Test_Call_Sync args=%s", args)
-    local err, response= AFB:servsync ("alsacore","ping", args)
+    AFB:notice ("_Simple_Server_Call args=%s", args)
+    local err, result= AFB:servsync ("monitor","get", args)
     if (err) then
         AFB:fail ("AFB:service_call_sync fail");
     else
-        AFB:success (request, response)
+        AFB:success (request, result["response"])
     end
 end
 
