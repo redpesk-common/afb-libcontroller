@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, something express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * Reference:
  *   Json load using json_unpack https://jansson.readthedocs.io/en/2.9/apiref.html#parsing-and-validating-values
  */
@@ -58,7 +58,7 @@ typedef struct {
     DispatchHandleT **controls;
 } DispatchConfigT;
 
-// global config handle 
+// global config handle
 STATIC DispatchConfigT *configHandle = NULL;
 
 STATIC int DispatchControlToIndex(DispatchHandleT **controls, const char* controlLabel) {
@@ -71,7 +71,7 @@ STATIC int DispatchControlToIndex(DispatchHandleT **controls, const char* contro
 
 STATIC int DispatchOneControl(DispatchSourceT source, DispatchHandleT **controls, const char* controlLabel, json_object *queryJ, afb_req request) {
     int err;
-    
+
     if (!configHandle) {
         AFB_ERROR("DISPATCH-CTL-API: (Hoops/Bug!!!) No Config Loaded");
         goto OnErrorExit;
@@ -87,12 +87,12 @@ STATIC int DispatchOneControl(DispatchSourceT source, DispatchHandleT **controls
         AFB_ERROR("DISPATCH-CTL-API:NotFound/Error label=%s in Json Control Config File", controlLabel);
         goto OnErrorExit;
     }
-    
+
     // Fulup (Bug/Feature) in current version is unique to every onload profile
     if (configHandle->plugin && configHandle->plugin->l2cCount) {
-        LuaL2cNewLib (configHandle->plugin->label, configHandle->plugin->l2cFunc, configHandle->plugin->l2cCount);      
+        LuaL2cNewLib (configHandle->plugin->label, configHandle->plugin->l2cFunc, configHandle->plugin->l2cCount);
     }
-    
+
     // loop on action for this control
     DispatchActionT *actions = controls[index]->actions;
     for (int idx = 0; actions[idx].label; idx++) {
@@ -104,10 +104,10 @@ STATIC int DispatchOneControl(DispatchSourceT source, DispatchHandleT **controls
 
                 // if query is empty increment usage count and pass args
                 if (!queryJ || json_object_get_type(queryJ) != json_type_object) {
-                    json_object_get(actions[idx].argsJ);                    
+                    json_object_get(actions[idx].argsJ);
                     queryJ= actions[idx].argsJ;
                 } else if (actions[idx].argsJ) {
-                    
+
                     // Merge queryJ and argsJ before sending request
                     if (json_object_get_type(actions[idx].argsJ) ==  json_type_object) {
                         json_object_object_foreach(actions[idx].argsJ, key, val) {
@@ -117,7 +117,7 @@ STATIC int DispatchOneControl(DispatchSourceT source, DispatchHandleT **controls
                         json_object_object_add(queryJ, "args", actions[idx].argsJ);
                     }
                 }
-                
+
                 int err = afb_service_call_sync(actions[idx].api, actions[idx].call, queryJ, &returnJ);
                 if (err) {
                     static const char*format = "DispatchOneControl(Api) api=%s verb=%s args=%s";
@@ -180,7 +180,7 @@ PUBLIC void DispatchOneEvent(const char *evtLabel, json_object *eventJ) {
 
 PUBLIC int DispatchOnLoad(const char *onLoadLabel) {
     if (!configHandle) return 1;
-    
+
     DispatchHandleT **onloads = configHandle->onloads;
 
     int err = DispatchOneControl(CTL_SOURCE_ONLOAD, onloads, onLoadLabel, NULL, NULL_AFBREQ);
@@ -192,14 +192,14 @@ PUBLIC void ctlapi_dispatch(afb_req request) {
     json_object *queryJ, *argsJ=NULL;
     const char *target;
     DispatchSourceT source= CTL_SOURCE_UNKNOWN;
-    
+
     queryJ = afb_req_json(request);
     int err = wrap_json_unpack(queryJ, "{s:s, s?i s?o !}", "target", &target, "source", &source, "args", &argsJ);
     if (err) {
         afb_req_fail_f(request, "CTL-DISPTACH-INVALID", "missing target or args not a valid json object query=%s", json_object_get_string(queryJ));
         goto OnErrorExit;
     }
-    
+
     (void) DispatchOneControl(source, controls, target, argsJ, request);
 
 OnErrorExit:
@@ -211,7 +211,7 @@ PUBLIC int DispatchOneL2c(lua_State* luaState, char *funcname, Lua2cFunctionT ca
 #ifndef CONTROL_SUPPORT_LUA
     AFB_ERROR("DISPATCH-ONE-L2C: LUA support not selected (cf:CONTROL_SUPPORT_LUA) in config.cmake");
     return 1;
-#else    
+#else
     int err=Lua2cWrapper(luaState, funcname, callback, configHandle->plugin->context);
     return err;
 #endif
@@ -223,13 +223,13 @@ PUBLIC int DispatchOneL2c(lua_State* luaState, char *funcname, Lua2cFunctionT ca
 PUBLIC void ctlapi_config(struct afb_req request) {
     json_object*tmpJ;
     char *dirList;
-    
+
 
     json_object* queryJ = afb_req_json(request);
     if (queryJ && json_object_object_get_ex(queryJ, "cfgpath", &tmpJ)) {
         dirList = strdup(json_object_get_string(tmpJ));
     } else {
-        
+
         dirList = getenv("CONTROL_CONFIG_PATH");
         if (!dirList) dirList = strdup(CONTROL_CONFIG_PATH);
         AFB_NOTICE("CONFIG-MISSING: use default CONTROL_CONFIG_PATH=%s", CONTROL_CONFIG_PATH);
@@ -399,7 +399,7 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
 
         // if search path not in Json config file, then try default
         if (!ldSearchPath) ldSearchPath=CONTROL_PLUGIN_PATH;
-        
+
         // search for default policy config file
         json_object *pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, dPlugin->sharelib, NULL);
         if (!pluginPathJ || json_object_array_length(pluginPathJ) == 0) {
@@ -441,20 +441,20 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
         struct afb_binding_data_v2 *afbHidenData = dlsym(dPlugin->dlHandle, "afbBindingV2data");
         if (afbHidenData) *afbHidenData = afbBindingV2data;
 
-        // Push lua2cWrapper @ into plugin 
+        // Push lua2cWrapper @ into plugin
         Lua2cWrapperT *lua2cInPlug = dlsym(dPlugin->dlHandle, "Lua2cWrap");
-#ifndef CONTROL_SUPPORT_LUA      
+#ifndef CONTROL_SUPPORT_LUA
         if (lua2cInPlug) *lua2cInPlug = NULL;
 #else
         // Lua2cWrapper is part of binder and not expose to dynamic link
         if (lua2cInPlug) *lua2cInPlug = DispatchOneL2c;
-        
+
         {
             int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
                 char funcName[CONTROL_MAXPATH_LEN];
                 strncpy(funcName, "lua2c_", sizeof(funcName));
                 strncat(funcName, l2cName, sizeof(funcName));
-                
+
                 Lua2cFunctionT l2cFunction= (Lua2cFunctionT)dlsym(dPlugin->dlHandle, funcName);
                 if (!l2cFunction) {
                     AFB_ERROR("DISPATCH-LOAD-CONFIG:Plugin symbol'%s' missing err=%s", funcName, dlerror());
@@ -462,14 +462,14 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
                 }
                 l2cFunc[index].func=(void*)l2cFunction;
                 l2cFunc[index].name=strdup(l2cName);
-                
+
                 return 0;
             }
 
             int errCount = 0;
             luaL_Reg *l2cFunc=NULL;
             int count=0;
-            
+
             // look on l2c command and push them to LUA
             if (json_object_get_type(lua2csJ) == json_type_array) {
                 int length = json_object_array_length(lua2csJ);
@@ -531,8 +531,8 @@ STATIC DispatchConfigT *DispatchLoadConfig(const char* filepath) {
         AFB_ERROR("DISPATCH-LOAD-CONFIG Missing something metadata|[onload]|[controls]|[events] in %s", json_object_get_string(controlConfigJ));
         goto OnErrorExit;
     }
-    
-        
+
+
 
     DispatchConfigT *controlConfig = calloc(1, sizeof (DispatchConfigT));
     if (metadataJ) {
@@ -542,7 +542,7 @@ STATIC DispatchConfigT *DispatchLoadConfig(const char* filepath) {
             AFB_ERROR("DISPATCH-LOAD-CONFIG:METADATA Missing something label|version|[label] in %s", json_object_get_string(metadataJ));
             goto OnErrorExit;
         }
-        
+
         // if ctlname is provided change process name now
         if (ctlname) {
             err= prctl(PR_SET_NAME, ctlname,NULL,NULL,NULL);
@@ -620,7 +620,7 @@ OnErrorExit:
 PUBLIC int DispatchInit() {
     int index, err, luaLoaded = 0;
     char controlFile [CONTROL_MAXPATH_LEN];
-    
+
     const char *dirList= getenv("CONTROL_CONFIG_PATH");
     if (!dirList) dirList=CONTROL_CONFIG_PATH;
 
@@ -630,7 +630,7 @@ PUBLIC int DispatchInit() {
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, "json");
 
-    // We load 1st file others are just warnings   
+    // We load 1st file others are just warnings
     for (index = 0; index < json_object_array_length(responseJ); index++) {
         json_object *entryJ = json_object_array_get_idx(responseJ, index);
 

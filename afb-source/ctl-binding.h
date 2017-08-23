@@ -70,7 +70,7 @@ typedef enum {
     CTL_MODE_NONE=0,
     CTL_MODE_API,
     CTL_MODE_CB,
-    CTL_MODE_LUA,        
+    CTL_MODE_LUA,
 } CtlRequestModeT;
 
 
@@ -130,14 +130,14 @@ PUBLIC void ctlapi_lua_doscript (afb_req request);
 
 // sharelib ctl-plugin*
 typedef struct {
-  long  magic;  
-  char *label;  
+  long  magic;
+  char *label;
 } CtlPluginMagicT;
 
 
 #define MACRO_STR_VALUE(arg) #arg
 #define CTLP_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.magic=CTL_PLUGIN_MAGIC,.label=pluglabel}; struct afb_binding_data_v2; Lua2cWrapperT Lua2cWrap;
-#define CTLP_ONLOAD(label,version,info) void* CtlPluginOnload(char* label, char* version, char* info) 
+#define CTLP_ONLOAD(label,version,info) void* CtlPluginOnload(char* label, char* version, char* info)
 #define CTLP_CAPI(funcname,source, label,argsJ, queryJ, context) int funcname(DispatchSourceT source, char* label, json_object* argsJ, json_object* queryJ, void* context)
 
 

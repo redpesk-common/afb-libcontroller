@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  * Sample plugin for Controller
  */
 
@@ -28,16 +28,16 @@
 
 typedef struct {
   int magic;
-  int count;  
+  int count;
 } MyPluginCtxT;
 
 STATIC const char* jsonToString (json_object *valueJ) {
     const char *value;
     if (valueJ)
         value=json_object_get_string(valueJ);
-    else 
+    else
         value="NULL";
-    
+
     return value;
 }
 
@@ -60,7 +60,7 @@ PUBLIC CTLP_CAPI (SamplePolicyInit, source, label, argsJ, queryJ, context) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:SamplePolicyInit (Hoops) Invalid Sample Plugin Context");
         return -1;
     };
-    
+
     pluginCtx->count = 0;
     AFB_NOTICE ("CONTROLLER-PLUGIN-SAMPLE:Init label=%s args=%s\n", label, jsonToString(argsJ));
     return 0;
@@ -68,7 +68,7 @@ PUBLIC CTLP_CAPI (SamplePolicyInit, source, label, argsJ, queryJ, context) {
 
 PUBLIC CTLP_CAPI (sampleControlMultimedia, source, label, argsJ,queryJ,context) {
     MyPluginCtxT *pluginCtx= (MyPluginCtxT*)context;
-    
+
     if (!context || pluginCtx->magic != MY_PLUGIN_MAGIC) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:sampleControlMultimedia (Hoops) Invalid Sample Plugin Context");
         return -1;
@@ -81,7 +81,7 @@ PUBLIC CTLP_CAPI (sampleControlMultimedia, source, label, argsJ,queryJ,context) 
 
 PUBLIC  CTLP_CAPI (sampleControlNavigation, source, label, argsJ, queryJ, context) {
     MyPluginCtxT *pluginCtx= (MyPluginCtxT*)context;
-    
+
     if (!context || pluginCtx->magic != MY_PLUGIN_MAGIC) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:sampleControlNavigation (Hoops) Invalid Sample Plugin Context");
         return -1;
@@ -94,7 +94,7 @@ PUBLIC  CTLP_CAPI (sampleControlNavigation, source, label, argsJ, queryJ, contex
 
 PUBLIC  CTLP_CAPI (SampleControlEvent, source, label, argsJ, queryJ, context) {
     MyPluginCtxT *pluginCtx= (MyPluginCtxT*)context;
-    
+
     if (!context || pluginCtx->magic != MY_PLUGIN_MAGIC) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:cousampleControlMultimediant (Hoops) Invalid Sample Plugin Context");
         return -1;
@@ -108,7 +108,7 @@ PUBLIC  CTLP_CAPI (SampleControlEvent, source, label, argsJ, queryJ, context) {
 // This function is a LUA function. Lua2CHelloWorld label should be declare in the "onload" section of JSON config file
 PUBLIC CTLP_LUA2C (Lua2cHelloWorld1, label, argsJ, context) {
     MyPluginCtxT *pluginCtx= (MyPluginCtxT*)context;
-    
+
     if (!context || pluginCtx->magic != MY_PLUGIN_MAGIC) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:Lua2cHelloWorld1 (Hoops) Invalid Sample Plugin Context");
         return -1;
@@ -122,7 +122,7 @@ PUBLIC CTLP_LUA2C (Lua2cHelloWorld1, label, argsJ, context) {
 // This function is a LUA function. Lua2CHelloWorld label should be declare in the "onload" section of JSON config file
 PUBLIC CTLP_LUA2C (Lua2cHelloWorld2, label, argsJ, context) {
     MyPluginCtxT *pluginCtx= (MyPluginCtxT*)context;
-    
+
     if (!context || pluginCtx->magic != MY_PLUGIN_MAGIC) {
         AFB_ERROR("CONTROLLER-PLUGIN-SAMPLE:Lua2cHelloWorld2 (Hoops) Invalid Sample Plugin Context");
         return -1;

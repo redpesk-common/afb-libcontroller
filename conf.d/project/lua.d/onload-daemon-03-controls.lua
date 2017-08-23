@@ -15,7 +15,7 @@
   limitations under the License.
 
   Following function are called when a client activate a control with
-  controller api -> APi=control VERB=dispatch 
+  controller api -> APi=control VERB=dispatch
   arguments are
     - source (0) when requesting the control (-1) when releasing
     - control comme from config given with 'args' in onload-middlename-xxxxx.json

@@ -1,7 +1,7 @@
 Controler AAAA(AGL Advance Audio Controler) and more.
 ------------------------------------------------------------
 
- * Object: Generic Controler to handle Policy,Small Business Logic, Glue in between components, ... 
+ * Object: Generic Controler to handle Policy,Small Business Logic, Glue in between components, ...
  * Status: Release Candidate
  * Author: Fulup Ar Foll fulup@iot.bzh
  * Date  : August-2017
@@ -34,20 +34,20 @@ environment variable. Setenv 'CONTROL_ONLOAD_PROFILE'=xxxx to overload 'onload-d
 
 ### Config is organised in 4 sections:
 
- * metadata 
+ * metadata
  * onload defines the set of action to be executed at startup time
  * control defines the set of controls with corresponding actions
  * event define the set of actions to be executed when receiving a given signal
 
 ### Metadata
- 
-As today matadata is only used for documentation purpose. 
+
+As today matadata is only used for documentation purpose.
  * label + version mandatory
  * info optional
 
 ### OnLoad section
 
-Defines startup time configuration. Onload may provide multiple initialisation profiles, each with a different label.  
+Defines startup time configuration. Onload may provide multiple initialisation profiles, each with a different label.
  * label is mandatory. Label is used to select onload profile at initialisation through DispatchOneOnLoad("onload-label") API;
  * info is optional
  * plugin provides optional unique plugin name. Plugin should follow "onload-bindername-xxxxx.ctlso" patern
@@ -61,7 +61,7 @@ Defines startup time configuration. Onload may provide multiple initialisation p
 
 ### Control section
 
-Defines a list of controls that are accessible through (api="control", verb="request", control="control-label"). 
+Defines a list of controls that are accessible through (api="control", verb="request", control="control-label").
 
  * label mandatory
  * info optional
@@ -83,10 +83,10 @@ Controler support tree categories of actions. Each action return a status status
  * AppFw API, Provides a generic model to request other bindings. Requested binding can be local (eg: ALSA/UCM) or
    external (eg: vehicle signalling).
     * api  provides requested binding API name
-    * verb provides verb to requested binding 
+    * verb provides verb to requested binding
     * args optionally provides a jsonc object for targeted binding API. Note that 'args' are statically defined
        in JSON configuration file. Controler client may also provided its own arguments from the query list. Targeted
-       binding receives both arguments defined in the config file and the argument provided by controller client. 
+       binding receives both arguments defined in the config file and the argument provided by controller client.
  * C-API, when defined in the onload section, the plugin may provided C native API with CTLP-CAPI(apiname, label, args, query, context).
    Plugin may also create Lua command with  CTLP-Lua2C(LuaFuncName, label, args, query, context). Where args+query are JSONC object
    and context the value return from CTLP_ONLOAD function. Any missing value is set to NULL.
@@ -95,14 +95,14 @@ Controler support tree categories of actions. Each action return a status status
    is automatically loaded. Any function defined in those Lua script can be called through a controller action. Lua functions receive
    three parameters (label, args, query).
 
-Note: Lua added functions systematically prefix. AGL standard AppFw functions are prefixed with AGL: (eg: AGL:notice(), AGL_success(), ...). 
+Note: Lua added functions systematically prefix. AGL standard AppFw functions are prefixed with AGL: (eg: AGL:notice(), AGL_success(), ...).
 User Lua functions added though the plugin and CTLP_Lua2C are prefix with plugin label (eg: MyPlug:HelloWorld1).
 
 ### Avaliable Application Framework Commands
 
 Each Lua AppFw commands should be prefixed by AFB:
 
- * AFB:notice ("format", arg1,... argn) LUA table are print directly as json string with '%s'. 
+ * AFB:notice ("format", arg1,... argn) LUA table are print directly as json string with '%s'.
    AFB:error, AFB:warning, AFB:info, AFB:debug work on the same model. Printed message are limited to 512 characters.
 
  * AFB:service ('API', 'VERB', {query}, "Lua_Callback_Name", {context}) asynchronous call to an other binding. When empty query/context should be set to '{}'
@@ -117,14 +117,14 @@ Each Lua AppFw commands should be prefixed by AFB:
    return. AFB:servsync return both the error message and the response as a Lua table. Like for AFB:service user should not
    forget to extract response from result.
 
- * AFB:success(request, response) request is the opaque handle pass when Lua is called from (api="control", verb="docall"). 
+ * AFB:success(request, response) request is the opaque handle pass when Lua is called from (api="control", verb="docall").
    Response is a Lua table that will be return to client.
 
  * AFB:fail(request, response) same as for success. Note that LUA generate automatically the error code from Lua function name.
    The response is tranformed to a json string before being return to client.
 
  * EventHandle=AFB:evtmake("MyEventName") Create an event and return the handle as an opaque handle. Note that due to a limitation
-   of json_object this opaque handle cannot be passed as argument in a callback context. 
+   of json_object this opaque handle cannot be passed as argument in a callback context.
 
  * AFB:subscribe(request, MyEventHandle) Subscribe a given client to previously created event.
 
@@ -135,7 +135,7 @@ Each Lua AppFw commands should be prefixed by AFB:
    MyTimer={[l"abel"]="MyTimerName", ["delay"]=timeoutInMs, ["count"]=nBOfCycles}. Note that is count==0 then timer is cycle
    infinitively. Context is a standard Lua table. This function return an opaque handle to be use to further control the timer.
 
- * AFB:timerclear(timerHandle) Kill an existing timer. Return an error when timer does not exit. 
+ * AFB:timerclear(timerHandle) Kill an existing timer. Return an error when timer does not exit.
 
  * MyTimer=AFB:timerget(timerHandle) Return Label, Delay and Count of an active timer. Return an error when timerHandle does not
    point on an active timer.
@@ -145,9 +145,9 @@ Note: Except for function call during binding initialisation period. Lua call ar
 
 ### Adding Lua command from User Plugin
 
-User Plugin is optional and may provide either native C-action accessible directly from controller actions as defined in 
-JSON config file, or alternatively may provide at set of Lua commands usable inside any script (onload, control,event). A simple 
-plugin that provide both natice C API and Lua commands is provided as example (see ctl-plugin-sample.c). Technically a 
+User Plugin is optional and may provide either native C-action accessible directly from controller actions as defined in
+JSON config file, or alternatively may provide at set of Lua commands usable inside any script (onload, control,event). A simple
+plugin that provide both natice C API and Lua commands is provided as example (see ctl-plugin-sample.c). Technically a
 plugin is a simple sharelibrary and any code fitting in sharelib might be used as a plugin. Developer should nevertheless
 not forget that except when no-concurrency flag was at binding construction time, any binding should to be thread safe.
 
@@ -173,7 +173,7 @@ local or as global. Unfortunately "luac" is not smart enough to handle strict mo
 at run time. Because of this strict mode every global variables (which include functions) should be prefix by '_'.
 Note that LUA require an initialisation value for every variables and declaring something like "local myvar" wont
 allocate "myvar"
- 
+
 ### Debugging Facilities
 
 Controler Lua script are check for syntax from CMAKE template with Luac. When needed to go further an developer API allow to
@@ -226,7 +226,7 @@ Here after a simple configuration sample.
                     }
                 }, {
                     "label": "onload-sample-api",
-                    "info": "Assert AlsaCore Presence",   
+                    "info": "Assert AlsaCore Presence",
                     "api": "alsacore",
                     "verb": "ping",
                     "args": "test"
@@ -237,14 +237,14 @@ Here after a simple configuration sample.
                 }
             ]
         }],
-    "controls": 
+    "controls":
             [
                 {
                     "label": "multimedia",
                     "permissions": "urn:AGL:permission:audio:public:mutimedia",
                     "actions": {
                             "label": "multimedia-control-lua",
-                            "info": "Call Lua Script function Test_Lua_Engin",   
+                            "info": "Call Lua Script function Test_Lua_Engin",
                             "lua": "Audio_Set_Multimedia"
                         }
                 }, {
@@ -252,7 +252,7 @@ Here after a simple configuration sample.
                     "permissions": "urn:AGL:permission:audio:public:navigation",
                     "actions": {
                             "label": "navigation-control-lua",
-                            "info": "Call Lua Script to set Navigation",   
+                            "info": "Call Lua Script to set Navigation",
                             "lua": "Audio_Set_Navigation"
                         }
                 }, {
@@ -282,7 +282,7 @@ Here after a simple configuration sample.
                             }
                         }, {
                             "label": "navigation-control-lua",
-                            "info": "Call Lua Script to set Navigation",   
+                            "info": "Call Lua Script to set Navigation",
                             "lua": "Audio_Set_Navigation"
                         }]
                 }

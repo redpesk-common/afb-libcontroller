@@ -45,7 +45,7 @@ function _Simple_Timer_Test (request, client)
     -- if event does not exit create it now.
     if (_MyContext["event"] == nil) then
       _MyContext["event"]= AFB:evtmake(client["label"])
-    end  
+    end
 
     -- if delay not defined default is 5s
     if (client["delay"]==nil) then client["delay"]=5000 end
@@ -67,7 +67,7 @@ function _Simple_Timer_Test (request, client)
     -- settimer take a table with delay+count as input (count==0 means infinite)
     AFB:timerset (myTimer, "_Timer_Test_CB", context)
 
-    -- nothing special to return send back 
+    -- nothing special to return send back
     AFB:success (request, myTimer)
 
     return 0
