@@ -43,11 +43,10 @@ PROJECT_TARGET_ADD(audio-plugin-sample)
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
         afb-utilities
-        afb-controller
         ${link_libraries}
     )
 
-    include_directories("../afb-source")
+    include_directories("../ctl-binding")
 
 
 
