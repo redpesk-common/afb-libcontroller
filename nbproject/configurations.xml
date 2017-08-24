@@ -30,6 +30,12 @@
           <in>feature_tests.cxx</in>
         </df>
       </df>
+      <df name="ctl-binding">
+        <in>ctl-binding.c</in>
+        <in>ctl-dispatch.c</in>
+        <in>ctl-lua.c</in>
+        <in>ctl-timer.c</in>
+      </df>
       <df name="ctl-plugin">
         <in>ctl-plugin-sample.c</in>
       </df>
@@ -175,13 +181,26 @@
         </cTool>
       </item>
       <item path="afb-utilities/filescan-utils.c" ex="false" tool="0" flavor2="3">
-        <cTool flags="1">
+        <cTool flags="0">
           <incDir>
-            <pElem>../../../opt/include/afb</pElem>
-            <pElem>afb-utilities</pElem>
             <pElem>/usr/include/json-c</pElem>
+            <pElem>../../../opt/include</pElem>
+            <pElem>/usr/include/p11-kit-1</pElem>
+            <pElem>/usr/include/lua5.3</pElem>
+            <pElem>afb-utilities</pElem>
             <pElem>build/afb-utilities</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>CONTROL_CONFIG_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/conf.d/project/json.d:/home/fulup/opt/afb-controller/json.d"</Elem>
+            <Elem>CONTROL_CONFIG_POST="control"</Elem>
+            <Elem>CONTROL_CONFIG_PRE="onload"</Elem>
+            <Elem>CONTROL_DOSCRIPT_PRE="doscript"</Elem>
+            <Elem>CONTROL_MAXPATH_LEN=255</Elem>
+            <Elem>CONTROL_ONLOAD_PROFILE="onload-default"</Elem>
+            <Elem>CONTROL_PLUGIN_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/build:/home/fulup/opt/afb-controller/lib/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"</Elem>
+            <Elem>CTL_PLUGIN_MAGIC=2468013579</Elem>
+            <Elem>NATIVE_LINUX</Elem>
+          </preprocessorList>
         </cTool>
       </item>
       <item path="afb-utilities/wrap-json.c" ex="false" tool="0" flavor2="3">
@@ -207,8 +226,24 @@
       </item>
       <item path="build/CMakeFiles/feature_tests.cxx" ex="false" tool="1" flavor2="4">
       </item>
+      <item path="ctl-binding/ctl-binding.c" ex="false" tool="0" flavor2="0">
+        <cTool flags="0">
+        </cTool>
+      </item>
+      <item path="ctl-binding/ctl-dispatch.c" ex="false" tool="0" flavor2="0">
+        <cTool flags="0">
+        </cTool>
+      </item>
+      <item path="ctl-binding/ctl-lua.c" ex="false" tool="0" flavor2="0">
+        <cTool flags="0">
+        </cTool>
+      </item>
+      <item path="ctl-binding/ctl-timer.c" ex="false" tool="0" flavor2="0">
+        <cTool flags="0">
+        </cTool>
+      </item>
       <item path="ctl-plugin/ctl-plugin-sample.c" ex="false" tool="0" flavor2="3">
-        <cTool flags="1">
+        <cTool flags="0">
         </cTool>
       </item>
       <folder path="0/build">
@@ -218,16 +253,60 @@
           </incDir>
         </cTool>
       </folder>
+      <folder path="0/ctl-binding">
+        <cTool>
+          <incDir>
+            <pElem>/usr/include/json-c</pElem>
+            <pElem>../../../opt/include</pElem>
+            <pElem>/usr/include/p11-kit-1</pElem>
+            <pElem>/usr/include/lua5.3</pElem>
+            <pElem>ctl-binding</pElem>
+            <pElem>afb-utilities</pElem>
+            <pElem>build/ctl-binding</pElem>
+          </incDir>
+          <preprocessorList>
+            <Elem>CONTROL_CONFIG_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/conf.d/project/json.d:/home/fulup/opt/afb-controller/json.d"</Elem>
+            <Elem>CONTROL_CONFIG_POST="control"</Elem>
+            <Elem>CONTROL_CONFIG_PRE="onload"</Elem>
+            <Elem>CONTROL_DOSCRIPT_PRE="doscript"</Elem>
+            <Elem>CONTROL_LUA_EVENT="luaevt"</Elem>
+            <Elem>CONTROL_LUA_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/conf.d/project/lua.d:/home/fulup/opt/controller-plugins/ctl-lua.d"</Elem>
+            <Elem>CONTROL_MAXPATH_LEN=255</Elem>
+            <Elem>CONTROL_ONLOAD_PROFILE="onload-default"</Elem>
+            <Elem>CONTROL_PLUGIN_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/build:/home/fulup/opt/afb-controller/lib/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"</Elem>
+            <Elem>CONTROL_SUPPORT_LUA</Elem>
+            <Elem>CTL_PLUGIN_MAGIC=2468013579</Elem>
+            <Elem>NATIVE_LINUX</Elem>
+            <Elem>afb_controller_EXPORTS</Elem>
+          </preprocessorList>
+        </cTool>
+      </folder>
       <folder path="0/ctl-plugin">
         <cTool>
           <incDir>
-            <pElem>../../../opt/include/afb</pElem>
-            <pElem>ctl-plugin</pElem>
             <pElem>/usr/include/json-c</pElem>
+            <pElem>../../../opt/include</pElem>
+            <pElem>/usr/include/p11-kit-1</pElem>
             <pElem>/usr/include/lua5.3</pElem>
-            <pElem>afb-source</pElem>
+            <pElem>ctl-binding</pElem>
+            <pElem>afb-utilities</pElem>
             <pElem>build/ctl-plugin</pElem>
           </incDir>
+          <preprocessorList>
+            <Elem>CONTROL_CONFIG_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/conf.d/project/json.d:/home/fulup/opt/afb-controller/json.d"</Elem>
+            <Elem>CONTROL_CONFIG_POST="control"</Elem>
+            <Elem>CONTROL_CONFIG_PRE="onload"</Elem>
+            <Elem>CONTROL_DOSCRIPT_PRE="doscript"</Elem>
+            <Elem>CONTROL_LUA_EVENT="luaevt"</Elem>
+            <Elem>CONTROL_LUA_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/conf.d/project/lua.d:/home/fulup/opt/controller-plugins/ctl-lua.d"</Elem>
+            <Elem>CONTROL_MAXPATH_LEN=255</Elem>
+            <Elem>CONTROL_ONLOAD_PROFILE="onload-default"</Elem>
+            <Elem>CONTROL_PLUGIN_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/build:/home/fulup/opt/afb-controller/lib/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"</Elem>
+            <Elem>CONTROL_SUPPORT_LUA</Elem>
+            <Elem>CTL_PLUGIN_MAGIC=2468013579</Elem>
+            <Elem>NATIVE_LINUX</Elem>
+            <Elem>audio_plugin_sample_EXPORTS</Elem>
+          </preprocessorList>
         </cTool>
       </folder>
     </conf>

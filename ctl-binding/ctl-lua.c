@@ -460,7 +460,7 @@ STATIC int LuaAfbService(lua_State* luaState) {
 
     // note: argument start at 2 because of AFB: table
     if (count <5 || !lua_isstring(luaState, 2) || !lua_isstring(luaState, 3) || !lua_istable(luaState, 4) || !lua_isstring(luaState, 5)) {
-        lua_pushliteral (luaState, "LuaAfbServiceCall-Syntax is AFB:service_call (api, verb, query, callback, handle ....");
+        lua_pushliteral (luaState, "ERROR: syntax AFB:service(api, verb, {[Lua Table]})");
         goto OnErrorExit;
     }
 
@@ -489,7 +489,7 @@ STATIC int LuaAfbServiceSync(lua_State* luaState) {
 
     // note: argument start at 2 because of AFB: table
     if (count <3 || !lua_isstring(luaState, 2) || !lua_isstring(luaState, 3) || !lua_istable(luaState, 4)) {
-        lua_pushliteral (luaState, "LuaAfbServiceSync-Syntax is error,data=AFB:service_call (api, verb, query)");
+        lua_pushliteral (luaState, "ERROR: syntax AFB:servsync(api, verb, {[Lua Table]})");
         goto OnErrorExit;
     }
 
