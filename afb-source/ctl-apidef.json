@@ -97,17 +97,17 @@
             }
         },
         "x-permissions": {
-            "monitor": {
-                "permission": "urn:AGL:permission:audio:public:monitor"
+            "control": {
+                "permission": "urn:AGL:permission:audio:public:control"
             },
-            "multimedia": {
-                "permission": "urn:AGL:permission:audio:public:monitor"
+            "dispatch": {
+                "permission": "urn:AGL:permission:audio:public:dispatch"
             },
-            "navigation": {
-                "permission": "urn:AGL:permission:audio:public:monitor"
+            "request": {
+                "permission": "urn:AGL:permission:audio:public:request"
             },
-            "emergency": {
-                "permission": "urn:AGL:permission:audio:public:emergency"
+            "debug": {
+                "permission": "urn:AGL:permission:audio:public:debug"
             }
         },
         "responses": {
@@ -124,22 +124,20 @@
         }
     },
     "paths": {
-        "/monitor": {
-            "description": "Subcribe Audio Agent Policy Control End",
+        "/ping": {
+            "description": "Ping Binding",
             "get": {
                 "x-permissions": {
-                    "$ref": "#/components/x-permissions/monitor"
+                    "$ref": "#/components/x-permissions/control"
                 },
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "event_patern",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+                "parameters": [{
+                    "in": "query",
+                    "name": "args",
+                    "required": false,
+                    "schema": {
+                        "type": "json"
                     }
-                ],
+                }],
                 "responses": {
                     "200": {
                         "$ref": "#/components/responses/200"
@@ -147,82 +145,105 @@
                 }
             }
         },
-        "/dispatch": {
-            "description": "Request Access to Navigation Audio Channel.",
-            "get": {
-                "x-permissions": {
-                    "$ref": "#/components/x-permissions/navigation"
-                },
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "zone",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/200"
-                    }
-                }
-            }
-        },
-        "/request": {
-            "description": "Execute LUA string script.",
-            "get": {
-                "x-permissions": {
-                    "$ref": "#/components/x-permissions/navigation"
-                },
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "func",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
+            "/subscribe": {
+                "description": "Subcribe Audio Agent Policy Control End",
+                "get": {
+                    "x-permissions": {
+                        "$ref": "#/components/x-permissions/control"
                     },
-                    {
-                        "in": "query",
-                        "name": "args",
-                        "required": false,
-                        "schema": {
-                            "type": "array"
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "event_patern",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
                         }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/200"
+                    ],
+                    "responses": {
+                        "200": {
+                            "$ref": "#/components/responses/200"
+                        }
                     }
                 }
-            }
-        },
-        "/debuglua": {
-            "description": "Execute LUA string script.",
-            "get": {
-                "x-permissions": {
-                    "$ref": "#/components/x-permissions/navigation"
-                },
-                "parameters": [
-                    {
-                        "in": "query",
-                        "name": "filename",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
+            },
+            "/dispatch": {
+                "description": "Request Access to Navigation Audio Channel.",
+                "get": {
+                    "x-permissions": {
+                        "$ref": "#/components/x-permissions/dispatch"
+                    },
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "zone",
+                            "required": false,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "$ref": "#/components/responses/200"
                         }
                     }
-                ],
-                "responses": {
-                    "200": {
-                        "$ref": "#/components/responses/200"
+                }
+            },
+            "/request": {
+                "description": "Execute LUA string script.",
+                "get": {
+                    "x-permissions": {
+                        "$ref": "#/components/x-permissions/request"
+                    },
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "func",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        },
+                        {
+                            "in": "query",
+                            "name": "args",
+                            "required": false,
+                            "schema": {
+                                "type": "array"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "$ref": "#/components/responses/200"
+                        }
+                    }
+                }
+            },
+            "/debuglua": {
+                "description": "Execute LUA string script.",
+                "get": {
+                    "x-permissions": {
+                        "$ref": "#/components/x-permissions/debug"
+                    },
+                    "parameters": [
+                        {
+                            "in": "query",
+                            "name": "filename",
+                            "required": true,
+                            "schema": {
+                                "type": "string"
+                            }
+                        }
+                    ],
+                    "responses": {
+                        "200": {
+                            "$ref": "#/components/responses/200"
+                        }
                     }
                 }
             }
         }
-    }
 }

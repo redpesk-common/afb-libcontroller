@@ -22,13 +22,20 @@
 
 #include "ctl-binding.h"
 
-
-
 // Include Binding Stub generated from Json OpenAPI
 #include "ctl-apidef.h"
 
+PUBLIC void ctlapi_ping (afb_req request) {
+    static int count=0;
 
-PUBLIC void ctlapi_monitor (afb_req request) {
+    count++;
+    AFB_NOTICE ("Controller:ping count=%d", count);
+    afb_req_success(request,json_object_new_int(count), NULL);
+
+    return;
+}
+
+PUBLIC void ctlapi_subscribe (afb_req request) {
 
     // subscribe Client to event
     int err = afb_req_subscribe(request, TimerEvtGet());

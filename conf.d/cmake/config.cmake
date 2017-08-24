@@ -18,7 +18,7 @@
 
 # Project Info
 # ------------------
-set(PROJECT_NAME Controller-binding)
+set(PROJECT_NAME afb-controller)
 set(PROJECT_VERSION "1.0")
 set(PROJECT_PRETTY_NAME "Controller Binding for AGL Application Framework")
 set(PROJECT_DESCRIPTION "Create controls that could be mapped to LUA functions, callback or API/VERB methods.")

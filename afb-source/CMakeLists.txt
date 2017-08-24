@@ -28,7 +28,7 @@ else(CONTROL_SUPPORT_LUA)
 endif(CONTROL_SUPPORT_LUA)
 
 # Add target to project dependency list
-PROJECT_TARGET_ADD(control-afb)
+PROJECT_TARGET_ADD(controller)
 
     # Define project Targets
     ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
