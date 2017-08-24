@@ -37,19 +37,40 @@ git submodule update
  * place monitoring HTML pages in a well known location eg: $HOME/opt/monitoring
  * start your binder with the alias option e.g. afb-daemon --port=1234 --alias=/monitoring:/home/fulup/opt/afb-monitoring --ldpaths=. --workdir=. --roothttp=../htdocs
 
-## Config
+## Controller binding configuration
 
-Configuration is loaded dynamically during startup time. The controller scans CONTROL_CONFIG_PATH for a file corresponding to pattern
+By default controller searches for a config filename with the same 'middlename' as daemon process. As an example if your process name is afb-daemon then middle name is 'daemon'.
+
+```bash
+# Middlename is taken from process middlename.
+onload-middlename-xxxxx.json
+```
+
+You may overload config search path with environement variables
+
+* AFB_BINDER_NAME: change patern config search path. 'export AFB_BINDER_NAME=sample' will make controller to search for a configfile name 'onload-sample-xxx.json'.
+* CONTROL_CONFIG_PATH: change default reserch path for configuration. You may provide multiple directories separated by ':'.
+* CONTROL_LUA_PATH: same as CONTROL_CONFIG_PATH but for Lua script files.
+
+Example to load a config name 'onload-myconfig-test.json' do
+
+```bash
+  AFB_BINDER_NAME='myconfig' afb-daemon --verbose ...'
+```
+
+> **Note**: you may change search pattern for Lua script by adding 'ctlname=afb-middlename-xxx' in the metadata section of your config 'onload-*.json'
+
+The configuration is loaded dynamically during startup time. The controller scans CONTROL_CONFIG_PATH for a file corresponding to pattern
 "onload-bindername-xxxxx.json". When controller runs within AAAA binder it searches for "onload-audio-xxxx.json". First file found in the path the loaded
 any other files corresponding to the same pather are ignored and only generate a warning.
 
 Each bloc in the configuration file are defined with
 
-* label: must be provided is used either for debugging or as input for the action (eg: signal name, control name, ...)
-* info:  optional used for documentation purpose only
+* *label*: must be provided is used either for debugging or as input for the action (eg: signal name, control name, ...)
+* *info*:  optional used for documentation purpose only
 
-Note by default controller config search path is defined at compilation time, but path might be overloaded with CONTROL_CONFIG_PATH
-environment variable. Setenv 'CONTROL_ONLOAD_PROFILE'=xxxx to overload 'onload-default-profile' initialisation sequence.
+> **Note**: by default controller config search path is defined at compilation time, but path might be overloaded with CONTROL_CONFIG_PATH
+> environment variable. Setenv 'CONTROL_ONLOAD_PROFILE'=xxxx to overload 'onload-default-profile' initialisation sequence.
 
 ### Config is organised in 4 sections:
 
@@ -101,6 +122,7 @@ send back signal, ...) eg: if a controller subscribes to vehicule speed, then sp
 ### Actions Categories
 
 Controler support tree categories of actions. Each action return a status status where 0=success and 1=failure.
+
 * AppFw API, Provides a generic model to request other bindings. Requested binding can be local (eg: ALSA/UCM) or
    external (eg: vehicle signalling).
   * api  provides requested binding API name
