@@ -1,18 +1,18 @@
 
-static const char _afb_description_v2_aaaa[] =
+static const char _afb_description_v2_control[] =
     "{\"openapi\":\"3.0.0\",\"$schema\":\"http:iot.bzh/download/openapi/schem"
     "a-3.0/default-schema.json\",\"info\":{\"description\":\"\",\"title\":\"c"
-    "ontroler\",\"version\":\"1.0\",\"x-binding-c-generator\":{\"api\":\"aaaa"
-    "\",\"version\":2,\"prefix\":\"ctlapi_\",\"postfix\":\"\",\"start\":null,"
-    "\"onevent\":\"DispatchOneEvent\",\"init\":\"CtlBindingInit\",\"scope\":\""
-    "\",\"private\":false}},\"servers\":[{\"url\":\"ws://{host}:{port}/api/po"
-    "lctl\",\"description\":\"Unicens2 API.\",\"variables\":{\"host\":{\"defa"
-    "ult\":\"localhost\"},\"port\":{\"default\":\"1234\"}},\"x-afb-events\":["
-    "{\"$ref\":\"#/components/schemas/afb-event\"}]}],\"components\":{\"schem"
-    "as\":{\"afb-reply\":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\"a"
-    "fb-event\":{\"$ref\":\"#/components/schemas/afb-event-v2\"},\"afb-reply-"
-    "v2\":{\"title\":\"Generic response.\",\"type\":\"object\",\"required\":["
-    "\"jtype\",\"request\"],\"properties\":{\"jtype\":{\"type\":\"string\",\""
+    "ontroler\",\"version\":\"1.0\",\"x-binding-c-generator\":{\"api\":\"cont"
+    "rol\",\"version\":2,\"prefix\":\"ctlapi_\",\"postfix\":\"\",\"start\":nu"
+    "ll,\"onevent\":\"DispatchOneEvent\",\"init\":\"CtlBindingInit\",\"scope\""
+    ":\"\",\"private\":false}},\"servers\":[{\"url\":\"ws://{host}:{port}/api"
+    "/polctl\",\"description\":\"Unicens2 API.\",\"variables\":{\"host\":{\"d"
+    "efault\":\"localhost\"},\"port\":{\"default\":\"1234\"}},\"x-afb-events\""
+    ":[{\"$ref\":\"#/components/schemas/afb-event\"}]}],\"components\":{\"sch"
+    "emas\":{\"afb-reply\":{\"$ref\":\"#/components/schemas/afb-reply-v2\"},\""
+    "afb-event\":{\"$ref\":\"#/components/schemas/afb-event-v2\"},\"afb-reply"
+    "-v2\":{\"title\":\"Generic response.\",\"type\":\"object\",\"required\":"
+    "[\"jtype\",\"request\"],\"properties\":{\"jtype\":{\"type\":\"string\",\""
     "const\":\"afb-reply\"},\"request\":{\"type\":\"object\",\"required\":[\""
     "status\"],\"properties\":{\"status\":{\"type\":\"string\"},\"info\":{\"t"
     "ype\":\"string\"},\"token\":{\"type\":\"string\"},\"uuid\":{\"type\":\"s"
@@ -53,7 +53,7 @@ static const char _afb_description_v2_aaaa[] =
     "}}}}}"
 ;
 
-static const struct afb_auth _afb_auths_v2_aaaa[] = {
+static const struct afb_auth _afb_auths_v2_control[] = {
 	{ .type = afb_auth_Permission, .text = "urn:AGL:permission:audio:public:control" },
 	{ .type = afb_auth_Permission, .text = "urn:AGL:permission:audio:public:dispatch" },
 	{ .type = afb_auth_Permission, .text = "urn:AGL:permission:audio:public:request" },
@@ -66,39 +66,39 @@ static const struct afb_auth _afb_auths_v2_aaaa[] = {
  void ctlapi_request(struct afb_req req);
  void ctlapi_debuglua(struct afb_req req);
 
-static const struct afb_verb_v2 _afb_verbs_v2_aaaa[] = {
+static const struct afb_verb_v2 _afb_verbs_v2_control[] = {
     {
         .verb = "ping",
         .callback = ctlapi_ping,
-        .auth = &_afb_auths_v2_aaaa[0],
+        .auth = &_afb_auths_v2_control[0],
         .info = NULL,
         .session = AFB_SESSION_NONE_V2
     },
     {
         .verb = "subscribe",
         .callback = ctlapi_subscribe,
-        .auth = &_afb_auths_v2_aaaa[0],
+        .auth = &_afb_auths_v2_control[0],
         .info = NULL,
         .session = AFB_SESSION_NONE_V2
     },
     {
         .verb = "dispatch",
         .callback = ctlapi_dispatch,
-        .auth = &_afb_auths_v2_aaaa[1],
+        .auth = &_afb_auths_v2_control[1],
         .info = NULL,
         .session = AFB_SESSION_NONE_V2
     },
     {
         .verb = "request",
         .callback = ctlapi_request,
-        .auth = &_afb_auths_v2_aaaa[2],
+        .auth = &_afb_auths_v2_control[2],
         .info = NULL,
         .session = AFB_SESSION_NONE_V2
     },
     {
         .verb = "debuglua",
         .callback = ctlapi_debuglua,
-        .auth = &_afb_auths_v2_aaaa[3],
+        .auth = &_afb_auths_v2_control[3],
         .info = NULL,
         .session = AFB_SESSION_NONE_V2
     },
@@ -106,10 +106,10 @@ static const struct afb_verb_v2 _afb_verbs_v2_aaaa[] = {
 };
 
 const struct afb_binding_v2 afbBindingV2 = {
-    .api = "aaaa",
-    .specification = _afb_description_v2_aaaa,
+    .api = "control",
+    .specification = _afb_description_v2_control,
     .info = NULL,
-    .verbs = _afb_verbs_v2_aaaa,
+    .verbs = _afb_verbs_v2_control,
     .preinit = NULL,
     .init = CtlBindingInit,
     .onevent = DispatchOneEvent,
