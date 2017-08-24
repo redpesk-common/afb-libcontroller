@@ -28,7 +28,7 @@ else(CONTROL_SUPPORT_LUA)
 endif(CONTROL_SUPPORT_LUA)
 
 # Add target to project dependency list
-PROJECT_TARGET_ADD(controller)
+PROJECT_TARGET_ADD(afb-controller)
 
     # Define project Targets
     ADD_LIBRARY(${TARGET_NAME} MODULE ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
@@ -36,7 +36,7 @@ PROJECT_TARGET_ADD(controller)
     SET_OPENAPI_FILENAME("ctl-apidef")
     # Binder exposes a unique public entry point
     SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-	PREFIX "afb-"
+	PREFIX ""
         LABELS "BINDINGV2"
 	LINK_FLAGS  ${BINDINGS_LINK_FLAG}
         OUTPUT_NAME ${TARGET_NAME}
@@ -45,5 +45,10 @@ PROJECT_TARGET_ADD(controller)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
 	    afb-utilities
 	    ${link_libraries}
+    )
+
+    # Define target includes for this target client
+    TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
+        PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
