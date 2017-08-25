@@ -33,9 +33,10 @@ git submodule update
 * Controler relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
 ## Monitoring
- - Default test HTML page expect monitoring HTML page to be accessible from /monitoring for this to work you should
- * place monitoring HTML pages in a well known location eg: $HOME/opt/monitoring
- * start your binder with the alias option e.g. afb-daemon --port=1234 --alias=/monitoring:/home/fulup/opt/afb-monitoring --ldpaths=. --workdir=. --roothttp=../htdocs
+
+* Default test HTML page expect monitoring HTML page to be accessible from /monitoring for this to work you should
+* place monitoring HTML pages in a well known location eg: $HOME/opt/monitoring
+* start your binder with the alias option e.g. afb-daemon --port=1234 --alias=/monitoring:/home/fulup/opt/afb-monitoring --ldpaths=. --workdir=. --roothttp=../htdocs
 
 ## Controller binding configuration
 
@@ -48,76 +49,79 @@ onload-middlename-xxxxx.json
 
 You may overload config search path with environement variables
 
-* AFB_BINDER_NAME: change patern config search path. 'export AFB_BINDER_NAME=sample' will make controller to search for a configfile name 'onload-sample-xxx.json'.
-* CONTROL_CONFIG_PATH: change default reserch path for configuration. You may provide multiple directories separated by ':'.
-* CONTROL_LUA_PATH: same as CONTROL_CONFIG_PATH but for Lua script files.
+* **AFB_BINDER_NAME**: change patern config search path. 'export AFB_BINDER_NAME=sample' will make controller to search for a configfile name 'onload-sample-xxx.json'.
+* **CONTROL_CONFIG_PATH**: change default reserch path for configuration. You may provide multiple directories separated by ':'.
+* **CONTROL_LUA_PATH**: same as CONTROL_CONFIG_PATH but for Lua script files.
 
 Example to load a config name 'onload-myconfig-test.json' do
 
 ```bash
-  AFB_BINDER_NAME='myconfig' afb-daemon --verbose ...'
+AFB_BINDER_NAME='myconfig' afb-daemon --verbose ...'
 ```
 
 > **Note**: you may change search pattern for Lua script by adding 'ctlname=afb-middlename-xxx' in the metadata section of your config 'onload-*.json'
 
-The configuration is loaded dynamically during startup time. The controller scans CONTROL_CONFIG_PATH for a file corresponding to pattern
+The configuration is loaded dynamically during startup time. The controller scans **CONTROL_CONFIG_PATH** for a file corresponding to pattern
 "onload-bindername-xxxxx.json". When controller runs within AAAA binder it searches for "onload-audio-xxxx.json". First file found in the path the loaded
 any other files corresponding to the same pather are ignored and only generate a warning.
 
 Each bloc in the configuration file are defined with
 
-* *label*: must be provided is used either for debugging or as input for the action (eg: signal name, control name, ...)
-* *info*:  optional used for documentation purpose only
+* **label**: must be provided is used either for debugging or as input for the action (eg: signal name, control name, ...)
+* **info**:  optional used for documentation purpose only
 
-> **Note**: by default controller config search path is defined at compilation time, but path might be overloaded with CONTROL_CONFIG_PATH
+> **Note**: by default controller config search path is defined at compilation time, but path might be overloaded with **CONTROL_CONFIG_PATH**
 > environment variable. Setenv 'CONTROL_ONLOAD_PROFILE'=xxxx to overload 'onload-default-profile' initialisation sequence.
 
 ### Config is organised in 4 sections:
 
-* metadata
-* onload defines the set of action to be executed at startup time
-* control defines the set of controls with corresponding actions
-* event define the set of actions to be executed when receiving a given signal
+* **metadata**: describe the configuration
+* **onload**: defines the set of action to be executed at startup time
+* **control**: defines the set of controls with corresponding actions
+* **event**: define the set of actions to be executed when receiving a given signal
 
 ### Metadata
 
 As today matadata is only used for documentation purpose.
 
-* label + version mandatory
-* info optional
+* **label**: mandatory
+* **version**: mandatory
+* **info**: optional
 
 ### OnLoad section
 
 Defines startup time configuration. Onload may provide multiple initialisation profiles, each with a different label.
 
-* label is mandatory. Label is used to select onload profile at initialisation through DispatchOneOnLoad("onload-label") API;
-* info is optional
-* plugin provides optional unique plugin name. Plugin should follow "onload-bindername-xxxxx.ctlso" patern
-   and are search into CONTROL_PLUGIN_PATH. When defined controller will execute user provided function context=CTLP_ONLOAD(label,version,info).
+* **label**: is mandatory. Label is used to select onload profile at initialisation through DispatchOneOnLoad("onload-label") API;
+* **info**: is optional
+* **plugin**: provides optional unique plugin name. Plugin should follow "onload-bindername-xxxxx.ctlso" pattern
+   and are searched into CONTROL_PLUGIN_PATH. When defined controller will execute user provided function context=**CTLP_ONLOAD(label,version,info)**.
    The context returned by this routine is provided back to any C routines call later by the controller. Note that Lua2C function
    are prefix in Lua script with plugin label (eg: MyPlug: in following config sample)
-* lua2c list of Lua commands shipped with provided plugin.
-* require list of binding that should be initialised before the controller starts. Note that some listed requirer binding might be absent,
+  * **label**: mandatory
+  * **sharedlib**: file name of the built shared library of the provided plugin
+  * **lua2c**: list of Lua commands shipped with provided plugin.
+* **require**: list of binding that should be initialised before the controller starts. Note that some listed requirer binding might be absent,
    nevertheless any present binding from this list will be started before controller binding, missing ones generate a warning.
-* action the list of action to execute during loadtime. Any failure in action will prevent controller binding from starting.
+* **action**: the list of action to execute during loadtime. Any failure in action will prevent controller binding from starting.
 
 ### Control section
 
 Defines a list of controls that are accessible through (api="control", verb="request", control="control-label").
 
-* label mandatory
-* info optional
-* permissions Cynara needed privileges to request this control (same as AppFw-V2)
-* action the list of actions
+* **label**: mandatory
+* **info**: optional
+* **permissions**: Cynara needed privileges to request this control (same as AppFw-V2)
+* **action**: the list of actions
 
 ### Event section
 
 Defines a list of actions to be executed on event reception. Even can do anything a controller can (change state,
 send back signal, ...) eg: if a controller subscribes to vehicule speed, then speed-event may ajust master-volume to speed.
 
-* label mandatory
-* info optional
-* action the list of actions
+* **label**: mandatory
+* **info**: optional
+* **action**: the list of actions
 
 ### Actions Categories
 
@@ -130,18 +134,28 @@ Controler support tree categories of actions. Each action return a status status
   * args optionally provides a jsonc object for targeted binding API. Note that 'args' are statically defined
        in JSON configuration file. Controler client may also provided its own arguments from the query list. Targeted
        binding receives both arguments defined in the config file and the argument provided by controller client.
-* C-API, when defined in the onload section, the plugin may provided C native API with CTLP-CAPI(apiname, label, args, query, context).
-   Plugin may also create Lua command with  CTLP-Lua2C(LuaFuncName, label, args, query, context). Where args+query are JSONC object
-   and context the value return from CTLP_ONLOAD function. Any missing value is set to NULL.
-* Lua-API, when compiled with Lua option, the controller support action defined directly in Lua script. During "onload" phase the
-   controller search in CONTROL_Lua_PATH file with pattern "onload-bindername-xxxx.lua". Any file corresponding to this pattern
+* C-API, when defined in the onload section, the plugin may provide C native API with **CTLP-CAPI(apiname, label, args, query, context)**.
+   Plugin may also create Lua command with **CTLP-Lua2C(LuaFuncName, label, args, query, context)**. Where *args*+*query* are JSON-C object
+   and context the value return from **CTLP_ONLOAD** function. Any missing value is set to NULL.
+* Lua-API, when compiled with Lua option, the controller support action defined directly in Lua script. During "*onload*" phase the
+   controller search in *CONTROL_LUA_PATH* file with pattern "onload-bindername-xxxx.lua". Any file corresponding to this pattern
    is automatically loaded. Any function defined in those Lua script can be called through a controller action. Lua functions receive
    three parameters (label, args, query).
 
 > **Note**: Lua added functions systematically prefix. AGL standard AppFw functions are prefixed with AGL: (eg: AGL:notice(), AGL_success(), ...).
 > User Lua functions added though the plugin and CTLP_Lua2C are prefix with plugin label (eg: MyPlug:HelloWorld1).
 
-### Avaliable Application Framework Commands
+Actions is a list with the following fields:
+
+* **label**:  mandatory
+* **info**:  optional
+* **callback**:  to specify a plugin callback
+* **api**:  name an api from another binding
+* **verb**:  name called from the other api specified with api field
+* **args**:  could be is a JSON object with arguments when calling a callback or an api/verb
+* **lua**:  map a LUA function
+
+### Available Application Framework Commands
 
 Each Lua AppFw commands should be prefixed by AFB:
 
@@ -194,28 +208,28 @@ plugin that provide both natice C API and Lua commands is provided as example (s
 plugin is a simple sharelibrary and any code fitting in sharelib might be used as a plugin. Developer should nevertheless
 not forget that except when no-concurrency flag was at binding construction time, any binding should to be thread safe.
 
-A plugin must be declare with CTLP_REGISTER("MyCtlSamplePlugin"). This entry point defines a special structure that is check
-at plugin load time by the controller. Then you have an optional init routine declare with CTLP_ONLOAD(label, version, info).
+A plugin must be declare with **CTLP_REGISTER**("MyCtlSamplePlugin"). This entry point defines a special structure that is check
+at plugin load time by the controller. Then you have an optional init routine declare with **CTLP_ONLOAD**(label, version, info).
 This init routine receives controller onload profile as selected by DispatchOnLoad("profile"). The init routine may create
 a plugin context that is later one presented to every plugin API this for both LUA and native C ones. Then each:
 
-* C API declare with CTLP_CAPI (MyCFunction, label, argsJ, queryJ, context) {your code}. Where:
+* C API declare with **CTLP_CAPI**(MyCFunction, label, argsJ, queryJ, context) {your code}. Where:
   * MyFunction is your function
   * Label is a string containing the name of your function
   * ArgsJ a json_object containing the argument attach the this control in JSON config file.
-  * context your C context as return from  CTLP_ONLOAD
+  * context is your C context as return from **CTLP_ONLOAD**
 
-* Lua API declarewith TLP_LUA2C (MyLuaCFunction, label, argsJ, context) {your code}. Where
+* Lua API declarewith **TLP_LUA2C**(MyLuaCFunction, label, argsJ, context) {your code}. Where
   * MyLuaCFunction is both the name of your C function and Lua command
   * Label your function name as a string
   * Args the arguments passed this time from Lua script and not from Json config file.
   * Query is not provided as LuaC function are called from a script and not directly from controller action list.
 
-Warning: Lua samples use with controller enforce strict mode. As a result every variables should be declare either as
-local or as global. Unfortunately "luac" is not smart enough to handle strict mode at build time and errors only appear
-at run time. Because of this strict mode every global variables (which include functions) should be prefix by '_'.
-Note that LUA require an initialisation value for every variables and declaring something like "local myvar" wont
-allocate "myvar"
+> **Warning**: Lua samples use with controller enforce strict mode. As a result every variables should be declare either as
+> local or as global. Unfortunately "luac" is not smart enough to handle strict mode at build time and errors only appear
+> at run time. Because of this strict mode every global variables (which include functions) should be prefix by '_'.
+> Note that LUA require an initialisation value for every variables and declaring something like "local myvar" wont
+> allocate "myvar"
 
 ### Debugging Facilities
 
@@ -253,7 +267,7 @@ Here after a simple configuration sample.
     "onload": [{
             "label": "onload-default",
             "info": "onload initialisation config",
-                        "plugin": {
+            "plugin": {
                 "label" : "MyPlug",
                 "sharelib": "ctl-audio-plugin-sample.ctlso",
                 "lua2c": ["Lua2cHelloWorld1", "Lua2cHelloWorld2"]
