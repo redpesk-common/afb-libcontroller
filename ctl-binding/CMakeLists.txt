@@ -52,3 +52,8 @@ PROJECT_TARGET_ADD(afb-controller)
         PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     )
 
+    # Define target includes for this target client
+    TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
+        PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
+    )
+
