@@ -30,7 +30,6 @@
           <in>feature_tests.cxx</in>
         </df>
       </df>
-<<<<<<< Updated upstream
       <df name="ctl-binding">
         <in>ctl-binding.c</in>
         <in>ctl-dispatch.c</in>
@@ -40,8 +39,6 @@
       <df name="ctl-plugin">
         <in>ctl-plugin-sample.c</in>
       </df>
-=======
->>>>>>> Stashed changes
     </df>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -110,12 +107,8 @@
             <Elem>CONTROL_PLUGIN_PATH="/home/fulup/Workspace/AGL-AppFW/afb-controller/build:/home/fulup/opt/afb-controller/lib/controller-plugins:/usr/lib/afb/controller-plugins/ctlplug"</Elem>
             <Elem>CONTROL_SUPPORT_LUA</Elem>
             <Elem>CTL_PLUGIN_MAGIC=2468013579</Elem>
-<<<<<<< Updated upstream
             <Elem>NATIVE_LINUX</Elem>
             <Elem>controller_EXPORTS</Elem>
-=======
-            <Elem>control_afb_EXPORTS</Elem>
->>>>>>> Stashed changes
           </preprocessorList>
         </cTool>
       </item>
@@ -233,7 +226,6 @@
       </item>
       <item path="build/CMakeFiles/feature_tests.cxx" ex="false" tool="1" flavor2="4">
       </item>
-<<<<<<< Updated upstream
       <item path="ctl-binding/ctl-binding.c" ex="false" tool="0" flavor2="0">
         <cTool flags="0">
         </cTool>
@@ -254,8 +246,6 @@
         <cTool flags="0">
         </cTool>
       </item>
-=======
->>>>>>> Stashed changes
       <folder path="0/build">
         <cTool>
           <incDir>
@@ -263,7 +253,6 @@
           </incDir>
         </cTool>
       </folder>
-<<<<<<< Updated upstream
       <folder path="0/ctl-binding">
         <cTool>
           <incDir>
@@ -320,8 +309,6 @@
           </preprocessorList>
         </cTool>
       </folder>
-=======
->>>>>>> Stashed changes
     </conf>
   </confs>
 </configurationDescriptor>
