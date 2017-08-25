@@ -666,11 +666,11 @@ PUBLIC int DispatchInit() {
         AFB_WARNING("DISPATCH-INIT:WARNING (setenv CONTROL_CONFIG_PATH) No Config '%s-*.json' in '%s'", controlFile, dirList);
     }
 
-    AFB_NOTICE("DISPATCH-INIT:SUCCES: Audio Control Dispatch Init");
+    AFB_NOTICE("DISPATCH-INIT:SUCCES: Control Dispatch Init");
     return 0;
 
 OnErrorExit:
-    AFB_NOTICE("DISPATCH-INIT:ERROR: Audio Control Dispatch Init");
+    AFB_NOTICE("DISPATCH-INIT:ERROR: Control Dispatch Init");
     return 1;
 }
 
