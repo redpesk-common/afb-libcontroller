@@ -1,1 +1,1 @@
-add_required_module(lua REQUIRED lua>=5.3)
+list(APPEND PKG_REQUIRED_LIST lua>=5.3)
