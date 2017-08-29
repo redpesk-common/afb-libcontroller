@@ -1,6 +1,6 @@
-# Controler AAAA(AGL Advance Audio Controler) and more.
+# Controler AAAA(AGL Advance Audio Controller) and more.
 
-* Object: Generic Controler to handle Policy,Small Business Logic, Glue in between components, ...
+* Object: Generic Controller to handle Policy,Small Business Logic, Glue in between components, ...
 * Status: Release Candidate
 * Author: Fulup Ar Foll fulup@iot.bzh
 * Date  : August-2017
@@ -28,9 +28,9 @@ git submodule update
 
 ## Installation
 
-* Controler is a native part of AGL Advance Audio Framework but may be used independently with any other service or application binder.
+* Controller is a native part of AGL Advance Audio Framework but may be used independently with any other service or application binder.
 * Dependencies: the only dependencies are audio-common for JSON-WRAP and Filescan-utils capabilities.
-* Controler relies on Lua-5.3, when not needed Lua might be removed at compilation time.
+* Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
 ## Monitoring
 
@@ -47,7 +47,7 @@ By default controller searches for a config filename with the same 'middlename' 
 onload-middlename-xxxxx.json
 ```
 
-You may overload config search path with environement variables
+You may overload config search path with environment variables
 
 * **AFB_BINDER_NAME**: change patern config search path. 'export AFB_BINDER_NAME=sample' will make controller to search for a configfile name 'onload-sample-xxx.json'.
 * **CONTROL_CONFIG_PATH**: change default reserch path for configuration. You may provide multiple directories separated by ':'.
@@ -63,7 +63,7 @@ AFB_BINDER_NAME='myconfig' afb-daemon --verbose ...'
 
 The configuration is loaded dynamically during startup time. The controller scans **CONTROL_CONFIG_PATH** for a file corresponding to pattern
 "onload-bindername-xxxxx.json". When controller runs within AAAA binder it searches for "onload-audio-xxxx.json". First file found in the path the loaded
-any other files corresponding to the same pather are ignored and only generate a warning.
+any other files corresponding to the same path are ignored and only generate a warning.
 
 Each bloc in the configuration file are defined with
 
@@ -117,7 +117,7 @@ Defines a list of controls that are accessible through (api="control", verb="req
 ### Event section
 
 Defines a list of actions to be executed on event reception. Even can do anything a controller can (change state,
-send back signal, ...) eg: if a controller subscribes to vehicule speed, then speed-event may ajust master-volume to speed.
+send back signal, ...) eg: if a controller subscribes to vehicle speed, then speed-event may adjust master-volume to speed.
 
 * **label**: mandatory
 * **info**: optional
@@ -125,14 +125,14 @@ send back signal, ...) eg: if a controller subscribes to vehicule speed, then sp
 
 ### Actions Categories
 
-Controler support tree categories of actions. Each action return a status status where 0=success and 1=failure.
+Controller support tree categories of actions. Each action return a status status where 0=success and 1=failure.
 
 * AppFw API, Provides a generic model to request other bindings. Requested binding can be local (eg: ALSA/UCM) or
    external (eg: vehicle signalling).
   * api  provides requested binding API name
   * verb provides verb to requested binding
   * args optionally provides a jsonc object for targeted binding API. Note that 'args' are statically defined
-       in JSON configuration file. Controler client may also provided its own arguments from the query list. Targeted
+       in JSON configuration file. Controller client may also provided its own arguments from the query list. Targeted
        binding receives both arguments defined in the config file and the argument provided by controller client.
 * C-API, when defined in the onload section, the plugin may provide C native API with **CTLP-CAPI(apiname, label, args, query, context)**.
    Plugin may also create Lua command with **CTLP-Lua2C(LuaFuncName, label, args, query, context)**. Where *args*+*query* are JSON-C object
@@ -178,7 +178,7 @@ Each Lua AppFw commands should be prefixed by AFB:
    Response is a Lua table that will be return to client.
 
 * AFB:fail(request, response) same as for success. Note that LUA generate automatically the error code from Lua function name.
-   The response is tranformed to a json string before being return to client.
+   The response is transformed to a json string before being return to client.
 
 * EventHandle=AFB:evtmake("MyEventName") Create an event and return the handle as an opaque handle. Note that due to a limitation
    of json_object this opaque handle cannot be passed as argument in a callback context.
@@ -190,7 +190,7 @@ Each Lua AppFw commands should be prefixed by AFB:
 
 * timerHandle=AFB:timerset (MyTimer, "Timer_Test_CB", context) Initialise a timer from MyTimer Lua table. This table should contend 3 elements:
    MyTimer={[l"abel"]="MyTimerName", ["delay"]=timeoutInMs, ["count"]=nBOfCycles}. Note that is count==0 then timer is cycle
-   infinitively. Context is a standard Lua table. This function return an opaque handle to be use to further control the timer.
+   infinitely. Context is a standard Lua table. This function return an opaque handle to be use to further control the timer.
 
 * AFB:timerclear(timerHandle) Kill an existing timer. Return an error when timer does not exit.
 
@@ -204,7 +204,7 @@ Each Lua AppFw commands should be prefixed by AFB:
 
 User Plugin is optional and may provide either native C-action accessible directly from controller actions as defined in
 JSON config file, or alternatively may provide at set of Lua commands usable inside any script (onload, control,event). A simple
-plugin that provide both natice C API and Lua commands is provided as example (see ctl-plugin-sample.c). Technically a
+plugin that provides both notice C API and Lua commands is provided as example (see ctl-plugin-sample.c). Technically a
 plugin is a simple sharelibrary and any code fitting in sharelib might be used as a plugin. Developer should nevertheless
 not forget that except when no-concurrency flag was at binding construction time, any binding should to be thread safe.
 
@@ -233,7 +233,7 @@ a plugin context that is later one presented to every plugin API this for both L
 
 ### Debugging Facilities
 
-Controler Lua script are check for syntax from CMAKE template with Luac. When needed to go further an developer API allow to
+Controller Lua script are check for syntax from CMAKE template with Luac. When needed to go further an developer API allow to
 execute directly Lua command within controller context from Rest/Ws (api=control, verb=lua_doscript). DoScript API takes two
 other optional arguments func=xxxx where xxxx is the function to execute within Lua script and args a JSON object to provide
 input parameter. When funcname is not given by default the controller try to execute middle filename doscript-xxxx-????.lua.
@@ -349,7 +349,7 @@ Here after a simple configuration sample.
             [
                 {
                     "label": "Vehicle-Speed",
-                    "info": "Action when Vehicule speed change",
+                    "info": "Action when Vehicle speed change",
                     "actions": [
                         {
                             "label": "speed-action-1",
