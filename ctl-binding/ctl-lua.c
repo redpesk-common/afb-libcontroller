@@ -741,8 +741,8 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             // search for filename=script in CONTROL_LUA_PATH
             if (!luaScriptPathJ)  {
                 strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
-                strncat(luaScriptPath,"-", sizeof(luaScriptPath));
-                strncat(luaScriptPath,target, sizeof(luaScriptPath));
+                strncat(luaScriptPath,"-", sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
+                strncat(luaScriptPath,target, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
                 luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
             }
             for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -757,8 +757,8 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
                 if (index > 0) AFB_WARNING("LUA-DOSCRIPT-SCAN:Ignore second script=%s path=%s", filename, fullpath);
                 else {
                     strncpy (luaScriptPath, fullpath, sizeof(luaScriptPath));
-                    strncat (luaScriptPath, "/", sizeof(luaScriptPath));
-                    strncat (luaScriptPath, filename, sizeof(luaScriptPath));
+                    strncat (luaScriptPath, "/", sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
+                    strncat (luaScriptPath, filename, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
                 }
             }
 
@@ -778,7 +778,7 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             // if no func name given try to deduct from filename
             if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
                 strncpy(luaScriptPath,"_", sizeof(luaScriptPath));
-                strncat(luaScriptPath,func, sizeof(luaScriptPath));
+                strncat(luaScriptPath,func, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
                 func=luaScriptPath;
             }
             if (!func) {
@@ -995,8 +995,8 @@ PUBLIC int LuaLibInit () {
     // search for default policy config file
     char fullprefix[CONTROL_MAXPATH_LEN];
     strncpy (fullprefix, CONTROL_CONFIG_PRE "-", sizeof(fullprefix));
-    strncat (fullprefix, GetBinderName(), sizeof(fullprefix));
-    strncat (fullprefix, "-", sizeof(fullprefix));
+    strncat (fullprefix, GetBinderName(), sizeof(fullprefix)-strlen(fullprefix)-1);
+    strncat (fullprefix, "-", sizeof(fullprefix)-strlen(fullprefix)-1);
 
     const char *dirList= getenv("CONTROL_LUA_PATH");
     if (!dirList) dirList=CONTROL_LUA_PATH;
@@ -1039,8 +1039,8 @@ PUBLIC int LuaLibInit () {
 
         char filepath[CONTROL_MAXPATH_LEN];
         strncpy(filepath, fullpath, sizeof(filepath));
-        strncat(filepath, "/", sizeof(filepath));
-        strncat(filepath, filename, sizeof(filepath));
+        strncat(filepath, "/", sizeof(filepath)-strlen(filepath)-1);
+        strncat(filepath, filename, sizeof(filepath)-strlen(filepath)-1);
         err= luaL_loadfile(luaState, filepath);
         if (err) {
             AFB_ERROR ("LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));

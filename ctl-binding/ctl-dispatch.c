@@ -421,8 +421,8 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
 
         char pluginpath[CONTROL_MAXPATH_LEN];
         strncpy(pluginpath, fullpath, sizeof (pluginpath));
-        strncat(pluginpath, "/", sizeof (pluginpath));
-        strncat(pluginpath, filename, sizeof (pluginpath));
+        strncat(pluginpath, "/", sizeof (pluginpath)-strlen(pluginpath)-1);
+        strncat(pluginpath, filename, sizeof (pluginpath)-strlen(pluginpath)-1);
         dPlugin->dlHandle = dlopen(pluginpath, RTLD_NOW);
         if (!dPlugin->dlHandle) {
             AFB_ERROR("DISPATCH-LOAD-CONFIG:PLUGIN Fail to load pluginpath=%s err= %s", pluginpath, dlerror());
@@ -453,7 +453,7 @@ STATIC DispatchHandleT *DispatchLoadOnload(DispatchConfigT *controlConfig, json_
             int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
                 char funcName[CONTROL_MAXPATH_LEN];
                 strncpy(funcName, "lua2c_", sizeof(funcName));
-                strncat(funcName, l2cName, sizeof(funcName));
+                strncat(funcName, l2cName, sizeof(funcName)-strlen(funcName)-1);
 
                 Lua2cFunctionT l2cFunction= (Lua2cFunctionT)dlsym(dPlugin->dlHandle, funcName);
                 if (!l2cFunction) {
@@ -625,7 +625,7 @@ PUBLIC int DispatchInit() {
     if (!dirList) dirList=CONTROL_CONFIG_PATH;
 
     strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
-    strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
+    strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN-strlen(controlFile)-1);
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, "json");
@@ -646,8 +646,8 @@ PUBLIC int DispatchInit() {
             if (strcasestr(filename, controlFile)) {
                 char filepath[CONTROL_MAXPATH_LEN];
                 strncpy(filepath, fullpath, sizeof (filepath));
-                strncat(filepath, "/", sizeof (filepath));
-                strncat(filepath, filename, sizeof (filepath));
+                strncat(filepath, "/", sizeof (filepath)-strlen(filepath)-1);
+                strncat(filepath, filename, sizeof (filepath)-strlen(filepath)-1);
                 configHandle = DispatchLoadConfig(filepath);
                 if (!configHandle) {
                     AFB_ERROR("DISPATCH-INIT:ERROR Fail loading [%s]", filepath);
