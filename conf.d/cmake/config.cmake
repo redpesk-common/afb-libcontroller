@@ -75,6 +75,10 @@ set (PKG_REQUIRED_LIST
 	libafbwsc
 )
 
+# EXTRA required packages
+# -----------------------------
+#set (EXTRA_REQUIRED_LIST a_package)
+
 # Prefix path where will be installed the files
 # Default: /usr/local (need root permission to write in)
 # ------------------------------------------------------
