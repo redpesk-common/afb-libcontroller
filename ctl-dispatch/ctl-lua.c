@@ -28,9 +28,7 @@
 #include <stdio.h>
 #include <string.h>
 
-
-#include "ctl-binding.h"
-#include "wrap-json.h"
+#include "ctl-config.h"
 
 #define LUA_FIST_ARG 2  // when using luaL_newlib calllback receive libtable as 1st arg
 #define LUA_MSG_MAX_LENGTH 512
@@ -613,18 +611,18 @@ STATIC int LuaAfbEventMake(lua_State* luaState) {
 }
 
 // Function call from LUA when lua2c plugin L2C is used
-PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback, void *context) {
+PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback) {
 
     json_object *argsJ= LuaPopArgs(luaState, LUA_FIST_ARG+1);
-    int response = (*callback) (funcname, argsJ, context);
+    int response = (*callback) (funcname, argsJ);
 
     // push response to LUA
     lua_pushinteger(luaState, response);
     return 1;
 }
 
-// Generated some fake event based on watchdog/counter
-PUBLIC int LuaCallFunc (DispatchSourceT source, DispatchActionT *action, json_object *queryJ) {
+// Call a Lua function from a control action
+PUBLIC int LuaCallFunc (CtlActionT *action, json_object *queryJ) {
 
     int err, count;
 
@@ -636,7 +634,7 @@ PUBLIC int LuaCallFunc (DispatchSourceT source, DispatchActionT *action, json_ob
 
     // push source on the stack
     count=1;
-    lua_pushinteger(luaState, source);
+    lua_pushstring(luaState, action->source.label);
 
     // push argsJ on the stack
     if (!argsJ) {
@@ -741,8 +739,8 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             // search for filename=script in CONTROL_LUA_PATH
             if (!luaScriptPathJ)  {
                 strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
-                strncat(luaScriptPath,"-", sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
-                strncat(luaScriptPath,target, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
+                strncat(luaScriptPath,"-", sizeof(luaScriptPath));
+                strncat(luaScriptPath,target, sizeof(luaScriptPath));
                 luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
             }
             for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -757,8 +755,8 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
                 if (index > 0) AFB_WARNING("LUA-DOSCRIPT-SCAN:Ignore second script=%s path=%s", filename, fullpath);
                 else {
                     strncpy (luaScriptPath, fullpath, sizeof(luaScriptPath));
-                    strncat (luaScriptPath, "/", sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
-                    strncat (luaScriptPath, filename, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
+                    strncat (luaScriptPath, "/", sizeof(luaScriptPath));
+                    strncat (luaScriptPath, filename, sizeof(luaScriptPath));
                 }
             }
 
@@ -778,7 +776,7 @@ STATIC void LuaDoAction (LuaDoActionT action, afb_req request) {
             // if no func name given try to deduct from filename
             if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
                 strncpy(luaScriptPath,"_", sizeof(luaScriptPath));
-                strncat(luaScriptPath,func, sizeof(luaScriptPath)-strlen(luaScriptPath)-1);
+                strncat(luaScriptPath,func, sizeof(luaScriptPath));
                 func=luaScriptPath;
             }
             if (!func) {
@@ -988,20 +986,9 @@ static const luaL_Reg afbFunction[] = {
     {NULL, NULL}  /* sentinel */
 };
 
-// Create Binding Event at Init
-PUBLIC int LuaLibInit () {
-    int err, index;
-
-    // search for default policy config file
-    char fullprefix[CONTROL_MAXPATH_LEN];
-    strncpy (fullprefix, CONTROL_CONFIG_PRE "-", sizeof(fullprefix));
-    strncat (fullprefix, GetBinderName(), sizeof(fullprefix)-strlen(fullprefix)-1);
-    strncat (fullprefix, "-", sizeof(fullprefix)-strlen(fullprefix)-1);
-
-    const char *dirList= getenv("CONTROL_LUA_PATH");
-    if (!dirList) dirList=CONTROL_LUA_PATH;
-
-    json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
+// Load Lua Interpreter
+PUBLIC int LuaConfigLoad () {
+    
 
     // open a new LUA interpretor
     luaState = luaL_newstate();
@@ -1016,7 +1003,17 @@ PUBLIC int LuaLibInit () {
     // redirect print to AFB_NOTICE
     luaL_newlib(luaState, afbFunction);
     lua_setglobal(luaState, "AFB");
+    
+    return 0;
+    
+ OnErrorExit:
+    return 1;
+}
 
+// Create Binding Event at Init Exec Time
+PUBLIC int LuaConfigExec () {
+    
+    int err, index;
     // create default lua event to send test pause/resume
     luaDefaultEvt=calloc(1,sizeof(LuaAfbEvent));
     luaDefaultEvt->name=CONTROL_LUA_EVENT;
@@ -1025,6 +1022,22 @@ PUBLIC int LuaLibInit () {
         AFB_ERROR ("POLCTL_INIT: Cannot register lua-events=%s ", CONTROL_LUA_EVENT);
         goto OnErrorExit;;
     }
+
+    // search for default policy config file
+    char fullprefix[CONTROL_MAXPATH_LEN];
+    strncpy (fullprefix, CONTROL_CONFIG_PRE "-", sizeof(fullprefix));
+    strncat (fullprefix, GetBinderName(), sizeof(fullprefix));
+    strncat (fullprefix, "-", sizeof(fullprefix));
+
+    const char *dirList= getenv("CONTROL_LUA_PATH");
+    if (!dirList) dirList=CONTROL_LUA_PATH;
+
+    // special case for no lua even when avaliable 
+    if (!strcasecmp ("/dev/null", dirList)) {
+        return 0;
+    }
+    
+    json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
 
     // load+exec any file found in LUA search path
     for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -1039,8 +1052,8 @@ PUBLIC int LuaLibInit () {
 
         char filepath[CONTROL_MAXPATH_LEN];
         strncpy(filepath, fullpath, sizeof(filepath));
-        strncat(filepath, "/", sizeof(filepath)-strlen(filepath)-1);
-        strncat(filepath, filename, sizeof(filepath)-strlen(filepath)-1);
+        strncat(filepath, "/", sizeof(filepath));
+        strncat(filepath, filename, sizeof(filepath));
         err= luaL_loadfile(luaState, filepath);
         if (err) {
             AFB_ERROR ("LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));

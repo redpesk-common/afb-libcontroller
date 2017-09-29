@@ -19,32 +19,22 @@
 # Include LUA only when requested
 if(CONTROL_SUPPORT_LUA)
    message(STATUS "Notice: LUA Controler Support Selected")
-   set(CTL_LUA_SOURCE ctl-lua.c)
+   set(CTL_LUA_SOURCE ctl-lua.c ctl-timer.c)
    ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA)
-   ADD_COMPILE_OPTIONS(-DCONTROL_LUA_EVENT="luaevt")
-   ADD_COMPILE_OPTIONS(-DCONTROL_LUA_PATH="${CMAKE_SOURCE_DIR}/conf.d/project/lua.d:${CMAKE_INSTALL_PREFIX}/controller-plugins/ctl-lua.d")
 else(CONTROL_SUPPORT_LUA)
    message(STATUS "Warning: LUA Without Support ")
 endif(CONTROL_SUPPORT_LUA)
+
 
 # Add target to project dependency list
 PROJECT_TARGET_ADD(afb-controller)
 
     # Define project Targets
-    ADD_LIBRARY(${TARGET_NAME} SHARED ctl-binding.c ctl-timer.c ctl-dispatch.c ${CTL_LUA_SOURCE})
+    ADD_LIBRARY(${TARGET_NAME} STATIC ctl-action.c ctl-config.c ctl-onload.c ctl-plugin.c ${CTL_LUA_SOURCE})
 
-    SET_OPENAPI_FILENAME("ctl-apidef")
-    # Binder exposes a unique public entry point
-    SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-    PREFIX ""
-        LABELS "BINDINGV2"
-    LINK_FLAGS  ${BINDINGS_LINK_FLAG}
-        OUTPUT_NAME ${TARGET_NAME}
-    )
-
+    # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
         afb-utilities
-        ${link_libraries}
     )
 
     # Define target includes for this target client

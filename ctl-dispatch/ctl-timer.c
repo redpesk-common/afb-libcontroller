@@ -19,9 +19,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <systemd/sd-event.h>
 
-#include "ctl-binding.h"
+#include "ctl-config.h"
+#include "ctl-timer.h"
 
 #define DEFAULT_PAUSE_DELAY 3000
 #define DEFAULT_TEST_COUNT 1
