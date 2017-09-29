@@ -27,7 +27,7 @@ endif(CONTROL_SUPPORT_LUA)
 
 
 # Add target to project dependency list
-PROJECT_TARGET_ADD(afb-controller)
+PROJECT_TARGET_ADD(ctl-utilities)
 
     # Define project Targets
     ADD_LIBRARY(${TARGET_NAME} STATIC ctl-action.c ctl-config.c ctl-onload.c ctl-plugin.c ${CTL_LUA_SOURCE})

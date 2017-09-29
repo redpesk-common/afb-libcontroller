@@ -17,4 +17,4 @@
 ###########################################################################
 
 # This component should be included as a submodule and wont compile as standalone
-add_subdirectory("ctl-dispatch")
+add_subdirectory("ctl-lib")
