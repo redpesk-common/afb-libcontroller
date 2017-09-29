@@ -51,5 +51,5 @@ static CtlSectionT ctlSections[]= {
   int err = CtlConfigExec (ctlConfig);
 ```
 
-For sample usage look at https://github.com/iotbzh/afb-controller
+For sample usage look at https://github.com/fulup-bzh/ctl-utilities
 

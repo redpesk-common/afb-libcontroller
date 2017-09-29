@@ -5,3 +5,4 @@ Makefile
 *.so
 nbproject/private
 *.tar.gz
+nbproject
