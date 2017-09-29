@@ -9,7 +9,7 @@
 
 1) Add ctl-utilities as a submodule to include in your project
 ```
-git submodule add git@github.com:iotbzh/afb-utilities
+git submodule add git@github.com:fulup-bzh/ctl-utilities
 ```
 
 2) Add ctl-utilities as a static library to your binding
