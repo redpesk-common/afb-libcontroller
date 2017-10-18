@@ -22,13 +22,10 @@
 #define _CTL_CONFIG_INCLUDE_
 
 #define _GNU_SOURCE
-#define AFB_BINDING_VERSION 2
-#include <afb/afb-binding.h>
-#include <json-c/json.h>
-#include <filescan-utils.h>
-#include <wrap-json.h>
 
 #include "ctl-plugin.h"
+#include <filescan-utils.h>
+#include <wrap-json.h>
 
 #ifndef CONTROL_MAXPATH_LEN
   #define CONTROL_MAXPATH_LEN 255
@@ -42,37 +39,13 @@
   #define CTL_PLUGIN_EXT ".ctlso"
 #endif
 
-
-
-typedef enum {
-    CTL_TYPE_NONE=0,
-    CTL_TYPE_API,
-    CTL_TYPE_CB,
-    CTL_TYPE_LUA,
-} CtlActionTypeT;
-
-
-typedef struct {
-    CtlActionTypeT type;
-    const char* api;
-    const char* call;
-    json_object *argsJ;
-    int (*actionCB)(CtlSourceT *source, json_object *argsJ, json_object *queryJ);
-    CtlSourceT source;
-} CtlActionT;
-
-typedef struct {
-    const char* label;
-    const char *info;
-    CtlActionT *actions;
-} DispatchHandleT;
-
 typedef struct ConfigSectionS {
   const char *key;
   const char *label;
   const char *info;
-  int (*loadCB)(struct ConfigSectionS *section, json_object *sectionJ);
-  void *handle;  
+  int (*loadCB)(AFB_ApiT apihandle, struct ConfigSectionS *section, json_object *sectionJ);
+  void *handle;
+  CtlActionT *actions;  
 } CtlSectionT;
 
 typedef struct {
@@ -80,6 +53,7 @@ typedef struct {
     const char* label;
     const char *info;
     const char *version;
+    json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
 } CtlConfigT;
@@ -87,27 +61,54 @@ typedef struct {
 
 #ifdef CONTROL_SUPPORT_LUA
   #include "ctl-lua.h"
-#else
- typedef void* Lua2cWrapperT;
 #endif
+ 
+// This should not be global as application may want to define their own sections 
+typedef enum {
+  CTL_SECTION_PLUGIN,  
+  CTL_SECTION_ONLOAD,  
+  CTL_SECTION_CONTROL,  
+  CTL_SECTION_EVENT,
+  CTL_SECTION_HAL,
+          
+  CTL_SECTION_ENDTAG, 
+} SectionEnumT;
 
 
 // ctl-action.c
-PUBLIC CtlActionT *ActionLoad(json_object *actionsJ);
-PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ);
-PUBLIC int ActionLoadOne(CtlActionT *action, json_object *actionJ);
+PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
+PUBLIC void ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
+PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
+PUBLIC int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
+
 
 // ctl-config.c
-PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections);
-PUBLIC int CtlConfigExec(CtlConfigT *ctlConfig);
+PUBLIC int CtlConfigMagicNew();
+PUBLIC json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
+PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
+PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
+PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
+PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+
+
+
+// ctl-event.c
+PUBLIC int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
+#ifdef AFB_BINDING_PREV3
+PUBLIC void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
+#else
+PUBLIC void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
+#endif
+
+// ctl-control.c
+PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-onload.c
-PUBLIC int OnloadConfig(CtlSectionT *section, json_object *actionsJ);
-
+PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-PUBLIC int PluginConfig(CtlSectionT *section, json_object *pluginsJ);
-PUBLIC int PluginGetCB (CtlActionT *action , json_object *callbackJ);
+PUBLIC int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
 
 
 #endif /* _CTL_CONFIG_INCLUDE_ */

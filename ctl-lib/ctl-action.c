@@ -24,11 +24,18 @@
 
 #include "ctl-config.h"
 
+PUBLIC int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
 
-PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ) {
+    for (int idx = 0; actions[idx].label; idx++) {
+        if (!strcasecmp(actionLabel, actions[idx].label)) return idx;
+    }
+    return -1;
+}
+
+
+PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err;
-
-
+    
     switch (action->type) {
         case CTL_TYPE_API:
         {
@@ -51,92 +58,123 @@ PUBLIC int ActionExecOne(CtlActionT* action, json_object *queryJ) {
                 }
             }
             
-            json_object_object_add(queryJ, "label", json_object_new_string(action->source.label));
+            json_object_object_add(queryJ, "label", json_object_new_string(source->label));
 
-            int err = afb_service_call_sync(action->api, action->call, queryJ, &returnJ);
+            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, queryJ, &returnJ);
             if (err) {
-                static const char*format = "ActionExecOne(Api) api=%s verb=%s args=%s";
-                AFB_ERROR(format, action->api, action->call, action->source.label);
-                goto OnErrorExit;
+                AFB_ApiError(action->api, "ActionExecOne(AppFw) label=%s api=%s verb=%s args=%s", source->label, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
             }
             break;
         }
 
 #ifdef CONTROL_SUPPORT_LUA
         case CTL_TYPE_LUA:
-            err = LuaCallFunc(action, queryJ);
+            err = LuaCallFunc(source, action, queryJ);
             if (err) {
-                AFB_ERROR("ActionExecOne(Lua) label=%s func=%s args=%s", action->source.label, action->call, json_object_get_string(action->argsJ));
-                goto OnErrorExit;
+                AFB_ApiError(action->api, "ActionExecOne(Lua) label=%s func=%s args=%s", source->label, action->exec.lua.funcname, json_object_get_string(action->argsJ));
             }
             break;
 #endif
 
         case CTL_TYPE_CB:
-            err = (*action->actionCB) (&action->source, action->argsJ, queryJ);
+            err = (*action->exec.cb.callback) (source, action->argsJ, queryJ);
             if (err) {
-                AFB_ERROR("ActionExecOne(Callback) label%s func=%s args=%s", action->source.label, action->call, json_object_get_string(action->argsJ));
-                goto OnErrorExit;
+                AFB_ApiError(action->api, "ActionExecOne(Callback) label%s plugin=%s function=%s args=%s", source->label, action->exec.cb.plugin->label, action->exec.cb.funcname, json_object_get_string(action->argsJ));
             }
             break;
 
         default:
         {
-            AFB_ERROR("ActionExecOne(unknown) API type label=%s", action->source.label);
+            AFB_ApiError(action->api, "ActionExecOne(unknown) API type label=%s", source->label);
+            break;
+        }
+    }
+}
+
+
+// Direct Request Call in APIV3 
+#ifdef AFB_BINDING_PREV3
+STATIC void ActionDynRequest (AFB_ReqT request) {
+   
+   // retrieve action handle from request and execute the request
+   json_object *queryJ = afb_request_json(request);
+   CtlActionT* action  = (CtlActionT*)afb_request_get_vcbdata(request);
+   
+    CtlSourceT source;
+    source.label = action->label;
+    source.request = request;
+    source.api  = action->api;
+    
+   // provide request and execute the action
+   ActionExecOne(&source, action, queryJ);   
+}
+#endif
+
+// unpack individual action object
+
+PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
+    int err, modeCount = 0;
+    json_object *callbackJ=NULL, *luaJ=NULL, *subcallJ=NULL;
+
+    err = wrap_json_unpack(actionJ, "{ss,s?s,s?o,s?o,s?o,s?o !}"
+            , "label", &action->label, "info", &action->info, "callback", &callbackJ, "lua", &luaJ, "subcall", &subcallJ, "args", &action->argsJ);
+    if (err) {
+        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing label|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
+        goto OnErrorExit;
+    }
+    
+    // save per action api handle
+    action->api = apiHandle;
+    
+    // in API V3 each control is optionally map to a verb            
+#ifdef AFB_BINDING_PREV3
+    if (apiHandle && exportApi) {
+        err = afb_dynapi_add_verb(apiHandle, action->label, action->info, ActionDynRequest, action, NULL, 0);
+        if (err) {
+            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE fail to register API verb=%s", action->label);
+            goto OnErrorExit;
+        }
+        action->api = apiHandle;
+    }
+#endif   
+
+    if (luaJ) {        
+        modeCount++;
+        action->type = CTL_TYPE_LUA;
+        err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "load", &action->exec.lua.load, "func", &action->exec.lua.funcname);
+        if (err) {
+            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
             goto OnErrorExit;
         }
     }
 
-    return 0;
-
-OnErrorExit:
-    return -1;
-}
-
-
-// unpack individual action object
-
-PUBLIC int ActionLoadOne(CtlActionT *action, json_object *actionJ) {
-    char *api = NULL, *verb = NULL, *lua = NULL;
-    int err, modeCount = 0;
-    json_object *callbackJ=NULL;
-
-    err = wrap_json_unpack(actionJ, "{ss,s?s,s?o,s?s,s?s,s?s,s?o !}"
-            , "label", &action->source.label, "info", &action->source.info, "callback", &callbackJ, "lua", &lua, "api", &api, "verb", &verb, "args", &action->argsJ);
-    if (err) {
-        AFB_ERROR("ACTION-LOAD-ONE Missing something label|info|callback|lua|(api+verb)|args in:\n--  %s", json_object_get_string(actionJ));
-        goto OnErrorExit;
-    }
-
-    if (lua) {
-        action->type = CTL_TYPE_LUA;
-        action->call = lua;
+    if (subcallJ) {
         modeCount++;
-    }
-
-    if (api && verb) {
         action->type = CTL_TYPE_API;
-        action->api = api;
-        action->call = verb;
-        modeCount++;
+        
+        err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "api", &action->exec.subcall.api, "verb", &action->exec.subcall.verb);
+        if (err) {
+            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Subcall missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
+            goto OnErrorExit;
+        }        
     }
 
     if (callbackJ) {
+        modeCount++;
         action->type = CTL_TYPE_CB;
         modeCount++;        
-        err = PluginGetCB (action, callbackJ);
-        if (err) goto OnErrorExit;
-        
+        err = PluginGetCB (apiHandle, action, callbackJ);
+        if (err) goto OnErrorExit;       
     }
 
     // make sure at least one mode is selected
     if (modeCount == 0) {
-        AFB_ERROR("ACTION-LOAD-ONE No Action Selected lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
+        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE No Action Selected lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
         goto OnErrorExit;
     }
 
     if (modeCount > 1) {
-        AFB_ERROR("ACTION-LOAD-ONE:ToMany arguments lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
+        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE:ToMany arguments lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
         goto OnErrorExit;
     }
     return 0;
@@ -145,7 +183,7 @@ OnErrorExit:
     return 1;
 };
 
-PUBLIC CtlActionT *ActionLoad(json_object *actionsJ) {
+PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportApi) {
     int err;
     CtlActionT *actions;
 
@@ -156,13 +194,14 @@ PUBLIC CtlActionT *ActionLoad(json_object *actionsJ) {
 
         for (int idx = 0; idx < count; idx++) {
             json_object *actionJ = json_object_array_get_idx(actionsJ, idx);
-            err = ActionLoadOne(&actions[idx], actionJ);
+                    
+            err = ActionLoadOne(apiHandle, &actions[idx], actionJ, exportApi);
             if (err) goto OnErrorExit;
         }
 
     } else {
         actions = calloc(2, sizeof (CtlActionT));
-        err = ActionLoadOne(&actions[0], actionsJ);
+        err = ActionLoadOne(apiHandle, &actions[0], actionsJ, exportApi);
         if (err) goto OnErrorExit;
     }
 

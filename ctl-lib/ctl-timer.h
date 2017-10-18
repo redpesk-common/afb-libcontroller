@@ -26,17 +26,19 @@
 typedef int (*timerCallbackT)(void *context);
 
 typedef struct TimerHandleS {
+    int magic;
     int count;
     int delay;
     const char*label;
     void *context;
     timerCallbackT callback;
     sd_event_source *evtSource;
+    AFB_ApiT api;
+    timerCallbackT freeCB;
 } TimerHandleT;
 
-PUBLIC int TimerEvtInit (void);
-PUBLIC afb_event TimerEvtGet(void);
-PUBLIC void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context);
+PUBLIC int TimerEvtInit (AFB_ApiT apiHandle);
+PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
 PUBLIC void TimerEvtStop(TimerHandleT *timerHandle);
 
 #endif // CTL_TIMER_INCLUDE

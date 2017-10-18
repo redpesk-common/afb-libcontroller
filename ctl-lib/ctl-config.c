@@ -21,6 +21,8 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
+
 
 #include "filescan-utils.h"
 #include "ctl-config.h"
@@ -28,15 +30,35 @@
 
 // Load control config file
 
-PUBLIC char* CtlConfigSearch(const char *dirList) {
-    int index, err;
-    char controlFile [CONTROL_MAXPATH_LEN];
+PUBLIC int CtlConfigMagicNew() {
+  static int InitRandomDone=0;
 
-    strncpy(controlFile, CONTROL_CONFIG_PRE "-", CONTROL_MAXPATH_LEN);
+  if (!InitRandomDone) {
+    struct timeval tv;
+    InitRandomDone=1;
+    gettimeofday(&tv,NULL);
+    srand ((int)tv.tv_usec);
+  }
+  
+  return ((long)rand());
+}
+
+PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
+    char controlFile [CONTROL_MAXPATH_LEN];
+    strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN);
     strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
+
+    return responseJ;
+}
+
+PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
+    int index, err;
+    
+    // search for default dispatch config file
+    json_object* responseJ = CtlConfigScan (dirList, prefix);
 
     // We load 1st file others are just warnings
     for (index = 0; index < json_object_array_length(responseJ); index++) {
@@ -46,18 +68,16 @@ PUBLIC char* CtlConfigSearch(const char *dirList) {
         char*fullpath;
         err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
-            AFB_ERROR("CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
+            AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
             return NULL;
         }
 
         if (index == 0) {
-            if (strcasestr(filename, controlFile)) {
-                char filepath[CONTROL_MAXPATH_LEN];
-                strncpy(filepath, fullpath, sizeof (filepath));
-                strncat(filepath, "/", sizeof (filepath));
-                strncat(filepath, filename, sizeof (filepath));
-                return (strdup(filepath));
-            }
+            char filepath[CONTROL_MAXPATH_LEN];
+            strncpy(filepath, fullpath, sizeof (filepath));
+            strncat(filepath, "/", sizeof (filepath));
+            strncat(filepath, filename, sizeof (filepath));
+            return (strdup(filepath));
         }
     }
 
@@ -65,15 +85,16 @@ PUBLIC char* CtlConfigSearch(const char *dirList) {
     return NULL;
 }
 
-PUBLIC int CtlConfigExec(CtlConfigT *ctlConfig) {
+PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
+    
     // best effort to initialise everything before starting
     if (ctlConfig->requireJ) {
 
         void DispatchRequireOneApi(json_object * bindindJ) {
             const char* requireBinding = json_object_get_string(bindindJ);
-            int err = afb_daemon_require_api(requireBinding, 1);
+            int err = AFB_RequireApi(apiHandle, requireBinding, 1);
             if (err) {
-                AFB_WARNING("CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
+                AFB_ApiWarning(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
             }
         }
 
@@ -87,14 +108,14 @@ PUBLIC int CtlConfigExec(CtlConfigT *ctlConfig) {
     }
 
 #ifdef CONTROL_SUPPORT_LUA
-    int err= LuaConfigExec();
+    int err= LuaConfigExec(apiHandle);
     if (err) goto OnErrorExit;
 #endif
 
     // Loop on every section and process config
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
-        errcount += ctlConfig->sections[idx].loadCB(&ctlConfig->sections[idx], NULL);
+        errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
     return errcount;
 
@@ -102,73 +123,66 @@ OnErrorExit:
     return 1;
 }
 
-PUBLIC CtlConfigT *CtlConfigLoad(const char* filepath, CtlSectionT *sections) {
+PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
     json_object *ctlConfigJ;
-    CtlConfigT *ctlConfig;
+    CtlConfigT *ctlHandle=NULL;
     int err;
-
-#ifdef CONTROL_SUPPORT_LUA
-    err= LuaConfigLoad();
-    if (err) goto OnErrorExit;
-#endif
-
-    // Search for config in filepath  
-    filepath = CtlConfigSearch(filepath);
-
-    if (!filepath) {
-        AFB_ERROR("CTL-LOAD-CONFIG No JSON Config found invalid JSON %s ", filepath);
-        goto OnErrorExit;
-    }
 
     // Load JSON file
     ctlConfigJ = json_object_from_file(filepath);
     if (!ctlConfigJ) {
-        AFB_ERROR("CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
+        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
         goto OnErrorExit;
     }
 
-    AFB_INFO("CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
+    AFB_ApiInfo(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
 
     json_object *metadataJ;
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
-        ctlConfig = calloc(1, sizeof (CtlConfigT));
-        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}", "label", &ctlConfig->label, "version", &ctlConfig->version
-                , "api", &ctlConfig->api, "info", &ctlConfig->info, "require", &ctlConfig->requireJ);
+        ctlHandle = calloc(1, sizeof (CtlConfigT));
+        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}", "label", &ctlHandle->label, "version", &ctlHandle->version
+                , "api", &ctlHandle->api, "info", &ctlHandle->info, "require", &ctlHandle->requireJ);
         if (err) {
-            AFB_ERROR("CTL-LOAD-CONFIG:METADATA Missing something label|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
+            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something label|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
             goto OnErrorExit;
         }
-
-        // Should replace this with API name change
-        if (ctlConfig->api) {
-            err = afb_daemon_rename_api(ctlConfig->api);
-            if (err) AFB_WARNING("Fail to rename api to:%s", ctlConfig->api);
-        }
-        
     }
+    
+    ctlHandle->configJ = ctlConfigJ;   
+    return ctlHandle;
+    
+OnErrorExit:
+    if (ctlHandle) free(ctlHandle);
+    return NULL;
+}
 
-    //load config sections
+PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
+    int err;
+
+#ifdef CONTROL_SUPPORT_LUA
+    err= LuaConfigLoad(apiHandle);
+    if (err) goto OnErrorExit;
+#endif
+
     err = 0;
-    ctlConfig->sections = sections;
+    ctlHandle->sections = sections;
     for (int idx = 0; sections[idx].key != NULL; idx++) {
         json_object * sectionJ;
-        int done = json_object_object_get_ex(ctlConfigJ, sections[idx].key, &sectionJ);
+        int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
         if (!done) {
-            AFB_ERROR("CtlConfigLoad: fail to find '%s' section in config '%s'", sections[idx].key, filepath);
+            AFB_ApiError(apiHandle, "CtlConfigLoad: fail to find '%s' section in config '%s'", sections[idx].key, ctlHandle->label);
             err++;
         } else {
-            err += sections[idx].loadCB(&sections[idx], sectionJ);
+            err += sections[idx].loadCB(apiHandle, &sections[idx], sectionJ);
         }
-
     }
     if (err) goto OnErrorExit;
 
-    return (ctlConfig);
+    return 0;
 
 OnErrorExit:
-    free(ctlConfig);
-    return NULL;
+    return 1;
 }
 
 

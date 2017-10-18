@@ -30,7 +30,6 @@ typedef struct {
     const char *label;
 } AutoTestCtxT;
 
-static afb_event afbevt;
 
 STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     TimerHandleT *timerHandle = (TimerHandleT*) handle;
@@ -41,12 +40,13 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     timerHandle->count --;
     if (timerHandle->count == 0) {
         sd_event_source_unref(source);
+        if (timerHandle->freeCB) timerHandle->freeCB(timerHandle->context);
         free (handle);
         return 0;
     }
     else {
         // otherwise validate timer for a new run
-        sd_event_now(afb_daemon_get_event_loop(), CLOCK_MONOTONIC, &usec);
+        sd_event_now(AFB_GetEventLoop(timerHandle->api), CLOCK_MONOTONIC, &usec);
         sd_event_source_set_enabled(source, SD_EVENT_ONESHOT);
         sd_event_source_set_time(source, usec + timerHandle->delay*1000);
     }
@@ -57,7 +57,7 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     return 0;
 
 OnErrorExit:
-    AFB_WARNING("TimerNext Callback Fail Tag=%s", timerHandle->label);
+    AFB_ApiWarning(timerHandle->api, "TimerNext Callback Fail Tag=%s", timerHandle->label);
     return -1;
 }
 
@@ -68,34 +68,24 @@ PUBLIC void TimerEvtStop(TimerHandleT *timerHandle) {
 }
 
 
-PUBLIC void TimerEvtStart(TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
+PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
     uint64_t usec;
 
     // populate CB handle
     timerHandle->callback=callback;
     timerHandle->context=context;
+    timerHandle->api=apiHandle;
 
     // set a timer with ~250us accuracy
-    sd_event_now(afb_daemon_get_event_loop(), CLOCK_MONOTONIC, &usec);
-    sd_event_add_time(afb_daemon_get_event_loop(), &timerHandle->evtSource, CLOCK_MONOTONIC, usec+timerHandle->delay*1000, 250, TimerNext, timerHandle);
-}
-
-PUBLIC afb_event TimerEvtGet(void) {
-    return afbevt;
+    sd_event_now(AFB_GetEventLoop(apiHandle), CLOCK_MONOTONIC, &usec);
+    sd_event_add_time(AFB_GetEventLoop(apiHandle), &timerHandle->evtSource, CLOCK_MONOTONIC, usec+timerHandle->delay*1000, 250, TimerNext, timerHandle);
 }
 
 
 // Create Binding Event at Init
-PUBLIC int TimerEvtInit () {
+PUBLIC int TimerEvtInit (AFB_ApiT apiHandle) {
 
-    // create binder event to send test pause/resume
-    afbevt = afb_daemon_make_event("control");
-    if (!afb_event_is_valid(afbevt)) {
-        AFB_ERROR ("POLCTL_INIT: Cannot register ctl-events");
-        return 1;
-    }
-
-    AFB_DEBUG ("Audio Control-Events Init Done");
+    AFB_ApiDebug (apiHandle, "Timer-Init Done");
     return 0;
 }
 

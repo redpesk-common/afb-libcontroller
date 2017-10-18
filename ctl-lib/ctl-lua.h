@@ -49,13 +49,6 @@
 
 PUBLIC int LuaLibInit ();
 
-typedef int (*Lua2cFunctionT)(char *funcname, json_object *argsJ);
-typedef int (*Lua2cWrapperT) (lua_State* luaState, char *funcname, Lua2cFunctionT callback);
-
-#define CTLP_LUALOAD Lua2cWrapperT Lua2cWrap;
-#define CTLP_LUA2C(FuncName, label,argsJ, context) static int FuncName(char*label,json_object*argsJ);\
-        int lua2c_ ## FuncName(lua_State* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(FuncName), FuncName, PLUGIN_NAME));};\
-        static int FuncName(char* label, json_object* argsJ, void* context)
 
 typedef enum {
     LUA_DOCALL,
@@ -64,11 +57,11 @@ typedef enum {
 } LuaDoActionT;
 
 
-PUBLIC int LuaConfigLoad();
-PUBLIC int LuaConfigExec();
+PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle);
+PUBLIC int LuaConfigExec(AFB_ApiT apiHandle);
 PUBLIC void LuaL2cNewLib(const char *label, luaL_Reg *l2cFunc, int count);
-PUBLIC int Lua2cWrapper(lua_State* luaState, char *funcname, Lua2cFunctionT callback);
-PUBLIC int LuaCallFunc (CtlActionT *action, json_object *queryJ) ;
+PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
+PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
 PUBLIC void ctlapi_lua_docall (afb_req request);
 PUBLIC void ctlapi_lua_dostring (afb_req request);
 PUBLIC void ctlapi_lua_doscript (afb_req request);

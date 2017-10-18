@@ -23,32 +23,16 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
     
-    // Load time parse actions in control file
+    // Load time parse actions in config file
     if (actionsJ != NULL) {
-        section->actions= ActionConfig(apiHandle, actionsJ, 0);
+        section->actions= ActionConfig(apiHandle, actionsJ, 1);
         
         if (!section->actions) {
-            AFB_ApiError (apiHandle, "OnloadConfig control fail processing onload actions");
+            AFB_ApiError (apiHandle, "ControlLoad config fail processing onload actions");
             goto OnErrorExit;
-        }
-        
-    } else {
-        // Exec time process onload action now
-        if (!section->actions) {
-            AFB_ApiError (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
-            goto OnErrorExit;
-        }
-
-        for (int idx=0; section->actions[idx].label != NULL; idx ++) {
-            CtlSourceT source;
-            source.label = section->actions[idx].label;
-            source.api  = section->actions[idx].api;
-            source.request = AFB_ReqNone;
-            
-            ActionExecOne(&source, &section->actions[idx], NULL);
-        }              
+        }        
     }
 
     return 0;
