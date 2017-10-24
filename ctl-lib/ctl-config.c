@@ -108,13 +108,19 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     }
 
 #ifdef CONTROL_SUPPORT_LUA
-    int err= LuaConfigExec(apiHandle);
+    int err= LuaConfigExec(apiHandle, ctlConfig->api);
     if (err) goto OnErrorExit;
 #endif
 
     // Loop on every section and process config
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
+                
+        if (!ctlConfig->sections[idx].actions) {
+                AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
+                continue;
+        }
+        
         errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
     return errcount;
@@ -141,10 +147,10 @@ PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
         ctlHandle = calloc(1, sizeof (CtlConfigT));
-        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}", "label", &ctlHandle->label, "version", &ctlHandle->version
+        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}", "uid", &ctlHandle->uid, "version", &ctlHandle->version
                 , "api", &ctlHandle->api, "info", &ctlHandle->info, "require", &ctlHandle->requireJ);
         if (err) {
-            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something label|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
+            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
             goto OnErrorExit;
         }
     }
@@ -170,10 +176,7 @@ PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSection
     for (int idx = 0; sections[idx].key != NULL; idx++) {
         json_object * sectionJ;
         int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
-        if (!done) {
-            AFB_ApiError(apiHandle, "CtlConfigLoad: fail to find '%s' section in config '%s'", sections[idx].key, ctlHandle->label);
-            err++;
-        } else {
+        if (done) {
             err += sections[idx].loadCB(apiHandle, &sections[idx], sectionJ);
         }
     }

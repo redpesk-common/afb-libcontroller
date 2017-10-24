@@ -41,7 +41,7 @@
 
 typedef struct ConfigSectionS {
   const char *key;
-  const char *label;
+  const char *uid;
   const char *info;
   int (*loadCB)(AFB_ApiT apihandle, struct ConfigSectionS *section, json_object *sectionJ);
   void *handle;
@@ -50,7 +50,7 @@ typedef struct ConfigSectionS {
 
 typedef struct {
     const char* api;
-    const char* label;
+    const char* uid;
     const char *info;
     const char *version;
     json_object *configJ;

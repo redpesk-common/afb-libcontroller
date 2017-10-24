@@ -29,7 +29,7 @@ typedef struct TimerHandleS {
     int magic;
     int count;
     int delay;
-    const char*label;
+    const char*uid;
     void *context;
     timerCallbackT callback;
     sd_event_source *evtSource;

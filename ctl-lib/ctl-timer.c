@@ -27,7 +27,7 @@
 #define DEFAULT_TEST_COUNT 1
 typedef struct {
     int value;
-    const char *label;
+    const char *uid;
 } AutoTestCtxT;
 
 
@@ -57,7 +57,7 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     return 0;
 
 OnErrorExit:
-    AFB_ApiWarning(timerHandle->api, "TimerNext Callback Fail Tag=%s", timerHandle->label);
+    AFB_ApiWarning(timerHandle->api, "TimerNext Callback Fail Tag=%s", timerHandle->uid);
     return -1;
 }
 

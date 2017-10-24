@@ -26,8 +26,8 @@
 
 PUBLIC int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
 
-    for (int idx = 0; actions[idx].label; idx++) {
-        if (!strcasecmp(actionLabel, actions[idx].label)) return idx;
+    for (int idx = 0; actions[idx].uid; idx++) {
+        if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
     }
     return -1;
 }
@@ -58,11 +58,11 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
                 }
             }
             
-            json_object_object_add(queryJ, "label", json_object_new_string(source->label));
+            json_object_object_add(queryJ, "uid", json_object_new_string(source->uid));
 
             int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, queryJ, &returnJ);
             if (err) {
-                AFB_ApiError(action->api, "ActionExecOne(AppFw) label=%s api=%s verb=%s args=%s", source->label, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+                AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
             }
             break;
         }
@@ -71,7 +71,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
         case CTL_TYPE_LUA:
             err = LuaCallFunc(source, action, queryJ);
             if (err) {
-                AFB_ApiError(action->api, "ActionExecOne(Lua) label=%s func=%s args=%s", source->label, action->exec.lua.funcname, json_object_get_string(action->argsJ));
+                AFB_ApiError(action->api, "ActionExecOne(Lua) uid=%s func=%s args=%s", source->uid, action->exec.lua.funcname, json_object_get_string(action->argsJ));
             }
             break;
 #endif
@@ -79,13 +79,13 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
         case CTL_TYPE_CB:
             err = (*action->exec.cb.callback) (source, action->argsJ, queryJ);
             if (err) {
-                AFB_ApiError(action->api, "ActionExecOne(Callback) label%s plugin=%s function=%s args=%s", source->label, action->exec.cb.plugin->label, action->exec.cb.funcname, json_object_get_string(action->argsJ));
+                AFB_ApiError(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
             }
             break;
 
         default:
         {
-            AFB_ApiError(action->api, "ActionExecOne(unknown) API type label=%s", source->label);
+            AFB_ApiError(action->api, "ActionExecOne(unknown) API type uid=%s", source->uid);
             break;
         }
     }
@@ -101,7 +101,7 @@ STATIC void ActionDynRequest (AFB_ReqT request) {
    CtlActionT* action  = (CtlActionT*)afb_request_get_vcbdata(request);
    
     CtlSourceT source;
-    source.label = action->label;
+    source.uid = action->uid;
     source.request = request;
     source.api  = action->api;
     
@@ -116,10 +116,10 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     int err, modeCount = 0;
     json_object *callbackJ=NULL, *luaJ=NULL, *subcallJ=NULL;
 
-    err = wrap_json_unpack(actionJ, "{ss,s?s,s?o,s?o,s?o,s?o !}"
-            , "label", &action->label, "info", &action->info, "callback", &callbackJ, "lua", &luaJ, "subcall", &subcallJ, "args", &action->argsJ);
+    err = wrap_json_unpack(actionJ, "{ss,s?s,s?s,s?o,s?o,s?o,s?o !}"
+            , "uid", &action->uid, "info", &action->info, "privileges", &action->privileges, "callback", &callbackJ, "lua", &luaJ, "subcall", &subcallJ, "args", &action->argsJ);
     if (err) {
-        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing label|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
+        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing uid|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
         goto OnErrorExit;
     }
     
@@ -129,9 +129,9 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     // in API V3 each control is optionally map to a verb            
 #ifdef AFB_BINDING_PREV3
     if (apiHandle && exportApi) {
-        err = afb_dynapi_add_verb(apiHandle, action->label, action->info, ActionDynRequest, action, NULL, 0);
+        err = afb_dynapi_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0);
         if (err) {
-            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE fail to register API verb=%s", action->label);
+            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE fail to register API verb=%s", action->uid);
             goto OnErrorExit;
         }
         action->api = apiHandle;
@@ -140,11 +140,22 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
 
     if (luaJ) {        
         modeCount++;
+        
         action->type = CTL_TYPE_LUA;
-        err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "load", &action->exec.lua.load, "func", &action->exec.lua.funcname);
-        if (err) {
-            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
-            goto OnErrorExit;
+        switch (json_object_get_type(luaJ)) {
+            case json_type_object:
+                err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "load", &action->exec.lua.load, "func", &action->exec.lua.funcname);
+                if (err) {
+                    AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua action missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
+                    goto OnErrorExit;
+                }
+                break;
+            case json_type_string:
+                action->exec.lua.funcname = json_object_get_string(luaJ);
+                break;
+            default:    
+                AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua action invalid syntax in:\n--  %s", json_object_get_string(luaJ));
+                goto OnErrorExit;
         }
     }
 

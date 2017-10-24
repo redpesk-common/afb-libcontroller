@@ -34,7 +34,6 @@ PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *
             goto OnErrorExit;
         }        
     }
-
     return 0;
 
 OnErrorExit:

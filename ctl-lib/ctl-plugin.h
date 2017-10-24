@@ -70,6 +70,9 @@
 
     #define AFB_GetEventLoop(api) afb_dynapi_get_event_loop(api) 
 
+    #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_request_context(request, replace, createCB, freeCB, handle)
+    #define AFB_ClientCtxClear(request) afb_request_context_clear(request)
+
 
     typedef struct { 
             const char *verb;                       /* name of the verb, NULL only at end of the array */
@@ -122,6 +125,11 @@
 
     #define AFB_GetEventLoop(api) afb_daemon_get_event_loop() 
 
+    #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_req_context_set(request, createCB(handle), freeCB)
+    #define AFB_ClientCtxClear(request) afb_req_context_clear(request)
+
+
+
     #define AFB_ApiVerbs afb_verb_v2
 #endif
 
@@ -146,12 +154,12 @@
 
     
 typedef struct {
-  const char *label;
+  const char *uid;
   const long magic;
 } CtlPluginMagicT;
 
 typedef struct {
-    const char *label; 
+    const char *uid; 
     const char *info; 
     AFB_ApiT api;
     void *dlHandle;
@@ -166,16 +174,25 @@ typedef enum {
     CTL_TYPE_LUA,
 } CtlActionTypeT;
 
+typedef enum {
+    CTL_STATUS_DONE=0,
+    CTL_STATUS_ERR=-1,
+    CTL_STATUS_EVT=1,
+    CTL_STATUS_FREE=2,
+} CtlActionStatusT;
+
 typedef struct {
-    const char *label;
+    const char *uid;
     AFB_ApiT api;
     AFB_ReqT request;
     void *context;
+    CtlActionStatusT status;
 } CtlSourceT;
 
 typedef struct {
-    const char *label;
-    const char *info;   
+    const char *uid;
+    const char *info; 
+    const char *privileges;
     AFB_ApiT api;
     json_object *argsJ;
     CtlActionTypeT type;
@@ -202,7 +219,7 @@ typedef struct {
 typedef void*(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg
-#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.magic=CTL_PLUGIN_MAGIC,.label=pluglabel}; struct afb_binding_data_v2;
+#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.magic=CTL_PLUGIN_MAGIC,.uid=pluglabel}; struct afb_binding_data_v2;
 #define CTLP_ONLOAD(plugin, handle) void* CtlPluginOnload(CtlPluginT *plugin, void* handle)
 #define CTLP_CAPI(funcname, source, argsJ, queryJ) int funcname(CtlSourceT *source, json_object* argsJ, json_object* queryJ)
 

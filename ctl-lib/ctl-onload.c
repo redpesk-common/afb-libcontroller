@@ -41,9 +41,9 @@ PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
             goto OnErrorExit;
         }
 
-        for (int idx=0; section->actions[idx].label != NULL; idx ++) {
+        for (int idx=0; section->actions[idx].uid != NULL; idx ++) {
             CtlSourceT source;
-            source.label = section->actions[idx].label;
+            source.uid = section->actions[idx].uid;
             source.api  = section->actions[idx].api;
             source.request = AFB_ReqNone;
             

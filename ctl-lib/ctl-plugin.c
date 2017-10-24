@@ -42,12 +42,12 @@ PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *ca
         goto OnErrorExit;
     }
     
-    for (idx=0; ctlPlugins[idx].label != NULL; idx++) {
-        if (!strcasecmp (ctlPlugins[idx].label, plugin)) break;
+    for (idx=0; ctlPlugins[idx].uid != NULL; idx++) {
+        if (!strcasecmp (ctlPlugins[idx].uid, plugin)) break;
     }
     
-    if (!ctlPlugins[idx].label) {
-        AFB_ApiError(apiHandle, "PluginGetCB no plugin with label=%s", plugin);
+    if (!ctlPlugins[idx].uid) {
+        AFB_ApiError(apiHandle, "PluginGetCB no plugin with uid=%s", plugin);
         goto OnErrorExit;
     }
     
@@ -87,14 +87,14 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     if (!pluginJ) return 0;
     
     int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s !}",
-            "label", &ctlPlugin->label,  "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename);
+            "uid", &ctlPlugin->uid,  "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename);
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing label|[info]|[basename]|[ldpath] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|[basename]|[ldpath] in:\n-- %s", json_object_get_string(pluginJ));
         goto OnErrorExit;
     }
     
-    // default basename equal label
-    if (!basename) basename=ctlPlugin->label;
+    // default basename equal uid
+    if (!basename) basename=ctlPlugin->uid;
 
     // if search path not in Json config file, then try default
     if (!ldSearchPath) ldSearchPath = CONTROL_PLUGIN_PATH;
@@ -133,7 +133,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE symbol'CtlPluginMagic' missing or !=  CTL_PLUGIN_MAGIC plugin=%s", pluginpath);
         goto OnErrorExit;
     } else {
-        AFB_ApiNotice(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->label);
+        AFB_ApiNotice(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->uid);
     }
     
     // store dlopen handle to enable onload action at exec time

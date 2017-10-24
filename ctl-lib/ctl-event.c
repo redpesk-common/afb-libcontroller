@@ -35,13 +35,13 @@ PUBLIC void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, stru
             
     int index= ActionLabelToIndex(actions, evtLabel);
     if (index < 0) {
-        AFB_ApiWarning(apiHandle, "CtlDispatchEvent: fail to find label=%s in action event section", evtLabel);
+        AFB_ApiWarning(apiHandle, "CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
         return;
     }
 
     // create a dummy source for action    
     CtlSourceT source;
-    source.label = actions[index].label;
+    source.uid = actions[index].uid;
     source.api   = actions[index].api;
     source.request = NULL;
     
@@ -59,12 +59,12 @@ PUBLIC void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
             
     int index= ActionLabelToIndex(actions, evtLabel);
     if (index < 0) {
-        AFB_WARNING ("CtlDispatchEvent: fail to find label=%s in action event section", evtLabel);
+        AFB_WARNING ("CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
         return;
     }
         
     CtlSourceT source;
-    source.label = actions[index].label;
+    source.uid = actions[index].uid;
     source.api   = actions[index].api;
     source.request = AFB_ReqNone;
 
@@ -78,7 +78,7 @@ PUBLIC int EventConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *ac
     
     // Load time parse actions in config file
     if (actionsJ != NULL) {
-        section->actions= ActionConfig(apiHandle, actionsJ, 1);
+        section->actions= ActionConfig(apiHandle, actionsJ, 0);
         
         if (!section->actions) {
             AFB_ApiError (apiHandle, "EventLoad config fail processing onload actions");
