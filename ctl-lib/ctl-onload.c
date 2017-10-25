@@ -24,16 +24,16 @@
 
 // onload section receive one action or an array of actions
 PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
-    
+
     // Load time parse actions in control file
     if (actionsJ != NULL) {
         section->actions= ActionConfig(apiHandle, actionsJ, 0);
-        
+
         if (!section->actions) {
             AFB_ApiError (apiHandle, "OnloadConfig control fail processing onload actions");
             goto OnErrorExit;
         }
-        
+
     } else {
         // Exec time process onload action now
         if (!section->actions) {
@@ -46,9 +46,9 @@ PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
             source.uid = section->actions[idx].uid;
             source.api  = section->actions[idx].api;
             source.request = AFB_ReqNone;
-            
+
             ActionExecOne(&source, &section->actions[idx], NULL);
-        }              
+        }
     }
 
     return 0;

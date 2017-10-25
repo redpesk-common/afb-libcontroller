@@ -77,7 +77,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
                     json_object_object_add(queryJ, "args", action->argsJ);
                 }
             }
-            
+
             json_object_object_add(queryJ, "uid", json_object_new_string(source->uid));
 
             int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, queryJ, &returnJ);
@@ -112,21 +112,21 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
 }
 
 
-// Direct Request Call in APIV3 
+// Direct Request Call in APIV3
 #ifdef AFB_BINDING_PREV3
 STATIC void ActionDynRequest (AFB_ReqT request) {
-   
+
    // retrieve action handle from request and execute the request
    json_object *queryJ = afb_request_json(request);
    CtlActionT* action  = (CtlActionT*)afb_request_get_vcbdata(request);
-   
+
     CtlSourceT source;
     source.uid = action->uid;
     source.request = request;
     source.api  = action->api;
-    
+
    // provide request and execute the action
-   ActionExecOne(&source, action, queryJ);   
+   ActionExecOne(&source, action, queryJ);
 }
 #endif
 
@@ -142,11 +142,11 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
         AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing uid|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
         goto OnErrorExit;
     }
-    
+
     // save per action api handle
     action->api = apiHandle;
-    
-    // in API V3 each control is optionally map to a verb            
+
+    // in API V3 each control is optionally map to a verb
 #ifdef AFB_BINDING_PREV3
     if (apiHandle && exportApi) {
         err = afb_dynapi_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0);
@@ -156,11 +156,11 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
         }
         action->api = apiHandle;
     }
-#endif   
+#endif
 
-    if (luaJ) {        
+    if (luaJ) {
         modeCount++;
-        
+
         action->type = CTL_TYPE_LUA;
         switch (json_object_get_type(luaJ)) {
             case json_type_object:
@@ -173,7 +173,7 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
             case json_type_string:
                 action->exec.lua.funcname = json_object_get_string(luaJ);
                 break;
-            default:    
+            default:
                 AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua action invalid syntax in:\n--  %s", json_object_get_string(luaJ));
                 goto OnErrorExit;
         }
@@ -182,20 +182,20 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     if (subcallJ) {
         modeCount++;
         action->type = CTL_TYPE_API;
-        
+
         err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "api", &action->exec.subcall.api, "verb", &action->exec.subcall.verb);
         if (err) {
             AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Subcall missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
             goto OnErrorExit;
-        }        
+        }
     }
 
     if (callbackJ) {
         modeCount++;
         action->type = CTL_TYPE_CB;
-        modeCount++;        
+        modeCount++;
         err = PluginGetCB (apiHandle, action, callbackJ);
-        if (err) goto OnErrorExit;       
+        if (err) goto OnErrorExit;
     }
 
     // make sure at least one mode is selected
@@ -225,7 +225,7 @@ PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int e
 
         for (int idx = 0; idx < count; idx++) {
             json_object *actionJ = json_object_array_get_idx(actionsJ, idx);
-                    
+
             err = ActionLoadOne(apiHandle, &actions[idx], actionJ, exportApi);
             if (err) goto OnErrorExit;
         }

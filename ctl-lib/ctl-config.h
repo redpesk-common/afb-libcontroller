@@ -45,7 +45,7 @@ typedef struct ConfigSectionS {
   const char *info;
   int (*loadCB)(AFB_ApiT apihandle, struct ConfigSectionS *section, json_object *sectionJ);
   void *handle;
-  CtlActionT *actions;  
+  CtlActionT *actions;
 } CtlSectionT;
 
 typedef struct {
@@ -62,16 +62,16 @@ typedef struct {
 #ifdef CONTROL_SUPPORT_LUA
   #include "ctl-lua.h"
 #endif
- 
-// This should not be global as application may want to define their own sections 
+
+// This should not be global as application may want to define their own sections
 typedef enum {
-  CTL_SECTION_PLUGIN,  
-  CTL_SECTION_ONLOAD,  
-  CTL_SECTION_CONTROL,  
+  CTL_SECTION_PLUGIN,
+  CTL_SECTION_ONLOAD,
+  CTL_SECTION_CONTROL,
   CTL_SECTION_EVENT,
   CTL_SECTION_HAL,
-          
-  CTL_SECTION_ENDTAG, 
+
+  CTL_SECTION_ENDTAG,
 } SectionEnumT;
 
 

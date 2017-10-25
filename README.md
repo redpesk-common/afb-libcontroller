@@ -24,7 +24,7 @@ git submodule add git@github.com:fulup-bzh/ctl-utilities
 3) Declare your controller config section in your binding
 ```
 // CtlSectionT syntax:
-// key: "section name in config file" 
+// key: "section name in config file"
 // loadCB: callback to process section
 // handle: a void* pass to callback when processing section
 static CtlSectionT ctlSections[]= {
@@ -43,10 +43,10 @@ static CtlSectionT ctlSections[]= {
     if (!dirList) dirList=CONTROL_CONFIG_PATH;
 
     ctlConfig = CtlConfigLoad(dirList, ctlSections);
-    if (!ctlConfig) goto OnErrorExit;        
+    if (!ctlConfig) goto OnErrorExit;
 ```
 
-4) Exec controller config during binding init 
+4) Exec controller config during binding init
 ```
   int err = CtlConfigExec (ctlConfig);
 ```

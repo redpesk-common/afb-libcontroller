@@ -33,37 +33,37 @@ PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *ca
 
     if (!ctlPlugins) {
         AFB_ApiError(apiHandle, "PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
-        goto OnErrorExit;        
+        goto OnErrorExit;
     }
-      
-    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ); 
+
+    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ);
     if (err) {
         AFB_ApiError(apiHandle, "PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
         goto OnErrorExit;
     }
-    
+
     for (idx=0; ctlPlugins[idx].uid != NULL; idx++) {
         if (!strcasecmp (ctlPlugins[idx].uid, plugin)) break;
     }
-    
+
     if (!ctlPlugins[idx].uid) {
         AFB_ApiError(apiHandle, "PluginGetCB no plugin with uid=%s", plugin);
         goto OnErrorExit;
     }
-    
-    action->exec.cb.funcname = function; 
-    action->exec.cb.callback = dlsym(ctlPlugins[idx].dlHandle, function); 
+
+    action->exec.cb.funcname = function;
+    action->exec.cb.callback = dlsym(ctlPlugins[idx].dlHandle, function);
     action->exec.cb.plugin= &ctlPlugins[idx];
-    
+
     if (!action->exec.cb.callback) {
-       AFB_ApiError(apiHandle, "PluginGetCB no plugin=%s no function=%s", plugin, function); 
+       AFB_ApiError(apiHandle, "PluginGetCB no plugin=%s no function=%s", plugin, function);
        goto OnErrorExit;
     }
-    return 0; 
+    return 0;
 
 OnErrorExit:
     return 1;
-    
+
 }
 
 // Wrapper to Lua2c plugin command add context and delegate to LuaWrapper
@@ -82,17 +82,17 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     const char*ldSearchPath = NULL, *basename = NULL;
     void *dlHandle;
 
-    
+
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
-    
+
     int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s !}",
             "uid", &ctlPlugin->uid,  "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename);
     if (err) {
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|[basename]|[ldpath] in:\n-- %s", json_object_get_string(pluginJ));
         goto OnErrorExit;
     }
-    
+
     // default basename equal uid
     if (!basename) basename=ctlPlugin->uid;
 
@@ -135,10 +135,10 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     } else {
         AFB_ApiNotice(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->uid);
     }
-    
+
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
-    
+
 #ifndef AFB_BINDING_PREV3
     // Jose hack to make verbosity visible from sharelib with API-V2
     struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
@@ -200,7 +200,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         ctlPlugin->context = (*ctlPluginOnload) (ctlPlugin, handle);
     }
     return 0;
-    
+
 OnErrorExit:
     return 1;
 }
@@ -208,7 +208,7 @@ OnErrorExit:
 
 PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
     int err=0;
-    
+
     if (json_object_get_type(pluginsJ) == json_type_array) {
         int length = json_object_array_length(pluginsJ);
         ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
@@ -218,8 +218,8 @@ PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *p
         }
     } else {
         ctlPlugins = calloc (2, sizeof(CtlPluginT));
-        err += PluginLoadOne(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);       
+        err += PluginLoadOne(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
     }
-    
+
     return err;
 }

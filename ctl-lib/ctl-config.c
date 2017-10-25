@@ -39,7 +39,7 @@ PUBLIC int CtlConfigMagicNew() {
     gettimeofday(&tv,NULL);
     srand ((int)tv.tv_usec);
   }
-  
+
   return ((long)rand());
 }
 
@@ -56,7 +56,7 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 
 PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
     int index, err;
-    
+
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
 
@@ -86,7 +86,7 @@ PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char
 }
 
 PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
-    
+
     // best effort to initialise everything before starting
     if (ctlConfig->requireJ) {
 
@@ -115,12 +115,12 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     // Loop on every section and process config
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
-                
+
         if (!ctlConfig->sections[idx].actions) {
                 AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
                 continue;
         }
-        
+
         errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
     return errcount;
@@ -154,10 +154,10 @@ PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
             goto OnErrorExit;
         }
     }
-    
-    ctlHandle->configJ = ctlConfigJ;   
+
+    ctlHandle->configJ = ctlConfigJ;
     return ctlHandle;
-    
+
 OnErrorExit:
     if (ctlHandle) free(ctlHandle);
     return NULL;

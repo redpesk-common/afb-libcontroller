@@ -52,7 +52,7 @@
     #define AFB_ReqDebug(request, ...)    AFB_REQUEST_DEBUG (request, __VA_ARGS__)
     #define AFB_ReqError(request, ...)    AFB_REQUEST_ERROR (request, __VA_ARGS__)
     #define AFB_ReqInfo(request, ...)     AFB_REQUEST_INFO (request, __VA_ARGS__)
-    
+
     #define AFB_ApiVerbose(api, level, ...) afb_dynapi_verbose(api, level, __VA_ARGS__)
     #define AFB_ApiNotice(api, ...)   AFB_DYNAPI_NOTICE (api, __VA_ARGS__)
     #define AFB_ApiWarning(api, ...)  AFB_DYNAPI_WARNING (api, __VA_ARGS__)
@@ -63,23 +63,23 @@
     #define AFB_ReqIsValid(request)   request
     #define AFB_EvtIsValid(evtHandle) evtHandle
 
-    #define AFB_ServiceCall(api, ...) afb_dynapi_call(api, __VA_ARGS__) 
-    #define AFB_ServiceSync(api, ...) afb_dynapi_call_sync(api, __VA_ARGS__) 
+    #define AFB_ServiceCall(api, ...) afb_dynapi_call(api, __VA_ARGS__)
+    #define AFB_ServiceSync(api, ...) afb_dynapi_call_sync(api, __VA_ARGS__)
 
-    #define AFB_RequireApi(api, ...) afb_dynapi_require_api(api, __VA_ARGS__) 
+    #define AFB_RequireApi(api, ...) afb_dynapi_require_api(api, __VA_ARGS__)
 
-    #define AFB_GetEventLoop(api) afb_dynapi_get_event_loop(api) 
+    #define AFB_GetEventLoop(api) afb_dynapi_get_event_loop(api)
 
     #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_request_context(request, replace, createCB, freeCB, handle)
     #define AFB_ClientCtxClear(request) afb_request_context_clear(request)
 
 
-    typedef struct { 
+    typedef struct {
             const char *verb;                       /* name of the verb, NULL only at end of the array */
             void (*callback)(AFB_ReqT req);   /* callback function implementing the verb */
             const struct afb_auth *auth;		/* required authorisation, can be NULL */
             const char *info;			/* some info about the verb, can be NULL */
-            uint32_t session;    
+            uint32_t session;
     } AFB_ApiVerbs;
 
 #else
@@ -89,8 +89,8 @@
     typedef afb_req AFB_ReqT;
     typedef void* AFB_ApiT;
     #define AFB_ReqNone (struct afb_req){0,0}
-    
-    typedef afb_event AFB_EventT;    
+
+    typedef afb_event AFB_EventT;
     #define AFB_EventPush afb_event_push
     #define AFB_ReqSubscribe  afb_req_subscribe
     #define AFB_EventIsValid(event) afb_event_is_valid(event)
@@ -118,15 +118,12 @@
     #define AFB_ReqIsValid(request)   afb_req_is_valid(request)
     #define AFB_EvtIsValid(evtHandle) afb_event_is_valid(evtHandle)
 
-    #define AFB_ServiceCall(api, ...) afb_service_call(__VA_ARGS__) 
-    #define AFB_ServiceSync(api, ...) afb_service_call_sync(__VA_ARGS__) 
+    #define AFB_ServiceCall(api, ...) afb_service_call(__VA_ARGS__)
+    #define AFB_ServiceSync(api, ...) afb_service_call_sync(__VA_ARGS__)
 
-    #define AFB_RequireApi(api, ...)  afb_daemon_require_api(__VA_ARGS__) 
+    #define AFB_RequireApi(api, ...)  afb_daemon_require_api(__VA_ARGS__)
 
-    #define AFB_GetEventLoop(api) afb_daemon_get_event_loop() 
-
-    #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_req_context_set(request, createCB(handle), freeCB)
-    #define AFB_ClientCtxClear(request) afb_req_context_clear(request)
+    #define AFB_GetEventLoop(api) afb_daemon_get_event_loop()
 
     static inline void* AFB_ClientCtxSet(afb_req request, int replace, void *(*create_context)(void *closure), void (*free_context)(void*), void *closure)
     {
@@ -136,6 +133,7 @@
         return ctx;
     }
 
+    #define AFB_ClientCtxClear(request) afb_req_context_clear(request)
 
     #define AFB_ApiVerbs afb_verb_v2
 #endif
@@ -159,15 +157,15 @@
 #endif
 
 
-    
+
 typedef struct {
   const char *uid;
   const long magic;
 } CtlPluginMagicT;
 
 typedef struct {
-    const char *uid; 
-    const char *info; 
+    const char *uid;
+    const char *info;
     AFB_ApiT api;
     void *dlHandle;
     void *context;
@@ -198,7 +196,7 @@ typedef struct {
 
 typedef struct {
     const char *uid;
-    const char *info; 
+    const char *info;
     const char *privileges;
     AFB_ApiT api;
     json_object *argsJ;
@@ -208,17 +206,17 @@ typedef struct {
             const char* api;
             const char* verb;
         } subcall;
-        
+
         struct {
             const char* load;
             const char* funcname;
         } lua;
-        
+
         struct {
             const char* funcname;
             int (*callback)(CtlSourceT *source, json_object *argsJ, json_object *queryJ);
             CtlPluginT *plugin;
-        } cb;        
+        } cb;
     } exec;
 } CtlActionT;
 
