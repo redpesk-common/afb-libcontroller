@@ -128,6 +128,13 @@
     #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_req_context_set(request, createCB(handle), freeCB)
     #define AFB_ClientCtxClear(request) afb_req_context_clear(request)
 
+    static inline void* AFB_ClientCtxSet(afb_req request, int replace, void *(*create_context)(void *closure), void (*free_context)(void*), void *closure)
+    {
+        void *ctx = create_context(closure);
+        if(ctx)
+            {afb_req_context_set(request, ctx, free_context);}
+        return ctx;
+    }
 
 
     #define AFB_ApiVerbs afb_verb_v2
