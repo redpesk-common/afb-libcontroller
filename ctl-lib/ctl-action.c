@@ -25,17 +25,37 @@
 #include "ctl-config.h"
 
 PUBLIC int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
-
     for (int idx = 0; actions[idx].uid; idx++) {
         if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
     }
     return -1;
 }
 
+PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ)
+{
+    for(int i=0; ctlConfig->sections[i].key != NULL; i++)
+    {
+        if(ctlConfig->sections[i].actions)
+        {
+            for(int j=0; ctlConfig->sections[i].actions[j].uid != NULL; j++)
+            {
+                if(strcmp(ctlConfig->sections[i].actions[j].uid, uid) == 0)
+                {
+                    CtlSourceT source;
+                    source.uid = ctlConfig->sections[i].actions[j].uid;
+                    source.api  = ctlConfig->sections[i].actions[j].api;
+                    source.request = request;
+
+                    ActionExecOne(&source, &ctlConfig->sections[i].actions[j], queryJ);
+                }
+            }
+        }
+    }
+}
 
 PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err;
-    
+
     switch (action->type) {
         case CTL_TYPE_API:
         {
