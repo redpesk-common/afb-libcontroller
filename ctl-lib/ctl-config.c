@@ -187,7 +187,3 @@ PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSection
 OnErrorExit:
     return 1;
 }
-
-
-
-

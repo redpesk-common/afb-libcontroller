@@ -25,7 +25,6 @@ else(CONTROL_SUPPORT_LUA)
    message(STATUS "Warning: LUA Without Support ")
 endif(CONTROL_SUPPORT_LUA)
 
-
 # Add target to project dependency list
 PROJECT_TARGET_ADD(ctl-utilities)
 
@@ -41,4 +40,3 @@ PROJECT_TARGET_ADD(ctl-utilities)
     TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
         PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}
     )
-

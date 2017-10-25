@@ -21,7 +21,9 @@
 #ifndef _CTL_CONFIG_INCLUDE_
 #define _CTL_CONFIG_INCLUDE_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 #include "ctl-plugin.h"
 #include <filescan-utils.h>

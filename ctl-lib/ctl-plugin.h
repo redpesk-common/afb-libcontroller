@@ -21,7 +21,10 @@
 #define _CTL_PLUGIN_INCLUDE_
 
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
+
 #include <json-c/json.h>
 
 // Waiting for a clean AppFW-V3 API

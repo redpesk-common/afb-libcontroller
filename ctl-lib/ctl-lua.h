@@ -21,7 +21,9 @@
 #ifndef _LUA_CTL_INCLUDE_
 #define _LUA_CTL_INCLUDE_
 
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
+#endif
 
 // prefix start debug script
 #ifndef CONTROL_DOSCRIPT_PRE
