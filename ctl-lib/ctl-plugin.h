@@ -121,7 +121,7 @@
     #define AFB_ServiceCall(api, ...) afb_service_call(__VA_ARGS__) 
     #define AFB_ServiceSync(api, ...) afb_service_call_sync(__VA_ARGS__) 
 
-    #define AFB_RequireApi (api, ...) afb_daemon_require_api(__VA_ARGS__) 
+    #define AFB_RequireApi(api, ...)  afb_daemon_require_api(__VA_ARGS__) 
 
     #define AFB_GetEventLoop(api) afb_daemon_get_event_loop() 
 
