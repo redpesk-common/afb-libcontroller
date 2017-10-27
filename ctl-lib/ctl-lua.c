@@ -416,7 +416,11 @@ STATIC int LuaAfbFail(lua_State* luaState) {
         return 1;
 }
 
+#ifdef AFB_BINDING_PREV3
 STATIC void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ, AFB_ApiT apiHandle) {
+#else
+STATIC void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ) {
+#endif
     LuaCbHandleT *handleCb= (LuaCbHandleT*)handle;
     int count=1;
 
@@ -914,8 +918,11 @@ STATIC int LuaTimerClear (lua_State* luaState) {
     // retrieve useful information opaque handle
     TimerHandleT *timerHandle = LuaTimerPop(luaState, LUA_FIST_ARG);
     if (!timerHandle) goto OnErrorExit;
+    
+#ifdef AFB_BINDING_PREV3    
+    // API handle does not exit in API-V2
     LuaCbHandleT *luaCbHandle = (LuaCbHandleT*) timerHandle->context;
-
+#endif
     AFB_ApiNotice (luaCbHandle->source->api,"LuaTimerClear timer=%s", timerHandle->uid);
     TimerEvtStop(timerHandle);
 
