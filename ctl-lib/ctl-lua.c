@@ -350,7 +350,7 @@ STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 
 PrintMessage:
     // TBD: __file__ and __line__ should match LUA source code
-    AFB_ApiVerbose(source->api, level,__FILE__,__LINE__,source->uid, message);
+    AFB_ApiVerbose(source->api, level,__FILE__,__LINE__,source->uid, "%s", message);
     return 0;  // nothing return to lua
 
   OnErrorExit: // on argument to return (the error message)
