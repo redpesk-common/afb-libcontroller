@@ -804,9 +804,9 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
             // search for filename=script in CONTROL_LUA_PATH
             if (!luaScriptPathJ)  {
-                strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, sizeof(luaScriptPath));
-                strncat(luaScriptPath,"-", sizeof(luaScriptPath));
-                strncat(luaScriptPath,target, sizeof(luaScriptPath));
+                strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE));
+                strncat(luaScriptPath,"-", strlen("-"));
+                strncat(luaScriptPath,target, strlen(target));
                 luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
             }
             for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -820,9 +820,9 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
                 if (index > 0) AFB_ApiWarning(source->api, "LUA-DOSCRIPT-SCAN:Ignore second script=%s path=%s", filename, fullpath);
                 else {
-                    strncpy (luaScriptPath, fullpath, sizeof(luaScriptPath));
-                    strncat (luaScriptPath, "/", sizeof(luaScriptPath));
-                    strncat (luaScriptPath, filename, sizeof(luaScriptPath));
+                    strncpy (luaScriptPath, fullpath, strlen(fullpath));
+                    strncat (luaScriptPath, "/", strlen("/"));
+                    strncat (luaScriptPath, filename, strlen(filename));
                 }
             }
 
@@ -841,8 +841,8 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
             // if no func name given try to deduct from filename
             if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
-                strncpy(luaScriptPath,"_", sizeof(luaScriptPath));
-                strncat(luaScriptPath,func, sizeof(luaScriptPath));
+                strncpy(luaScriptPath,"_", strlen("_"));
+                strncat(luaScriptPath,func, strlen(func));
                 func=luaScriptPath;
             }
             if (!func) {
@@ -918,8 +918,8 @@ STATIC int LuaTimerClear (lua_State* luaState) {
     // retrieve useful information opaque handle
     TimerHandleT *timerHandle = LuaTimerPop(luaState, LUA_FIST_ARG);
     if (!timerHandle) goto OnErrorExit;
-    
-#ifdef AFB_BINDING_PREV3    
+
+#ifdef AFB_BINDING_PREV3
     // API handle does not exit in API-V2
     LuaCbHandleT *luaCbHandle = (LuaCbHandleT*) timerHandle->context;
 #endif
@@ -975,7 +975,7 @@ STATIC int LuaTimerSetCB (TimerHandleT *timer) {
     count ++;
     lua_pushlightuserdata(luaState, timer);
     if (!afbSource) goto OnErrorExit;
-    
+
     // Push user Context
     count+= LuaPushArgument(LuaCbHandle->source, LuaCbHandle->context);
 
@@ -1025,7 +1025,7 @@ STATIC int LuaTimerSet(lua_State* luaState) {
 
     int err = wrap_json_unpack(timerJ, "{ss, s?s si, si !}", "uid", &uid, "info", &info, "delay", &delay, "count", &count);
     if (err) {
-        
+
         lua_pushliteral(luaState, "LuaTimerSet: Syntax timerT={uid:xxx delay:ms, count:xx}");
         goto OnErrorExit;
     }
@@ -1269,10 +1269,10 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
 
     // search for default policy config files
     char fullprefix[CONTROL_MAXPATH_LEN];
-    strncpy (fullprefix, prefix, sizeof(fullprefix));
-    strncat (fullprefix, "-", sizeof(fullprefix));
-    strncat (fullprefix, GetBinderName(), sizeof(fullprefix));
-    strncat (fullprefix, "-", sizeof(fullprefix));
+    strncpy (fullprefix, prefix, strlen(prefix));
+    strncat (fullprefix, "-", strlen("-"));
+    strncat (fullprefix, GetBinderName(), strlen(GetBinderName()));
+    strncat (fullprefix, "-", strlen("-"));
 
     const char *dirList= getenv("CONTROL_LUA_PATH");
     if (!dirList) dirList=CONTROL_LUA_PATH;
@@ -1296,9 +1296,9 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
         }
 
         char filepath[CONTROL_MAXPATH_LEN];
-        strncpy(filepath, fullpath, sizeof(filepath));
-        strncat(filepath, "/", sizeof(filepath));
-        strncat(filepath, filename, sizeof(filepath));
+        strncpy(filepath, fullpath, strlen(fullpath));
+        strncat(filepath, "/", strlen("/"));
+        strncat(filepath, filename, strlen(filename));
         err= luaL_loadfile(luaState, filepath);
         if (err) {
             AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));

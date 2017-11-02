@@ -119,9 +119,9 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     }
 
     char pluginpath[CONTROL_MAXPATH_LEN];
-    strncpy(pluginpath, fullpath, sizeof (pluginpath));
-    strncat(pluginpath, "/", sizeof (pluginpath));
-    strncat(pluginpath, filename, sizeof (pluginpath));
+    strncpy(pluginpath, fullpath, strlen (fullpath));
+    strncat(pluginpath, "/", strlen ("/"));
+    strncat(pluginpath, filename, strlen (filename));
     dlHandle = dlopen(pluginpath, RTLD_NOW);
     if (!dlHandle) {
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Fail to load pluginpath=%s err= %s", pluginpath, dlerror());
@@ -156,8 +156,8 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
 
         int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
             char funcName[CONTROL_MAXPATH_LEN];
-            strncpy(funcName, "lua2c_", sizeof (funcName));
-            strncat(funcName, l2cName, sizeof (funcName));
+            strncpy(funcName, "lua2c_", strlen ("lua2c_"));
+            strncat(funcName, l2cName, strlen (l2cName));
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
             if (!l2cFunction) {

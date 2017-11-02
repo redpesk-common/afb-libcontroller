@@ -45,8 +45,8 @@ PUBLIC int CtlConfigMagicNew() {
 
 PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     char controlFile [CONTROL_MAXPATH_LEN];
-    strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN);
-    strncat(controlFile, GetBinderName(), CONTROL_MAXPATH_LEN);
+    strncpy(controlFile, prefix, strlen(prefix));
+    strncat(controlFile, GetBinderName(), strlen(GetBinderName()));
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
@@ -55,7 +55,7 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 }
 
 PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
-    int index, err;
+    int index;
 
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
@@ -66,7 +66,7 @@ PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char
 
         char *filename;
         char*fullpath;
-        err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
+        int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
             AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
             return NULL;
@@ -74,9 +74,9 @@ PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char
 
         if (index == 0) {
             char filepath[CONTROL_MAXPATH_LEN];
-            strncpy(filepath, fullpath, sizeof (filepath));
-            strncat(filepath, "/", sizeof (filepath));
-            strncat(filepath, filename, sizeof (filepath));
+            strncpy(filepath, fullpath, strlen(fullpath));
+            strncat(filepath, "/", strlen("/"));
+            strncat(filepath, filename, strlen(filename));
             return (strdup(filepath));
         }
     }
