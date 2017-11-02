@@ -209,16 +209,31 @@ OnErrorExit:
 PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
     int err=0;
 
-    if (json_object_get_type(pluginsJ) == json_type_array) {
-        int length = json_object_array_length(pluginsJ);
-        ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
-        for (int idx=0; idx < length; idx++) {
-            json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-            err += PluginLoadOne(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
+    if (ctlPlugins)
+    {
+        int idx = 0;
+        while(ctlPlugins[idx].uid != NULL)
+        {
+            // Jose hack to make verbosity visible from sharedlib and
+            // be able to call verb from others api inside the binder
+            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx++].dlHandle, "afbBindingV2data");
+            if (afbHidenData) *afbHidenData = afbBindingV2data;
         }
-    } else {
-        ctlPlugins = calloc (2, sizeof(CtlPluginT));
-        err += PluginLoadOne(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
+        return 0;
+    }
+    else
+    {
+        if (json_object_get_type(pluginsJ) == json_type_array) {
+            int length = json_object_array_length(pluginsJ);
+            ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
+            for (int idx=0; idx < length; idx++) {
+                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
+                err += PluginLoadOne(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
+            }
+        } else {
+            ctlPlugins = calloc (2, sizeof(CtlPluginT));
+            err += PluginLoadOne(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
+        }
     }
 
     return err;
