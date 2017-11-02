@@ -959,18 +959,23 @@ OnErrorExit:
 // Timer Callback
 
 // Set timer
-STATIC int LuaTimerSetCB (void *handle) {
-    LuaCbHandleT *LuaCbHandle = (LuaCbHandleT*) handle;
+STATIC int LuaTimerSetCB (TimerHandleT *timer) {
+    LuaCbHandleT *LuaCbHandle = (LuaCbHandleT*) timer->context;
     int count;
 
     // push timer handle and user context on Lua stack
     lua_getglobal(luaState, LuaCbHandle->callback);
 
-    count=1;
     // Push AFB client context on the stack
+    count=1;
     LuaAfbSourceT *afbSource= LuaSourcePush(luaState, LuaCbHandle->source);
     if (!afbSource) goto OnErrorExit;
 
+    // Push AFB client context on the stack
+    count ++;
+    lua_pushlightuserdata(luaState, timer);
+    if (!afbSource) goto OnErrorExit;
+    
     // Push user Context
     count+= LuaPushArgument(LuaCbHandle->source, LuaCbHandle->context);
 
@@ -1014,13 +1019,14 @@ STATIC int LuaTimerSet(lua_State* luaState) {
     json_object *contextJ = LuaPopOneArg(source, luaState, LUA_FIST_ARG + 3);
 
     if (lua_gettop(luaState) != LUA_FIST_ARG+3 || !timerJ || !callback || !contextJ) {
-        lua_pushliteral(luaState, "LuaTimerSet-Syntax timerset (source, timerT, 'callback', contextT)");
+        lua_pushliteral(luaState, "LuaTimerSet: Syntax timerset (source, timerT, 'callback', contextT)");
         goto OnErrorExit;
     }
 
     int err = wrap_json_unpack(timerJ, "{ss, s?s si, si !}", "uid", &uid, "info", &info, "delay", &delay, "count", &count);
     if (err) {
-        lua_pushliteral(luaState, "LuaTimerSet-Syntax timerT={uid:xxx delay:ms, count:xx}");
+        
+        lua_pushliteral(luaState, "LuaTimerSet: Syntax timerT={uid:xxx delay:ms, count:xx}");
         goto OnErrorExit;
     }
 

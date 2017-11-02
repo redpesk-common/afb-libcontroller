@@ -23,7 +23,6 @@
 
 // ctl-timer.c
 // ----------------------
-typedef int (*timerCallbackT)(void *context);
 
 typedef struct TimerHandleS {
     int magic;
@@ -31,11 +30,13 @@ typedef struct TimerHandleS {
     int delay;
     const char*uid;
     void *context;
-    timerCallbackT callback;
     sd_event_source *evtSource;
     AFB_ApiT api;
-    timerCallbackT freeCB;
+    int (*callback) (struct TimerHandleS *handle);
+    int (*freeCB) (void *context) ;
 } TimerHandleT;
+
+typedef int (*timerCallbackT)(TimerHandleT *context);
 
 PUBLIC int TimerEvtInit (AFB_ApiT apiHandle);
 PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);

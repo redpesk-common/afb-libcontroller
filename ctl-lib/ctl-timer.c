@@ -36,6 +36,9 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     int done;
     uint64_t usec;
 
+    done= timerHandle->callback(timerHandle);
+    if (!done) goto OnErrorExit;
+
     // Rearm timer if needed
     timerHandle->count --;
     if (timerHandle->count == 0) {
@@ -50,9 +53,6 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
         sd_event_source_set_enabled(source, SD_EVENT_ONESHOT);
         sd_event_source_set_time(source, usec + timerHandle->delay*1000);
     }
-
-    done= timerHandle->callback(timerHandle->context);
-    if (!done) goto OnErrorExit;
 
     return 0;
 
