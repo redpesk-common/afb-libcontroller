@@ -20,6 +20,9 @@
 #ifndef _CTL_PLUGIN_INCLUDE_
 #define _CTL_PLUGIN_INCLUDE_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
@@ -239,5 +242,9 @@ typedef int (*Lua2cWrapperT) (void*luaHandle, char *funcname, Lua2cFunctionT cal
 #define CTLP_LUA2C(funcname, source, argsJ, responseJ) static int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ);\
         int lua2c_ ## funcname (void* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(funcname), funcname));};\
         static int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _CTL_PLUGIN_INCLUDE_ */

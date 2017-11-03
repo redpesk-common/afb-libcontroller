@@ -21,6 +21,10 @@
 #ifndef _CTL_CONFIG_INCLUDE_
 #define _CTL_CONFIG_INCLUDE_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -93,8 +97,6 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
 PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
 PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
 
-
-
 // ctl-event.c
 PUBLIC int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
 #ifdef AFB_BINDING_PREV3
@@ -113,5 +115,8 @@ PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
 PUBLIC int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
 PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _CTL_CONFIG_INCLUDE_ */

@@ -19,6 +19,10 @@
 #ifndef CTL_TIMER_INCLUDE
 #define CTL_TIMER_INCLUDE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <systemd/sd-event.h>
 
 // ctl-timer.c
@@ -41,5 +45,9 @@ typedef int (*timerCallbackT)(TimerHandleT *context);
 PUBLIC int TimerEvtInit (AFB_ApiT apiHandle);
 PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
 PUBLIC void TimerEvtStop(TimerHandleT *timerHandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // CTL_TIMER_INCLUDE

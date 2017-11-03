@@ -21,6 +21,10 @@
 #ifndef _LUA_CTL_INCLUDE_
 #define _LUA_CTL_INCLUDE_
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
@@ -68,5 +72,8 @@ PUBLIC void ctlapi_lua_docall (afb_req request);
 PUBLIC void ctlapi_lua_dostring (afb_req request);
 PUBLIC void ctlapi_lua_doscript (afb_req request);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif
