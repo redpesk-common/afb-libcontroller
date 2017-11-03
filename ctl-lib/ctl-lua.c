@@ -804,7 +804,7 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
             // search for filename=script in CONTROL_LUA_PATH
             if (!luaScriptPathJ)  {
-                strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE));
+                strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE)+1);
                 strncat(luaScriptPath,"-", strlen("-"));
                 strncat(luaScriptPath,target, strlen(target));
                 luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
@@ -820,7 +820,7 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
                 if (index > 0) AFB_ApiWarning(source->api, "LUA-DOSCRIPT-SCAN:Ignore second script=%s path=%s", filename, fullpath);
                 else {
-                    strncpy (luaScriptPath, fullpath, strlen(fullpath));
+                    strncpy (luaScriptPath, fullpath, strlen(fullpath)+1);
                     strncat (luaScriptPath, "/", strlen("/"));
                     strncat (luaScriptPath, filename, strlen(filename));
                 }
@@ -841,7 +841,7 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
             // if no func name given try to deduct from filename
             if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
-                strncpy(luaScriptPath,"_", strlen("_"));
+                strncpy(luaScriptPath,"_", strlen("_")+1);
                 strncat(luaScriptPath,func, strlen(func));
                 func=luaScriptPath;
             }
@@ -1269,7 +1269,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
 
     // search for default policy config files
     char fullprefix[CONTROL_MAXPATH_LEN];
-    strncpy (fullprefix, prefix, strlen(prefix));
+    strncpy (fullprefix, prefix, strlen(prefix)+1);
     strncat (fullprefix, "-", strlen("-"));
     strncat (fullprefix, GetBinderName(), strlen(GetBinderName()));
     strncat (fullprefix, "-", strlen("-"));
@@ -1296,7 +1296,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
         }
 
         char filepath[CONTROL_MAXPATH_LEN];
-        strncpy(filepath, fullpath, strlen(fullpath));
+        strncpy(filepath, fullpath, strlen(fullpath)+1);
         strncat(filepath, "/", strlen("/"));
         strncat(filepath, filename, strlen(filename));
         err= luaL_loadfile(luaState, filepath);

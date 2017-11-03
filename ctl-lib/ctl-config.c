@@ -45,7 +45,7 @@ PUBLIC int CtlConfigMagicNew() {
 
 PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     char controlFile [CONTROL_MAXPATH_LEN];
-    strncpy(controlFile, prefix, strlen(prefix));
+    strncpy(controlFile, prefix, strlen(prefix)+1);
     strncat(controlFile, GetBinderName(), strlen(GetBinderName()));
 
     // search for default dispatch config file
@@ -60,24 +60,26 @@ PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
 
-    // We load 1st file others are just warnings
-    for (index = 0; index < json_object_array_length(responseJ); index++) {
-        json_object *entryJ = json_object_array_get_idx(responseJ, index);
+    if(responseJ) {
+        // We load 1st file others are just warnings
+        for (index = 0; index < json_object_array_length(responseJ); index++) {
+            json_object *entryJ = json_object_array_get_idx(responseJ, index);
 
-        char *filename;
-        char*fullpath;
-        int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
-        if (err) {
-            AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
-            return NULL;
-        }
+            char *filename;
+            char*fullpath;
+            int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
+            if (err) {
+                AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
+                return NULL;
+            }
 
-        if (index == 0) {
-            char filepath[CONTROL_MAXPATH_LEN];
-            strncpy(filepath, fullpath, strlen(fullpath));
-            strncat(filepath, "/", strlen("/"));
-            strncat(filepath, filename, strlen(filename));
-            return (strdup(filepath));
+            if (index == 0) {
+                char filepath[CONTROL_MAXPATH_LEN];
+                strncpy(filepath, fullpath, strlen(fullpath)+1);
+                strncat(filepath, "/", strlen("/"));
+                strncat(filepath, filename, strlen(filename));
+                return (strdup(filepath));
+            }
         }
     }
 
