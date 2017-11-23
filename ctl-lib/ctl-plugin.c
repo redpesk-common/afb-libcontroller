@@ -36,7 +36,10 @@ PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *ca
         goto OnErrorExit;
     }
 
-    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}", "plugin", &plugin, "function", &function, "args", &argsJ);
+    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}",
+        "plugin", &plugin,
+        "function", &function,
+        "args", &argsJ);
     if (err) {
         AFB_ApiError(apiHandle, "PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
         goto OnErrorExit;
@@ -86,10 +89,14 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
 
-    int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s !}",
-            "uid", &ctlPlugin->uid,  "info", &ctlPlugin->info, "ldpath", &ldSearchPath, "basename", &basename);
+    int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s,s?o !}",
+            "uid", &ctlPlugin->uid,
+            "info", &ctlPlugin->info,
+            "ldpath", &ldSearchPath,
+            "basename", &basename,
+            "lua2c", &lua2csJ);
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|[basename]|[ldpath] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|basename|ldpath|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
         goto OnErrorExit;
     }
 

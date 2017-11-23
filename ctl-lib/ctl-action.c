@@ -136,8 +136,14 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     int err, modeCount = 0;
     json_object *callbackJ=NULL, *luaJ=NULL, *subcallJ=NULL;
 
-    err = wrap_json_unpack(actionJ, "{ss,s?s,s?s,s?o,s?o,s?o,s?o !}"
-            , "uid", &action->uid, "info", &action->info, "privileges", &action->privileges, "callback", &callbackJ, "lua", &luaJ, "subcall", &subcallJ, "args", &action->argsJ);
+    err = wrap_json_unpack(actionJ, "{ss,s?s,s?s,s?o,s?o,s?o,s?o !}",
+        "uid", &action->uid,
+        "info", &action->info,
+        "privileges", &action->privileges,
+        "callback", &callbackJ,
+        "lua", &luaJ,
+        "subcall", &subcallJ,
+        "args", &action->argsJ);
     if (err) {
         AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing uid|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
         goto OnErrorExit;

@@ -796,7 +796,11 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
             // extract value from query
             const char *target=NULL,*func=NULL;
             json_object *argsJ=NULL;
-            err= wrap_json_unpack (queryJ, "{s:s,s?s,s?s,s?o !}","target", &target,"path",&luaScriptPathJ,"function",&func,"args",&argsJ);
+            err= wrap_json_unpack (queryJ, "{s:s,s?s,s?s,s?o !}",
+                "target", &target,
+                "path",&luaScriptPathJ,
+                "function",&func,
+                "args",&argsJ);
             if (err) {
                 AFB_ApiError(source->api, "LUA-DOSCRIPT-SYNTAX:missing target|[path]|[function]|[args] query=%s", json_object_get_string(queryJ));
                 goto OnErrorExit;
@@ -1023,7 +1027,11 @@ STATIC int LuaTimerSet(lua_State* luaState) {
         goto OnErrorExit;
     }
 
-    int err = wrap_json_unpack(timerJ, "{ss, s?s si, si !}", "uid", &uid, "info", &info, "delay", &delay, "count", &count);
+    int err = wrap_json_unpack(timerJ, "{ss, s?s si, si !}",
+        "uid", &uid,
+        "info", &info,
+        "delay", &delay,
+        "count", &count);
     if (err) {
 
         lua_pushliteral(luaState, "LuaTimerSet: Syntax timerT={uid:xxx delay:ms, count:xx}");
