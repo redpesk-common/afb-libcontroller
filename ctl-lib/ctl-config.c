@@ -54,36 +54,38 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     return responseJ;
 }
 
-PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
-    int index;
+char* ConfigSearch(json_object *responseJ) {
+    // We load 1st file others are just warnings
+    for (int index = 0; index < json_object_array_length(responseJ); index++) {
+        json_object *entryJ = json_object_array_get_idx(responseJ, index);
 
-    // search for default dispatch config file
-    json_object* responseJ = CtlConfigScan (dirList, prefix);
+        char *filename;
+        char*fullpath;
+        int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
+        if (err) {
+            AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
+            return NULL;
+        }
 
-    if(responseJ) {
-        // We load 1st file others are just warnings
-        for (index = 0; index < json_object_array_length(responseJ); index++) {
-            json_object *entryJ = json_object_array_get_idx(responseJ, index);
-
-            char *filename;
-            char*fullpath;
-            int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
-            if (err) {
-                AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
-                return NULL;
-            }
-
-            if (index == 0) {
-                char filepath[CONTROL_MAXPATH_LEN];
-                strncpy(filepath, fullpath, strlen(fullpath)+1);
-                strncat(filepath, "/", strlen("/"));
-                strncat(filepath, filename, strlen(filename));
-                return (strdup(filepath));
-            }
+        if (index == 0) {
+            char filepath[CONTROL_MAXPATH_LEN];
+            strncpy(filepath, fullpath, strlen(fullpath)+1);
+            strncat(filepath, "/", strlen("/"));
+            strncat(filepath, filename, strlen(filename));
+            return (strdup(filepath));
         }
     }
 
     // no config found
+    return NULL;
+}
+
+PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
+    // search for default dispatch config file
+    json_object* responseJ = CtlConfigScan (dirList, prefix);
+
+    if(responseJ) return ConfigSearch(responseJ);
+
     return NULL;
 }
 
@@ -165,6 +167,65 @@ OnErrorExit:
     return NULL;
 }
 
+void wrap_json_array_add(void* val, json_object *obj) {
+    json_object_array_add(obj,(json_object*) val);
+}
+
+void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ);
+void CtlUpdateSectionConfig(CtlConfigT *ctlHandle, json_object *sectionJ, json_object *filesJ) {
+    json_object *sectionArrayJ = json_object_new_array();
+    json_object_array_add(sectionArrayJ, sectionJ);
+    ctlHandle->configJ = sectionArrayJ;
+
+    if (json_object_get_type(filesJ) == json_type_array) {
+        int length = json_object_array_length(filesJ);
+        for (int idx=0; idx < length; idx++) {
+            json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
+            json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
+            const char *oneFile = ConfigSearch(responseJ);
+            if (oneFile) {
+                json_object *newSectionJ = json_object_from_file(oneFile);
+                LoadAdditionalsFiles(ctlHandle, newSectionJ);
+                wrap_json_optarray_for_all(sectionArrayJ, wrap_json_array_add, newSectionJ);
+            }
+        }
+    } else {
+        json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
+            const char *oneFile = ConfigSearch(responseJ);
+        json_object *newSectionJ = json_object_from_file(oneFile);
+        LoadAdditionalsFiles(ctlHandle, newSectionJ);
+        wrap_json_optarray_for_all(sectionArrayJ, wrap_json_array_add, newSectionJ);
+    }
+}
+
+void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ)
+{
+    json_object *filesJ, *filesArrayJ = json_object_new_array();
+    if (json_object_get_type(sectionJ) == json_type_array) {
+        int length = json_object_array_length(sectionJ);
+        for (int idx=0; idx < length; idx++) {
+            json_object *obj = json_object_array_get_idx(sectionJ, idx);
+            int hasFiles = json_object_object_get_ex(obj, "files", &filesJ);
+            if(hasFiles) {
+                // Clean files key as we don't want to make infinite loop
+                json_object_get(filesJ);
+                json_object_object_del(obj, "files");
+                json_object_array_add(filesArrayJ, filesJ);
+            }
+        }
+    } else {
+        int hasFiles = json_object_object_get_ex(sectionJ, "files", &filesJ);
+        if(hasFiles) {
+            // Clean files key as we don't want to make infinite loop
+            json_object_get(filesJ);
+            json_object_object_del(sectionJ, "files");
+            json_object_array_add(filesArrayJ, filesJ);
+        }
+    }
+
+    CtlUpdateSectionConfig(ctlHandle, sectionJ, filesArrayJ);
+}
+
 PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
     int err;
 
@@ -179,6 +240,7 @@ PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSection
         json_object * sectionJ;
         int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
         if (done) {
+            LoadAdditionalsFiles(ctlHandle, sectionJ);
             err += sections[idx].loadCB(apiHandle, &sections[idx], sectionJ);
         }
     }
