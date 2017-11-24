@@ -54,7 +54,7 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     return responseJ;
 }
 
-char* ConfigSearch(json_object *responseJ) {
+char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
     for (int index = 0; index < json_object_array_length(responseJ); index++) {
         json_object *entryJ = json_object_array_get_idx(responseJ, index);
@@ -84,7 +84,7 @@ PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
 
-    if(responseJ) return ConfigSearch(responseJ);
+    if(responseJ) return ConfigSearch(apiHandle, responseJ);
 
     return NULL;
 }
@@ -112,7 +112,7 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     }
 
 #ifdef CONTROL_SUPPORT_LUA
-    int err= LuaConfigExec(apiHandle, ctlConfig->api);
+    int err = LuaConfigExec(apiHandle, ctlConfig->api);
     if (err) goto OnErrorExit;
 #endif
 
@@ -167,38 +167,53 @@ OnErrorExit:
     return NULL;
 }
 
-void wrap_json_array_add(void* val, json_object *obj) {
-    json_object_array_add(obj,(json_object*) val);
+void wrap_json_array_add(void* array, json_object *val) {
+    json_object_array_add(array, (json_object*)val);
 }
 
-void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ);
-void CtlUpdateSectionConfig(CtlConfigT *ctlHandle, json_object *sectionJ, json_object *filesJ) {
-    json_object *sectionArrayJ = json_object_new_array();
-    json_object_array_add(sectionArrayJ, sectionJ);
-    ctlHandle->configJ = sectionArrayJ;
+json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ);
+
+json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ, json_object *filesJ) {
+
+    json_object *sectionArrayJ;
+
+    if(! json_object_is_type(sectionJ, json_type_array)) {
+        sectionArrayJ = json_object_new_array();
+        if(json_object_object_length(sectionJ) > 0)
+            json_object_array_add(sectionArrayJ, sectionJ);
+    }
+    else sectionArrayJ = sectionJ;
+
+    json_object_get(sectionJ);
+    json_object_object_del(ctlHandle->configJ, key);
+    json_object_object_add(ctlHandle->configJ, key, sectionArrayJ);
 
     if (json_object_get_type(filesJ) == json_type_array) {
         int length = json_object_array_length(filesJ);
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
             json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
-            const char *oneFile = ConfigSearch(responseJ);
+            const char *oneFile = ConfigSearch(apiHandle, responseJ);
             if (oneFile) {
-                json_object *newSectionJ = json_object_from_file(oneFile);
-                LoadAdditionalsFiles(ctlHandle, newSectionJ);
-                wrap_json_optarray_for_all(sectionArrayJ, wrap_json_array_add, newSectionJ);
+                json_object *newSectionJ, *newFileJ = json_object_from_file(oneFile);
+                json_object_object_get_ex(newFileJ, key, &newSectionJ);
+                LoadAdditionalsFiles(apiHandle, ctlHandle, key, newSectionJ);
+                json_object_object_get_ex(ctlHandle->configJ, key, &sectionArrayJ);
+                wrap_json_optarray_for_all(newSectionJ, wrap_json_array_add, sectionArrayJ);
             }
         }
     } else {
         json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
-            const char *oneFile = ConfigSearch(responseJ);
+            const char *oneFile = ConfigSearch(apiHandle, responseJ);
         json_object *newSectionJ = json_object_from_file(oneFile);
-        LoadAdditionalsFiles(ctlHandle, newSectionJ);
-        wrap_json_optarray_for_all(sectionArrayJ, wrap_json_array_add, newSectionJ);
+        LoadAdditionalsFiles(apiHandle, ctlHandle, key, newSectionJ);
+        wrap_json_optarray_for_all(newSectionJ, wrap_json_array_add, sectionArrayJ);
     }
+
+    return sectionArrayJ;
 }
 
-void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ)
+json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ)
 {
     json_object *filesJ, *filesArrayJ = json_object_new_array();
     if (json_object_get_type(sectionJ) == json_type_array) {
@@ -210,7 +225,10 @@ void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ)
                 // Clean files key as we don't want to make infinite loop
                 json_object_get(filesJ);
                 json_object_object_del(obj, "files");
-                json_object_array_add(filesArrayJ, filesJ);
+                if(json_object_is_type(filesJ, json_type_array))
+                    wrap_json_array_for_all(filesJ, wrap_json_array_add, filesArrayJ);
+                else
+                    json_object_array_add(filesArrayJ, filesJ);
             }
         }
     } else {
@@ -219,11 +237,16 @@ void LoadAdditionalsFiles(CtlConfigT *ctlHandle, json_object *sectionJ)
             // Clean files key as we don't want to make infinite loop
             json_object_get(filesJ);
             json_object_object_del(sectionJ, "files");
-            json_object_array_add(filesArrayJ, filesJ);
+            if(json_object_is_type(filesJ, json_type_array))
+                filesArrayJ = filesJ;
+            else
+                json_object_array_add(filesArrayJ, filesJ);
         }
     }
 
-    CtlUpdateSectionConfig(ctlHandle, sectionJ, filesArrayJ);
+    if(json_object_array_length(filesArrayJ) > 0)
+        return CtlUpdateSectionConfig(apiHandle, ctlHandle, key, sectionJ, filesArrayJ);
+    return sectionJ;
 }
 
 PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
@@ -240,8 +263,8 @@ PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSection
         json_object * sectionJ;
         int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
         if (done) {
-            LoadAdditionalsFiles(ctlHandle, sectionJ);
-            err += sections[idx].loadCB(apiHandle, &sections[idx], sectionJ);
+            json_object* updatedSectionJ = LoadAdditionalsFiles(apiHandle, ctlHandle, sections[idx].key, sectionJ);
+            err += sections[idx].loadCB(apiHandle, &sections[idx], updatedSectionJ);
         }
     }
     if (err) goto OnErrorExit;

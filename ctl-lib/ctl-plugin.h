@@ -236,7 +236,7 @@ typedef void*(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 // LUA2c Wrapper macro. Allows to call C code from Lua script
 typedef int (*Lua2cFunctionT)(CtlSourceT *source, json_object *argsJ, json_object **responseJ);
-typedef int (*Lua2cWrapperT) (void*luaHandle, char *funcname, Lua2cFunctionT callback);
+typedef int (*Lua2cWrapperT) (void*luaHandle, const char *funcname, Lua2cFunctionT callback);
 
 #define CTLP_LUA_REGISTER(pluglabel) Lua2cWrapperT Lua2cWrap; CTLP_CAPI_REGISTER(pluglabel);
 #define CTLP_LUA2C(funcname, source, argsJ, responseJ) static int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ);\
