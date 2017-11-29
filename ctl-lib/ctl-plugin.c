@@ -36,7 +36,7 @@ PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *ca
         goto OnErrorExit;
     }
 
-    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?s,s?o!}",
+    int err = wrap_json_unpack(callbackJ, "{ss,ss,s?o!}",
         "plugin", &plugin,
         "function", &function,
         "args", &argsJ);
