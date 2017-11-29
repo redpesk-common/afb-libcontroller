@@ -199,7 +199,6 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     if (callbackJ) {
         modeCount++;
         action->type = CTL_TYPE_CB;
-        modeCount++;
         err = PluginGetCB (apiHandle, action, callbackJ);
         if (err) goto OnErrorExit;
     }
