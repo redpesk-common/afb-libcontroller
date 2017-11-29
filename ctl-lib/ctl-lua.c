@@ -1293,40 +1293,43 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
     json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
 
     // load+exec any file found in LUA search path
-    for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
-        json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
+    if(luaScriptPathJ) {
+        for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
+            json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
 
-        char *filename; char*fullpath;
-        err= wrap_json_unpack (entryJ, "{s:s, s:s !}", "fullpath",  &fullpath,"filename", &filename);
-        if (err) {
-            AFB_ApiError(apiHandle, "LUA-INIT HOOPs invalid config file path = %s", json_object_get_string(entryJ));
-            goto OnErrorExit;
+            char *filename; char*fullpath;
+            err= wrap_json_unpack (entryJ, "{s:s, s:s !}", "fullpath",  &fullpath,"filename", &filename);
+            if (err) {
+                AFB_ApiError(apiHandle, "LUA-INIT HOOPs invalid config file path = %s", json_object_get_string(entryJ));
+                goto OnErrorExit;
+            }
+
+            char filepath[CONTROL_MAXPATH_LEN];
+            strncpy(filepath, fullpath, strlen(fullpath)+1);
+            strncat(filepath, "/", strlen("/"));
+            strncat(filepath, filename, strlen(filename));
+            err= luaL_loadfile(luaState, filepath);
+            if (err) {
+                AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
+                goto OnErrorExit;
+            }
+
+            // exec/compil script
+            err = lua_pcall(luaState, 0, 0, 0);
+            if (err) {
+                AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA exec scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
+                goto OnErrorExit;
+            } else {
+                AFB_ApiNotice(apiHandle, "LUA-LOAD '%s'", filepath);
+            }
         }
 
-        char filepath[CONTROL_MAXPATH_LEN];
-        strncpy(filepath, fullpath, strlen(fullpath)+1);
-        strncat(filepath, "/", strlen("/"));
-        strncat(filepath, filename, strlen(filename));
-        err= luaL_loadfile(luaState, filepath);
-        if (err) {
-            AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
-            goto OnErrorExit;
-        }
-
-        // exec/compil script
-        err = lua_pcall(luaState, 0, 0, 0);
-        if (err) {
-            AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA exec scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
-            goto OnErrorExit;
-        } else {
-            AFB_ApiNotice(apiHandle, "LUA-LOAD '%s'", filepath);
+        // no policy config found remove control API from binder
+        if (index == 0)  {
+            AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
         }
     }
-
-    // no policy config found remove control API from binder
-    if (index == 0)  {
-        AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
-    }
+    else AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
 
     AFB_ApiDebug (apiHandle, "Audio control-LUA Init Done");
     return 0;
