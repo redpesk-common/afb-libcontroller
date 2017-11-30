@@ -131,7 +131,6 @@ STATIC void ActionDynRequest (AFB_ReqT request) {
 #endif
 
 // unpack individual action object
-
 PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
     int err, modeCount = 0;
     json_object *callbackJ=NULL, *luaJ=NULL, *subcallJ=NULL;
@@ -189,9 +188,9 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
         modeCount++;
         action->type = CTL_TYPE_API;
 
-        err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "api", &action->exec.subcall.api, "verb", &action->exec.subcall.verb);
+        err = wrap_json_unpack(subcallJ, "{s?s,s:s !}", "api", &action->exec.subcall.api, "verb", &action->exec.subcall.verb);
         if (err) {
-            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Subcall missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
+            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Subcall missing [load]|func in:\n--  %s", json_object_get_string(subcallJ));
             goto OnErrorExit;
         }
     }
