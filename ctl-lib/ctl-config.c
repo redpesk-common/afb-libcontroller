@@ -56,6 +56,7 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 
 char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
+    char filepath[CONTROL_MAXPATH_LEN];
     for (int index = 0; index < json_object_array_length(responseJ); index++) {
         json_object *entryJ = json_object_array_get_idx(responseJ, index);
 
@@ -64,20 +65,17 @@ char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
         int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
             AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
-            return NULL;
         }
 
         if (index == 0) {
-            char filepath[CONTROL_MAXPATH_LEN];
             strncpy(filepath, fullpath, strlen(fullpath)+1);
             strncat(filepath, "/", strlen("/"));
             strncat(filepath, filename, strlen(filename));
-            return (strdup(filepath));
         }
     }
 
-    // no config found
-    return NULL;
+    json_object_put(responseJ);
+    return strndup(filepath, sizeof(filepath));
 }
 
 PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
@@ -163,7 +161,7 @@ PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
     return ctlHandle;
 
 OnErrorExit:
-    if (ctlHandle) free(ctlHandle);
+    free(ctlHandle);
     return NULL;
 }
 
@@ -197,6 +195,8 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
             if (oneFile) {
                 json_object *newSectionJ, *newFileJ = json_object_from_file(oneFile);
                 json_object_object_get_ex(newFileJ, key, &newSectionJ);
+                json_object_get(newSectionJ);
+                json_object_put(newFileJ);
                 LoadAdditionalsFiles(apiHandle, ctlHandle, key, newSectionJ);
                 json_object_object_get_ex(ctlHandle->configJ, key, &sectionArrayJ);
                 wrap_json_optarray_for_all(newSectionJ, wrap_json_array_add, sectionArrayJ);
@@ -245,7 +245,8 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
     }
 
     if(json_object_array_length(filesArrayJ) > 0)
-        return CtlUpdateSectionConfig(apiHandle, ctlHandle, key, sectionJ, filesArrayJ);
+        sectionJ = CtlUpdateSectionConfig(apiHandle, ctlHandle, key, sectionJ, filesArrayJ);
+    json_object_put(filesArrayJ);
     return sectionJ;
 }
 

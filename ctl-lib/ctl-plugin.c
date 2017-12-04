@@ -206,9 +206,12 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         ctlPlugin->api = apiHandle;
         ctlPlugin->context = (*ctlPluginOnload) (ctlPlugin, handle);
     }
+
+    json_object_put(pluginPathJ); // No more needs for that json_object.
     return 0;
 
 OnErrorExit:
+    json_object_put(pluginPathJ); // No more needs for that json_object.
     return 1;
 }
 

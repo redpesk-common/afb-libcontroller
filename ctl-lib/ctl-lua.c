@@ -1267,6 +1267,7 @@ PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
     return 0;
 
  OnErrorExit:
+    free(luaState);
     return 1;
 }
 
@@ -1324,6 +1325,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
             }
         }
 
+        json_object_put(luaScriptPathJ);
         // no policy config found remove control API from binder
         if (index == 0)  {
             AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);

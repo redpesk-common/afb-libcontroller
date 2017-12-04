@@ -54,7 +54,7 @@ PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *u
 }
 
 PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
-    int err;
+    int err = 0;
 
     switch (action->type) {
         case CTL_TYPE_API:
