@@ -24,6 +24,8 @@
 
 #include "ctl-config.h"
 
+extern CtlLua2cFuncT *ctlLua2cFunc;
+
 PUBLIC int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
     for (int idx = 0; actions[idx].uid; idx++) {
         if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
@@ -55,6 +57,10 @@ PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *u
 
 PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err = 0;
+
+    if(action->type == CTL_TYPE_LUA && ctlLua2cFunc->l2cCount) {
+        LuaL2cNewLib (ctlLua2cFunc->l2cFunc, ctlLua2cFunc->l2cCount);
+    }
 
     switch (action->type) {
         case CTL_TYPE_API:

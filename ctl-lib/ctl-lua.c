@@ -31,7 +31,7 @@
 
 #include "ctl-config.h"
 
-#define LUA_FIST_ARG 2  // when using luaL_newlib calllback receive libtable as 1st arg
+#define LUA_FIST_ARG 2 // when using luaL_newlib calllback receive libtable as 1st arg
 #define LUA_MSG_MAX_LENGTH 512
 #define JSON_ERROR (json_object*)-1
 
@@ -666,19 +666,22 @@ OnErrorExit:
 }
 
 // Function call from LUA when lua2c plugin L2C is used
+// Rfor: Not using LUA_FIRST_ARG here because we didn't use
+// luaL_newlib function, so first args is on stack at first
+// position.
 PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback) {
     lua_State* luaState = (lua_State*)luaHandle;
     json_object *responseJ=NULL;
 
-    CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
+    CtlSourceT *source= LuaSourcePop(luaState, 1);
 
-    json_object *argsJ= LuaPopArgs(source, luaState, LUA_FIST_ARG+1);
+    json_object *argsJ= LuaPopArgs(source, luaState, 2);
     int err= (*callback) (source, argsJ, &responseJ);
 
     // push error code and eventual response to LUA
     int count=1;
     lua_pushinteger (luaState, err);
-    if (!responseJ) count += LuaPushArgument (source, responseJ);
+    count += LuaPushArgument (source, responseJ);
 
     return count;
 }
@@ -1202,12 +1205,12 @@ OnErrorExit:
 
 
 // Register a new L2c list of LUA user plugin commands
-PUBLIC void LuaL2cNewLib(const char *uid, luaL_Reg *l2cFunc, int count) {
+PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count) {
     // luaL_newlib(luaState, l2cFunc); macro does not work with pointer :(
     luaL_checkversion(luaState);
     lua_createtable(luaState, 0, count+1);
     luaL_setfuncs(luaState,l2cFunc,0);
-    lua_setglobal(luaState, uid);
+    lua_setglobal(luaState, "_lua2c");
 }
 
 static const luaL_Reg afbFunction[] = {

@@ -67,6 +67,11 @@ typedef struct {
 
 #ifdef CONTROL_SUPPORT_LUA
   #include "ctl-lua.h"
+
+  typedef struct CtlLua2cFuncT {
+    luaL_Reg *l2cFunc;
+    int l2cCount;
+} CtlLua2cFuncT;
 #endif
 
 // This should not be global as application may want to define their own sections

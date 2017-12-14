@@ -163,7 +163,6 @@ extern "C" {
 #endif
 
 
-
 typedef struct {
   const char *uid;
   const long magic;
@@ -176,7 +175,6 @@ typedef struct {
     void *dlHandle;
     void *context;
 } CtlPluginT;
-
 
 typedef enum {
     CTL_TYPE_NONE=0,

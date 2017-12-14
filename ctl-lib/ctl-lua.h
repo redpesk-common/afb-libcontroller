@@ -65,7 +65,7 @@ typedef enum {
 
 PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle);
 PUBLIC int LuaConfigExec(AFB_ApiT apiHandle, const char * prefix);
-PUBLIC void LuaL2cNewLib(const char *uid, luaL_Reg *l2cFunc, int count);
+PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count);
 PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
 PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
 PUBLIC void ctlapi_lua_docall (afb_req request);

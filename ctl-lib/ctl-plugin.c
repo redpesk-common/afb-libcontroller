@@ -24,7 +24,11 @@
 
 #include "ctl-config.h"
 
-static  CtlPluginT *ctlPlugins=NULL;
+#ifdef CONTROL_SUPPORT_LUA
+CtlLua2cFuncT *ctlLua2cFunc = NULL;
+#endif
+
+static CtlPluginT *ctlPlugins = NULL;
 
 PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
@@ -162,6 +166,8 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         *lua2cInPlug = DispatchOneL2c;
 
         int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
+            if(ctlLua2cFunc->l2cCount)
+                {index += ctlLua2cFunc->l2cCount+1;}
             char funcName[CONTROL_MAXPATH_LEN];
             strncpy(funcName, "lua2c_", strlen ("lua2c_")+1);
             strncat(funcName, l2cName, strlen (l2cName));
@@ -177,28 +183,43 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
             return 0;
         }
 
-        int errCount = 0;
+        int count = 0, errCount = 0;
         luaL_Reg *l2cFunc = NULL;
+        if(!ctlLua2cFunc) {
+            ctlLua2cFunc = calloc(1, sizeof(CtlLua2cFuncT));
+        }
 
         // look on l2c command and push them to LUA
         if (json_object_get_type(lua2csJ) == json_type_array) {
             int length = json_object_array_length(lua2csJ);
-            l2cFunc = calloc(length + 1, sizeof (luaL_Reg));
-            for (int count = 0; count < length; count++) {
+            l2cFunc = calloc(length + ctlLua2cFunc->l2cCount + 1, sizeof (luaL_Reg));
+            for (count = 0; count < length; count++) {
                 int err;
                 const char *l2cName = json_object_get_string(json_object_array_get_idx(lua2csJ, count));
                 err = Lua2cAddOne(l2cFunc, l2cName, count);
                 if (err) errCount++;
             }
         } else {
-            l2cFunc = calloc(2, sizeof (luaL_Reg));
+            l2cFunc = calloc(2 + ctlLua2cFunc->l2cCount, sizeof (luaL_Reg));
             const char *l2cName = json_object_get_string(lua2csJ);
-            errCount = Lua2cAddOne(l2cFunc, l2cName, 0);
+            errCount = Lua2cAddOne(l2cFunc, l2cName, count);
+            count++;
         }
         if (errCount) {
             AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE %d symbols not found in plugin='%s'", errCount, pluginpath);
             goto OnErrorExit;
         }
+        int total = ctlLua2cFunc->l2cCount + count;
+        if(ctlLua2cFunc->l2cCount) {
+            for (int offset = ctlLua2cFunc->l2cCount; offset < total; offset++)
+            {
+                int index = offset - ctlLua2cFunc->l2cCount;
+                l2cFunc[index] = ctlLua2cFunc->l2cFunc[index];
+            }
+            free(ctlLua2cFunc->l2cFunc);
+        }
+        ctlLua2cFunc->l2cFunc = l2cFunc;
+        ctlLua2cFunc->l2cCount = total;
     }
 #endif
     DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
