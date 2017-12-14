@@ -81,7 +81,7 @@ STATIC int DispatchOneL2c(void* luaState, char *funcname, Lua2cFunctionT callbac
 }
 
 STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void* handle) {
-    json_object *lua2csJ = NULL;
+    json_object *lua2csJ = NULL, *pluginPathJ = NULL;
     const char*ldSearchPath = NULL, *basename = NULL;
     void *dlHandle;
 
@@ -107,7 +107,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     if (!ldSearchPath) ldSearchPath = CONTROL_PLUGIN_PATH;
 
     // search for default policy config file
-    json_object *pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
+    pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
     if (!pluginPathJ || json_object_array_length(pluginPathJ) == 0) {
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing plugin=%s*%s (config ldpath?) search=\n-- %s", basename, CTL_PLUGIN_EXT, ldSearchPath);
         goto OnErrorExit;
