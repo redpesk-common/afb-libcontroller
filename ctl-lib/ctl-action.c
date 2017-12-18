@@ -58,7 +58,7 @@ PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *u
 PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err = 0;
 
-    if(action->type == CTL_TYPE_LUA && ctlLua2cFunc->l2cCount) {
+    if(action->type == CTL_TYPE_LUA && ctlLua2cFunc && ctlLua2cFunc->l2cCount) {
         LuaL2cNewLib (ctlLua2cFunc->l2cFunc, ctlLua2cFunc->l2cCount);
     }
 

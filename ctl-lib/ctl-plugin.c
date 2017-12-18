@@ -100,7 +100,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
             "basename", &basename,
             "lua2c", &lua2csJ);
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|basename|ldpath|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|basename|[ldpath]|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
         goto OnErrorExit;
     }
 
