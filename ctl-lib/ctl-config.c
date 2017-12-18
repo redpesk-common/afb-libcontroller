@@ -54,7 +54,7 @@ PUBLIC  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     return responseJ;
 }
 
-char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
+PUBLIC char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
     char filepath[CONTROL_MAXPATH_LEN];
     for (int index = 0; index < json_object_array_length(responseJ); index++) {

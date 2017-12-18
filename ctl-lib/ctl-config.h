@@ -97,6 +97,7 @@ PUBLIC int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 // ctl-config.c
 PUBLIC int CtlConfigMagicNew();
 PUBLIC json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
+PUBLIC char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
 PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
 PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
 PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
