@@ -191,6 +191,12 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
             json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
+            responseJ = responseJ ? responseJ:
+                ScanForConfig(GetBindingDirPath(), CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
+            if(!responseJ) {
+                AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, GetBindingDirPath());
+                return sectionArrayJ;
+            }
             const char *oneFile = ConfigSearch(apiHandle, responseJ);
             if (oneFile) {
                 json_object *newSectionJ, *newFileJ = json_object_from_file(oneFile);
@@ -204,7 +210,13 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
         }
     } else {
         json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
-            const char *oneFile = ConfigSearch(apiHandle, responseJ);
+        responseJ = responseJ ? responseJ:
+            ScanForConfig(GetBindingDirPath(), CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
+        if(!responseJ) {
+            AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, GetBindingDirPath());
+            return sectionArrayJ;
+        }
+        const char *oneFile = ConfigSearch(apiHandle, responseJ);
         json_object *newSectionJ = json_object_from_file(oneFile);
         LoadAdditionalsFiles(apiHandle, ctlHandle, key, newSectionJ);
         wrap_json_optarray_for_all(newSectionJ, wrap_json_array_add, sectionArrayJ);

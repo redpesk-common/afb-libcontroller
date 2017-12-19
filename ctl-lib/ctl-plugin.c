@@ -108,7 +108,19 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
     if (!basename) basename=ctlPlugin->uid;
 
     // if search path not in Json config file, then try default
-    if (!ldSearchPath) ldSearchPath = CONTROL_PLUGIN_PATH;
+    if (!ldSearchPath)
+    {
+        char path[CONTROL_MAXPATH_LEN];
+        memset(path, 0, sizeof(path));
+        const char *envpath = getenv("CONTROL_PLUGIN_PATH");
+        envpath ?
+            strncat(path, envpath, strlen(envpath)):
+            strncat(path, CONTROL_PLUGIN_PATH, strlen(CONTROL_PLUGIN_PATH));
+        const char *bPath = GetBindingDirPath();
+        strncat(path, ":", strlen(":"));
+        strncat(path, bPath, strlen(bPath));
+        ldSearchPath = path;
+    }
 
     // search for default policy config file
     pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
