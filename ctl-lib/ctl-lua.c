@@ -1281,9 +1281,11 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
 
     // search for default policy config files
     char fullprefix[CONTROL_MAXPATH_LEN];
-    strncpy (fullprefix, prefix, strlen(prefix)+1);
-    strncat (fullprefix, "-", strlen("-"));
-    strncat (fullprefix, GetBinderName(), strlen(GetBinderName()));
+    if(prefix)
+        strncpy (fullprefix, prefix, strlen(prefix)+1);
+    else
+        strncat (fullprefix, GetBinderName(), strlen(GetBinderName()));
+
     strncat (fullprefix, "-", strlen("-"));
 
     const char *dirList= getenv("CONTROL_LUA_PATH");
