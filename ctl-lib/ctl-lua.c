@@ -351,9 +351,11 @@ STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 PrintMessage:
     // TBD: __file__ and __line__ should match LUA source code
     AFB_ApiVerbose(source->api, level,__FILE__,__LINE__,source->uid, "%s", message);
+    json_object_put(responseJ);
     return 0;  // nothing return to lua
 
   OnErrorExit: // on argument to return (the error message)
+    json_object_put(responseJ);
     return 1;
 }
 
@@ -393,6 +395,7 @@ STATIC int LuaAfbSuccess(lua_State* luaState) {
 
     AFB_ReqSucess (source->request, responseJ, NULL);
 
+    json_object_put(responseJ);
     return 0;
 
  OnErrorExit:
@@ -409,6 +412,7 @@ STATIC int LuaAfbFail(lua_State* luaState) {
 
     AFB_ReqFail(source->request, source->uid, json_object_get_string(responseJ));
 
+    json_object_put(responseJ);
     return 0;
 
  OnErrorExit:
