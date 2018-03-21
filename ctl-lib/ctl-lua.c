@@ -1284,7 +1284,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
     int err, index;
 
     // search for default policy config files
-    char fullprefix[CONTROL_MAXPATH_LEN];
+    char fullprefix[CONTROL_MAXPATH_LEN] = "";
     if(prefix)
         strncpy (fullprefix, prefix, strlen(prefix)+1);
     else
