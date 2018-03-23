@@ -1,6 +1,6 @@
 # Controller Utilities
 
-* Object: Generic Controller Utilities to handle Policy,Small Business Logic, Glue in between components, ...
+* Object: Generic Controller Utilities to handle Policy, Small Business Logic, Glue in between components, ...
 * Status: Release Candidate
 * Author: Fulup Ar Foll fulup@iot.bzh
 * Date  : October-2017
@@ -8,12 +8,14 @@
 ## Usage
 
 1) Add ctl-utilities as a submodule to include in your project
-```
-git submodule add git@github.com:fulup-bzh/ctl-utilities
+
+```bash
+git submodule add https://gerrit.automotivelinux.org/gerrit/apps/app-controller-submodule
 ```
 
 2) Add ctl-utilities as a static library to your binding
-```
+
+```cmake
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
         ctl-utilities
@@ -22,7 +24,8 @@ git submodule add git@github.com:fulup-bzh/ctl-utilities
 ```
 
 3) Declare your controller config section in your binding
-```
+
+```C
 // CtlSectionT syntax:
 // key: "section name in config file"
 // loadCB: callback to process section
@@ -37,7 +40,8 @@ static CtlSectionT ctlSections[]= {
 ```
 
 3) Do controller config parsing at binding pre-init
-```
+
+```C
    // check if config file exist
     const char *dirList= getenv("CTL_CONFIG_PATH");
     if (!dirList) dirList=CONTROL_CONFIG_PATH;
@@ -47,9 +51,9 @@ static CtlSectionT ctlSections[]= {
 ```
 
 4) Exec controller config during binding init
-```
+
+```C
   int err = CtlConfigExec (ctlConfig);
 ```
 
-For sample usage look at https://github.com/fulup-bzh/ctl-utilities
-
+For sample usage look at https://gerrit.automotivelinux.org/gerrit/gitweb?p=apps/app-controller-submodule.git
