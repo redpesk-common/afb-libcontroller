@@ -1342,7 +1342,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
     }
     else AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
 
-    AFB_ApiDebug (apiHandle, "Audio control-LUA Init Done");
+    AFB_ApiDebug (apiHandle, "Control: LUA Init Done");
     return 0;
 
  OnErrorExit:
