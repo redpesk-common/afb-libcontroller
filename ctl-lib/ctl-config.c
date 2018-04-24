@@ -118,12 +118,10 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
 
-        if (!ctlConfig->sections[idx].actions) {
-                AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
-                continue;
-        }
-
-        errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
+        if (!ctlConfig->sections[idx].actions)
+            AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
+        else
+            errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
     return errcount;
 
@@ -187,7 +185,7 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
     json_object_object_add(ctlHandle->configJ, key, sectionArrayJ);
 
     if (json_object_get_type(filesJ) == json_type_array) {
-        int length = json_object_array_length(filesJ);
+        size_t length = json_object_array_length(filesJ);
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
             json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
@@ -229,7 +227,7 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
 {
     json_object *filesJ, *filesArrayJ = json_object_new_array();
     if (json_object_get_type(sectionJ) == json_type_array) {
-        int length = json_object_array_length(sectionJ);
+        size_t length = json_object_array_length(sectionJ);
         for (int idx=0; idx < length; idx++) {
             json_object *obj = json_object_array_get_idx(sectionJ, idx);
             int hasFiles = json_object_object_get_ex(obj, "files", &filesJ);
