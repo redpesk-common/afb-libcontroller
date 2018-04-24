@@ -89,6 +89,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
 
             json_object_object_add(subcallArgsJ, "uid", json_object_new_string(source->uid));
 
+            /* AFB Subcall will release the json_object doing the json_object_put() call */
             int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, subcallArgsJ, &returnJ);
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
@@ -102,6 +103,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(Lua) uid=%s func=%s args=%s", source->uid, action->exec.lua.funcname, json_object_get_string(action->argsJ));
             }
+            json_object_put(queryJ);
             break;
 #endif
 
@@ -110,11 +112,13 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
             }
+            json_object_put(queryJ);
             break;
 
         default:
         {
             AFB_ApiError(action->api, "ActionExecOne(unknown) API type uid=%s", source->uid);
+            json_object_put(queryJ);
             break;
         }
     }
