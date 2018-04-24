@@ -65,28 +65,31 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
     switch (action->type) {
         case CTL_TYPE_API:
         {
-            json_object *returnJ;
+            json_object *returnJ, *subcallArgsJ = json_object_new_object();
 
-            // if query is empty increment usage count and pass args
-            if (!queryJ || json_object_get_type(queryJ) != json_type_object) {
-                json_object_get(action->argsJ);
-                queryJ = action->argsJ;
-            } else if (action->argsJ) {
+            if(queryJ) {
+                json_object_object_foreach(queryJ, key, val) {
+                    json_object_object_add(subcallArgsJ, key, val);
+                }
+            }
 
+            if (action->argsJ) {
                 // Merge queryJ and argsJ before sending request
                 if (json_object_get_type(action->argsJ) == json_type_object) {
 
                     json_object_object_foreach(action->argsJ, key, val) {
-                        json_object_object_add(queryJ, key, val);
+                        json_object_get(val);
+                        json_object_object_add(subcallArgsJ, key, val);
                     }
                 } else {
-                    json_object_object_add(queryJ, "args", action->argsJ);
+                    json_object_get(action->argsJ);
+                    json_object_object_add(subcallArgsJ, "args", action->argsJ);
                 }
             }
 
-            json_object_object_add(queryJ, "uid", json_object_new_string(source->uid));
+            json_object_object_add(subcallArgsJ, "uid", json_object_new_string(source->uid));
 
-            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, queryJ, &returnJ);
+            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, subcallArgsJ, &returnJ);
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
             }
