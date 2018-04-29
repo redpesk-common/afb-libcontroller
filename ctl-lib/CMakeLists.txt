@@ -33,7 +33,7 @@ PROJECT_TARGET_ADD(ctl-utilities)
 
     # Library dependencies (include updates automatically)
     TARGET_LINK_LIBRARIES(${TARGET_NAME}
-        afb-utilities
+        afb-helpers
         ${link_libraries}
     )
 
