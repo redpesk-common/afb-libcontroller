@@ -111,7 +111,7 @@ STATIC int LuaPushArgument (CtlSourceT *source, json_object *argsJ) {
             break;
         }
         case json_type_array: {
-            int length= json_object_array_length(argsJ);
+            size_t length= json_object_array_length(argsJ);
             lua_newtable (luaState);
             for (int idx=0; idx < length; idx ++) {
                 json_object *val=json_object_array_get_idx(argsJ, idx);

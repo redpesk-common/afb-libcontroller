@@ -203,7 +203,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
 
         // look on l2c command and push them to LUA
         if (json_object_get_type(lua2csJ) == json_type_array) {
-            int length = json_object_array_length(lua2csJ);
+            size_t length = json_object_array_length(lua2csJ);
             l2cFunc = calloc(length + ctlLua2cFunc->l2cCount + 1, sizeof (luaL_Reg));
             for (count = 0; count < length; count++) {
                 int err;
@@ -267,7 +267,7 @@ PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *p
     else
     {
         if (json_object_get_type(pluginsJ) == json_type_array) {
-            int length = json_object_array_length(pluginsJ);
+            size_t length = json_object_array_length(pluginsJ);
             ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
             for (int idx=0; idx < length; idx++) {
                 json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
