@@ -45,6 +45,10 @@ extern "C" {
   #define CTL_PLUGIN_EXT ".ctlso"
 #endif
 
+#define LUA_ACTION_PREFIX "lua://"
+#define API_ACTION_PREFIX "api://"
+#define PLUGIN_ACTION_PREFIX "plugin://"
+
 typedef struct ConfigSectionS {
   const char *key;
   const char *uid;

@@ -137,23 +137,124 @@ STATIC void ActionDynRequest (AFB_ReqT request) {
 }
 #endif
 
+/*** This function will fill the CtlActionT pointer given in parameters for a
+ * given api using an 'uri' that specify the C plugin to use and the name of
+ * the function
+ *
+ */
+static int BuildPluginAction(AFB_ApiT apiHandle, const char *uri, const char *function, CtlActionT *action)
+{
+    json_object *callbackJ = NULL;
+
+    if(!action) {
+        AFB_ApiError(apiHandle, "Action not valid");
+        return -1;
+    }
+
+    action->type = CTL_TYPE_CB;
+
+    if(uri && function) {
+        if(wrap_json_pack(&callbackJ, "{ss,ss,s?o*}",
+                "plugin", uri,
+                "function", function,
+                "args", action->argsJ)) {
+            AFB_ApiError(apiHandle, "Error packing Callback JSON object for plugin %s and function %s", uri, function);
+            return -1;
+        }
+        else {
+            return PluginGetCB(apiHandle, action, callbackJ);
+        }
+    }
+    else {
+        AFB_ApiError(apiHandle, "Miss something uri or function.");
+        return -1;
+    }
+
+    return 0;
+}
+
+/*** This function will fill the CtlActionT pointer given in parameters for a
+ * given api using an 'uri' that specify the API to use and the name of the
+ * verb
+ *
+ * Be aware that 'uri' and 'function' could be null but will result in
+ * unexpected result.
+ *
+ */
+static int BuildApiAction(AFB_ApiT apiHandle, const char *uri, const char *function, CtlActionT *action)
+{
+    if(!action) {
+        AFB_ApiError(apiHandle, "Action not valid");
+        return -1;
+    }
+
+    action->type = CTL_TYPE_API;
+    action->exec.subcall.api = uri;
+    action->exec.subcall.verb = function;
+
+    return 0;
+}
+
+/*** This function will fill the CtlActionT pointer given in parameters for a
+ * given api using an 'uri' that specify the Lua plugin to use and the name of
+ * the function.
+ *
+ * Be aware that 'uri' and 'function' could be null but will result in
+ * unexpected result.
+ *
+ */
+#ifdef CONTROL_SUPPORT_LUA
+static int BuildLuaAction(AFB_ApiT apiHandle, const char *uri, const char *function, CtlActionT *action)
+{
+    if(!action) {
+        AFB_ApiError(apiHandle, "Action not valid");
+        return -1;
+    }
+
+    action->type = CTL_TYPE_LUA;
+    action->exec.lua.plugin = uri;
+    action->exec.lua.funcname = function;
+
+    return 0;
+}
+#endif
+
+static int BuildOneAction(AFB_ApiT apiHandle, CtlActionT *action, const char *uri, const char *function) {
+    size_t lua_pre_len = strlen(LUA_ACTION_PREFIX);
+    size_t api_pre_len = strlen(API_ACTION_PREFIX);
+    size_t plugin_pre_len = strlen(PLUGIN_ACTION_PREFIX);
+
+    if(uri && function && action) {
+        if(! strncasecmp(uri, LUA_ACTION_PREFIX, lua_pre_len)) {
+#ifdef CONTROL_SUPPORT_LUA
+            return BuildLuaAction(apiHandle, &uri[lua_pre_len], function, action);
+#else
+            AFB_ApiError(apiHandle, "LUA support not selected at build. Feature disabled");
+            return -1;
+#endif
+        }
+        else if(! strncasecmp(uri, API_ACTION_PREFIX, api_pre_len)) {
+            return BuildApiAction(apiHandle, &uri[api_pre_len], function, action);
+        }
+        else if(! strncasecmp(uri, PLUGIN_ACTION_PREFIX, plugin_pre_len)) {
+            return BuildPluginAction(apiHandle, &uri[plugin_pre_len], function, action);
+        }
+        else {
+            AFB_ApiError(apiHandle, "Wrong uri specified. You have to specified 'lua://', 'plugin://' or 'api://'. (%s)", function);
+            return -1;
+        }
+    }
+
+    AFB_ApiError(apiHandle, "Uri, Action or function not valid");
+    return -1;
+}
+
 // unpack individual action object
 PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
-    int err, modeCount = 0;
-    json_object *callbackJ=NULL, *luaJ=NULL, *subcallJ=NULL;
+    int err = 0;
+    const char *uri = NULL, *function = NULL;
 
-    err = wrap_json_unpack(actionJ, "{ss,s?s,s?s,s?o,s?o,s?o,s?o !}",
-        "uid", &action->uid,
-        "info", &action->info,
-        "privileges", &action->privileges,
-        "callback", &callbackJ,
-        "lua", &luaJ,
-        "subcall", &subcallJ,
-        "args", &action->argsJ);
-    if (err) {
-        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Action missing uid|[info]|[callback]|[lua]|[subcall]|[args] in:\n--  %s", json_object_get_string(actionJ));
-        goto OnErrorExit;
-    }
+    memset(action, 0, sizeof(CtlActionT));
 
     // save per action api handle
     action->api = apiHandle;
@@ -170,67 +271,36 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     }
 #endif
 
-    if (luaJ) {
-        modeCount++;
-
-        action->type = CTL_TYPE_LUA;
-        switch (json_object_get_type(luaJ)) {
-            case json_type_object:
-                err = wrap_json_unpack(luaJ, "{s?s,s:s !}", "load", &action->exec.lua.load, "func", &action->exec.lua.funcname);
-                if (err) {
-                    AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua action missing [load]|func in:\n--  %s", json_object_get_string(luaJ));
-                    goto OnErrorExit;
-                }
-                break;
-            case json_type_string:
-                action->exec.lua.funcname = json_object_get_string(luaJ);
-                break;
-            default:
-                AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Lua action invalid syntax in:\n--  %s", json_object_get_string(luaJ));
-                goto OnErrorExit;
+    if(actionJ) {
+        err = wrap_json_unpack(actionJ, "{ss,s?s,ss,ss,s?s,s?o !}",
+            "uid", &action->uid,
+            "info", &action->info,
+            "uri", &uri,
+            "function", &function,
+            "privileges", &action->privileges,
+            "args", &action->argsJ);
+        if(!err) {
+            err = BuildOneAction(apiHandle, action, uri, function);
+        }
+        else {
+            AFB_ApiError(apiHandle, "Wrong action JSON object parameter: (%s)", json_object_to_json_string(actionJ));
+            err = -1;
         }
     }
-
-    if (subcallJ) {
-        modeCount++;
-        action->type = CTL_TYPE_API;
-
-        err = wrap_json_unpack(subcallJ, "{s?s,s:s !}", "api", &action->exec.subcall.api, "verb", &action->exec.subcall.verb);
-        if (err) {
-            AFB_ApiError(apiHandle,"ACTION-LOAD-ONE Subcall missing [load]|func in:\n--  %s", json_object_get_string(subcallJ));
-            goto OnErrorExit;
-        }
+    else {
+        AFB_ApiError(apiHandle, "Wrong action JSON object parameter: (%s)", json_object_to_json_string(actionJ));
+        err = -1;
     }
 
-    if (callbackJ) {
-        modeCount++;
-        action->type = CTL_TYPE_CB;
-        err = PluginGetCB (apiHandle, action, callbackJ);
-        if (err) goto OnErrorExit;
-    }
-
-    // make sure at least one mode is selected
-    if (modeCount == 0) {
-        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE No Action Selected lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
-        goto OnErrorExit;
-    }
-
-    if (modeCount > 1) {
-        AFB_ApiError(apiHandle,"ACTION-LOAD-ONE:ToMany arguments lua|callback|(api+verb) in %s", json_object_get_string(actionJ));
-        goto OnErrorExit;
-    }
-    return 0;
-
-OnErrorExit:
-    return 1;
-};
+    return err;
+}
 
 PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportApi) {
     int err;
     CtlActionT *actions;
 
     // action array is close with a nullvalue;
-    if (json_object_get_type(actionsJ) == json_type_array) {
+    if (json_object_is_type(actionsJ, json_type_array)) {
         size_t count = json_object_array_length(actionsJ);
         actions = calloc(count + 1, sizeof (CtlActionT));
 
@@ -251,5 +321,4 @@ PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int e
 
 OnErrorExit:
     return NULL;
-
 }

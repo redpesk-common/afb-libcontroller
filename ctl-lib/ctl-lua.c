@@ -35,9 +35,8 @@
 #define LUA_MSG_MAX_LENGTH 512
 #define JSON_ERROR (json_object*)-1
 
-
-extern CtlLua2cFuncT *ctlLua2cFunc;
 static  lua_State* luaState;
+CtlPluginT *ctlPlugins = NULL;
 
 #ifndef CTX_MAGIC
  static int CTX_MAGIC;
@@ -740,18 +739,17 @@ PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *que
 
 PUBLIC int luaLoadScript(const char *luaScriptPath)
 {
-    int err = luaL_loadfile(luaState, luaScriptPath);
-    if (err) {
-        AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState,-1));
+    int err = 0;
+
+    if(!luaScriptPath)
+        return -1;
+
+    err = luaL_loadfile(luaState, luaScriptPath);
+    if (err)
         return err;
-    }
 
     // Script was loaded we need to parse to make it executable
     err = lua_pcall(luaState, 0, 0, 0);
-    if (err) {
-        AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to load %s", luaScriptPath);
-        return err;
-    }
 
     return err;
 }
@@ -804,9 +802,11 @@ STATIC int LuaDoScript(json_object *queryJ, CtlSourceT *source)
         }
     }
 
-    err = luaLoadScript(luaScriptPath);
-    if(err)
+    err = LuaLoadScript(luaScriptPath);
+    if(err) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState,-1));
         return err;
+    }
 
     // if no func name given try to deduct from filename
     if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
@@ -1243,12 +1243,12 @@ OnErrorExit:
 
 
 // Register a new L2c list of LUA user plugin commands
-PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count) {
+void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix) {
     // luaL_newlib(luaState, l2cFunc); macro does not work with pointer :(
     luaL_checkversion(luaState);
     lua_createtable(luaState, 0, count+1);
     luaL_setfuncs(luaState,l2cFunc,0);
-    lua_setglobal(luaState, "L2C");
+    lua_setglobal(luaState, prefix);
 }
 
 static const luaL_Reg afbFunction[] = {
@@ -1314,84 +1314,4 @@ PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
     }
 
     return 0;
-
- OnErrorExit:
-    free(luaState);
-    return 1;
-}
-
-// Create Binding Event at Init Exec Time
-PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
-
-    int err, index;
-
-    // create L2C mapping before any LUA script is loaded
-    if (ctlLua2cFunc && ctlLua2cFunc->l2cCount) {
-        LuaL2cNewLib (ctlLua2cFunc->l2cFunc, ctlLua2cFunc->l2cCount);
-    }
-
-    // search for default policy config files
-    char fullprefix[CONTROL_MAXPATH_LEN] = "";
-    if(prefix)
-        strncpy (fullprefix, prefix, strlen(prefix)+1);
-    else
-        strncat (fullprefix, GetBinderName(), strlen(GetBinderName()));
-
-    strncat (fullprefix, "-", strlen("-"));
-
-    const char *dirList= getenv("CONTROL_LUA_PATH");
-    //if (!dirList) dirList=CONTROL_LUA_PATH;
-
-    // special case for no lua even when avaliable
-    if (!strcasecmp ("/dev/null", dirList)) {
-        return 0;
-    }
-
-    json_object *luaScriptPathJ = ScanForConfig(dirList , CTL_SCAN_RECURSIVE, fullprefix, "lua");
-
-    // load+exec any file found in LUA search path
-    if(luaScriptPathJ) {
-        for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
-            json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
-
-            char *filename; char*fullpath;
-            err= wrap_json_unpack (entryJ, "{s:s, s:s !}", "fullpath",  &fullpath,"filename", &filename);
-            if (err) {
-                AFB_ApiError(apiHandle, "LUA-INIT HOOPs invalid config file path = %s", json_object_get_string(entryJ));
-                goto OnErrorExit;
-            }
-
-            char filepath[CONTROL_MAXPATH_LEN];
-            strncpy(filepath, fullpath, strlen(fullpath)+1);
-            strncat(filepath, "/", strlen("/"));
-            strncat(filepath, filename, strlen(filename));
-            err= luaL_loadfile(luaState, filepath);
-            if (err) {
-                AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA loading scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
-                goto OnErrorExit;
-            }
-
-            // exec/compil script
-            err = lua_pcall(luaState, 0, 0, 0);
-            if (err) {
-                AFB_ApiError(apiHandle, "LUA-LOAD HOOPs Error in LUA exec scripts=%s err=%s", filepath, lua_tostring(luaState,-1));
-                goto OnErrorExit;
-            } else {
-                AFB_ApiNotice(apiHandle, "LUA-LOAD '%s'", filepath);
-            }
-        }
-
-        json_object_put(luaScriptPathJ);
-        // no policy config found remove control API from binder
-        if (index == 0)  {
-            AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
-        }
-    }
-    else AFB_ApiWarning (apiHandle, "POLICY-INIT:WARNING (setenv CONTROL_LUA_PATH) No LUA '%s*.lua' in '%s'", fullprefix, dirList);
-
-    AFB_ApiDebug (apiHandle, "Control: LUA Init Done");
-    return 0;
-
- OnErrorExit:
-    return 1;
 }
