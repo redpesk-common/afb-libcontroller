@@ -36,6 +36,7 @@
 #define JSON_ERROR (json_object*)-1
 
 
+extern CtlLua2cFuncT *ctlLua2cFunc;
 static  lua_State* luaState;
 
 #ifndef CTX_MAGIC
@@ -299,7 +300,7 @@ STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
     const char *format = json_object_get_string(json_object_array_get_idx(responseJ, 0));
 
     int arrayIdx=1;
-    int targetIdx=0;
+    int uidIdx=0;
 
     for (int idx=0; format[idx] !='\0'; idx++) {
 
@@ -310,43 +311,43 @@ STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 
             switch (format[++idx]) {
                 case 'd':
-                    if (slotJ) targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"%d", json_object_get_int(slotJ));
-                    else  targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"nil");
+                    if (slotJ) uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"%d", json_object_get_int(slotJ));
+                    else  uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"nil");
                     arrayIdx++;
                     break;
                 case 'f':
-                    if (slotJ) targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"%f", json_object_get_double(slotJ));
-                    else  targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"nil");
+                    if (slotJ) uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"%f", json_object_get_double(slotJ));
+                    else  uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"nil");
                     arrayIdx++;
                     break;
 
                 case'%':
-                    message[targetIdx]='%';
-                    targetIdx++;
+                    message[uidIdx]='%';
+                    uidIdx++;
                     break;
 
                 case 'A':
-                    targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"level: %s", source->uid);
+                    uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"level: %s", source->uid);
                     break;
 
                 case 's':
                 default:
-                    if (slotJ) targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"%s", json_object_get_string(slotJ));
-                    else  targetIdx += snprintf (&message[targetIdx], LUA_MSG_MAX_LENGTH-targetIdx,"nil");
+                    if (slotJ) uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"%s", json_object_get_string(slotJ));
+                    else  uidIdx += snprintf (&message[uidIdx], LUA_MSG_MAX_LENGTH-uidIdx,"nil");
                     arrayIdx++;
                 }
 
         } else {
-            if (targetIdx >= LUA_MSG_MAX_LENGTH) {
+            if (uidIdx >= LUA_MSG_MAX_LENGTH) {
                 AFB_ApiWarning (source->api, "LuaFormatMessage: message[%s] owerverflow LUA_MSG_MAX_LENGTH=%d", format, LUA_MSG_MAX_LENGTH);
-                targetIdx --; // move backward for EOL
+                uidIdx --; // move backward for EOL
                 break;
             } else {
-                message[targetIdx++] = format[idx];
+                message[uidIdx++] = format[idx];
             }
         }
     }
-    message[targetIdx]='\0';
+    message[uidIdx]='\0';
 
 PrintMessage:
     // TBD: __file__ and __line__ should match LUA source code
@@ -695,10 +696,10 @@ PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *que
 
     int err, count;
 
-    json_object* argsJ  = action->argsJ;
-    const char*  func   = action->exec.lua.funcname;
+    json_object* argsJ   = action->argsJ;
+    const char*  func    = action->exec.lua.funcname;
 
-    // load function (should exist in CONTROL_PATH_LUA
+    // load function (should exist in CONTROL_PATH_LUA)
     lua_getglobal(luaState, func);
 
     // push source on the stack
@@ -737,145 +738,178 @@ PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *que
     return -1;
 }
 
+PUBLIC int luaLoadScript(const char *luaScriptPath)
+{
+    int err = luaL_loadfile(luaState, luaScriptPath);
+    if (err) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState,-1));
+        return err;
+    }
+
+    // Script was loaded we need to parse to make it executable
+    err = lua_pcall(luaState, 0, 0, 0);
+    if (err) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to load %s", luaScriptPath);
+        return err;
+    }
+
+    return err;
+}
+
+STATIC int LuaDoScript(json_object *queryJ, CtlSourceT *source)
+{
+    const char *uid = NULL, *func = NULL;
+    char luaScriptPath[CONTROL_MAXPATH_LEN];
+    char *filename, *fullpath;
+    int index, err = 0;
+    json_object *argsJ=NULL;
+    static json_object *luaScriptPathJ = NULL;
+
+    if (!queryJ) {
+        return -1;
+    }
+
+    err= wrap_json_unpack (queryJ, "{s:s,s?s,s?s,s?o !}",
+        "uid", &uid,
+        "spath",&luaScriptPathJ,
+        "function",&func,
+        "args",&argsJ);
+
+    if (err) {
+        return -1;
+    }
+
+    // search for filename=script in CONTROL_LUA_PATH
+    if (!luaScriptPathJ)  {
+        strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE)+1);
+        strncat(luaScriptPath,"-", strlen("-"));
+        strncat(luaScriptPath,uid, strlen(uid));
+        luaScriptPathJ= ScanForConfig(luaScriptPath , CTL_SCAN_RECURSIVE, luaScriptPath, ".lua");
+    }
+
+    for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
+        json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
+
+        err= wrap_json_unpack (entryJ, "{s:s, s:s !}", "fullpath",  &fullpath,"filename", &filename);
+        if (err) {
+            AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN:HOOPs invalid config file path = %s", json_object_get_string(entryJ));
+            return -2;
+        }
+
+        // Ignoring other found script. Only take the first one.
+        if (!index) {
+            strncpy (luaScriptPath, fullpath, strlen(fullpath)+1);
+            strncat (luaScriptPath, "/", strlen("/"));
+            strncat (luaScriptPath, filename, strlen(filename));
+        }
+    }
+
+    err = luaLoadScript(luaScriptPath);
+    if(err)
+        return err;
+
+    // if no func name given try to deduct from filename
+    if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
+        strncpy(luaScriptPath,"_", strlen("_")+1);
+        strncat(luaScriptPath,func, strlen(func));
+        func=luaScriptPath;
+    }
+    if (!func) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to deduct funcname from %s", filename);
+        return -5;
+    }
+
+    // load function (should exist in CONTROL_PATH_LUA
+    lua_getglobal(luaState, func);
+
+    // Push AFB client context on the stack
+    LuaAfbSourceT *afbSource = LuaSourcePush(luaState, source);
+    if (!afbSource)
+        return -6;
+
+    return 0;
+}
+
+STATIC int LuaDoCall(json_object *queryJ, CtlSourceT *source)
+{
+    int err = 0;
+    int count = 0;
+    const char *func;
+    json_object *argsJ = NULL;
+
+    if(!queryJ)
+        return -1;
+
+    err = wrap_json_unpack(queryJ, "{s:s, s?o !}", "uid", &func, "args", &argsJ);
+    if (err)
+        return -2;
+
+    // load function (should exist in CONTROL_PATH_LUA
+    lua_getglobal(luaState, func);
+
+    // Push AFB client context on the stack
+    LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
+    if (!afbSource)
+        return -3;
+
+    // push query on the stack
+    if (!argsJ) {
+        lua_pushnil(luaState);
+        count++;
+    } else {
+        count+= LuaPushArgument (source, argsJ);
+    }
+
+    return count;
+}
+
+STATIC int LuaDoString(const char *script, CtlSourceT *source)
+{
+    int err = 0;
+
+    err = luaL_loadstring(luaState, script);
+    if (err)
+        return -1;
+
+    // Push AFB client context on the stack
+    if(source) {
+        LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
+        if (!afbSource)
+            return -2;
+    }
+
+    return 0;
+}
 
 // Execute LUA code from received API request
 STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
-
     int err, count=0;
     CtlSourceT *source = alloca(sizeof(CtlSourceT));
     source->request = request;
 
     json_object* queryJ = AFB_ReqJson(request);
 
-
     switch (action) {
 
         case LUA_DOSTRING: {
             const char *script = json_object_get_string(queryJ);
-            err=luaL_loadstring(luaState, script);
-            if (err) {
-                AFB_ApiError(source->api, "LUA-DO-COMPILE:FAIL String=%s err=%s", script, lua_tostring(luaState,-1) );
-                goto OnErrorExit;
-            }
-            // Push AFB client context on the stack
-            LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
-            if (!afbSource) goto OnErrorExit;
-
+            count = LuaDoString(script, source);
+            if(count)
+                AFB_ApiError(source->api, "DOSTRING goes wrong err=%d, String=%s ", count, script);
             break;
         }
 
         case LUA_DOCALL: {
-            const char *func;
-            json_object *argsJ=NULL;
-
-            err= wrap_json_unpack (queryJ, "{s:s, s?o !}", "target", &func, "args", &argsJ);
-            if (err) {
-                AFB_ApiError(source->api, "LUA-DOCALL-SYNTAX missing target|args query=%s", json_object_get_string(queryJ));
-                goto OnErrorExit;
-            }
-
-            // load function (should exist in CONTROL_PATH_LUA
-            lua_getglobal(luaState, func);
-
-            // Push AFB client context on the stack
-            LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
-            if (!afbSource) goto OnErrorExit;
-
-            // push query on the stack
-            if (!argsJ) {
-                lua_pushnil(luaState);
-                count++;
-            } else {
-                count+= LuaPushArgument (source, argsJ);
-            }
-
+            count = LuaDoCall(queryJ, source);
+            if(count)
+                AFB_ApiError(source->api, "DOCALL goes wrong, error = %d, query=%s", count, json_object_get_string(queryJ));
             break;
         }
 
         case LUA_DOSCRIPT: {   // Fulup need to fix argument passing
-            char *filename; char*fullpath;
-            char luaScriptPath[CONTROL_MAXPATH_LEN];
-            int index;
-
-            // scan luascript search path once
-            static json_object *luaScriptPathJ =NULL;
-
-            // extract value from query
-            const char *target=NULL,*func=NULL;
-            json_object *argsJ=NULL;
-            err= wrap_json_unpack (queryJ, "{s:s,s?s,s?s,s?o !}",
-                "target", &target,
-                "path",&luaScriptPathJ,
-                "function",&func,
-                "args",&argsJ);
-            if (err) {
-                AFB_ApiError(source->api, "LUA-DOSCRIPT-SYNTAX:missing target|[path]|[function]|[args] query=%s", json_object_get_string(queryJ));
-                goto OnErrorExit;
-            }
-
-            // search for filename=script in CONTROL_LUA_PATH
-            if (!luaScriptPathJ)  {
-                strncpy(luaScriptPath,CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE)+1);
-                strncat(luaScriptPath,"-", strlen("-"));
-                strncat(luaScriptPath,target, strlen(target));
-                luaScriptPathJ= ScanForConfig(CONTROL_LUA_PATH , CTL_SCAN_RECURSIVE,luaScriptPath,".lua");
-            }
-            for (index=0; index < json_object_array_length(luaScriptPathJ); index++) {
-                json_object *entryJ=json_object_array_get_idx(luaScriptPathJ, index);
-
-                err= wrap_json_unpack (entryJ, "{s:s, s:s !}", "fullpath",  &fullpath,"filename", &filename);
-                if (err) {
-                    AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN:HOOPs invalid config file path = %s", json_object_get_string(entryJ));
-                    goto OnErrorExit;
-                }
-
-                if (index > 0) AFB_ApiWarning(source->api, "LUA-DOSCRIPT-SCAN:Ignore second script=%s path=%s", filename, fullpath);
-                else {
-                    strncpy (luaScriptPath, fullpath, strlen(fullpath)+1);
-                    strncat (luaScriptPath, "/", strlen("/"));
-                    strncat (luaScriptPath, filename, strlen(filename));
-                }
-            }
-
-            err= luaL_loadfile(luaState, luaScriptPath);
-            if (err) {
-                AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState,-1));
-                goto OnErrorExit;
-            }
-
-            // script was loaded we need to parse to make it executable
-            err=lua_pcall(luaState, 0, 0, 0);
-            if (err) {
-                AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to load %s", luaScriptPath);
-                goto OnErrorExit;
-            }
-
-            // if no func name given try to deduct from filename
-            if (!func && (func=(char*)GetMidleName(filename))!=NULL) {
-                strncpy(luaScriptPath,"_", strlen("_")+1);
-                strncat(luaScriptPath,func, strlen(func));
-                func=luaScriptPath;
-            }
-            if (!func) {
-                AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to deduct funcname from %s", filename);
-                goto OnErrorExit;
-            }
-
-            // load function (should exist in CONTROL_PATH_LUA
-            lua_getglobal(luaState, func);
-
-            // Push AFB client context on the stack
-            LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
-            if (!afbSource) goto OnErrorExit;
-
-            // push function arguments
-            if (!argsJ) {
-                lua_pushnil(luaState);
-                count++;
-            } else {
-                count+= LuaPushArgument(source, argsJ);
-            }
-
+            count = LuaDoScript(queryJ, source);
+            if(count)
+                AFB_ApiError(source->api, "DOSCRIPT goes wrong error=%d query=%s", count, json_object_get_string(queryJ));
             break;
         }
 
@@ -884,8 +918,8 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
             goto OnErrorExit;
     }
 
-    // effectively exec LUA code (afb_reply/fail done later from callback)
-    err=lua_pcall(luaState, count+1, 0, 0);
+    if(count >= 0)
+        err=lua_pcall(luaState, count+1, 0, 0);
     if (err) {
         AFB_ApiError(source->api, "LUA-DO-EXEC:FAIL query=%s err=%s", json_object_get_string(queryJ), lua_tostring(luaState,-1));
         goto OnErrorExit;
@@ -1214,7 +1248,7 @@ PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count) {
     luaL_checkversion(luaState);
     lua_createtable(luaState, 0, count+1);
     luaL_setfuncs(luaState,l2cFunc,0);
-    lua_setglobal(luaState, "_lua2c");
+    lua_setglobal(luaState, "L2C");
 }
 
 static const luaL_Reg afbFunction[] = {
@@ -1242,7 +1276,8 @@ static const luaL_Reg afbFunction[] = {
 
 // Load Lua Interpreter
 PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
-    static int luaLoaded=0;
+    static int luaLoaded=0, err = 0;
+    //int err = 0;
 
     // Lua loads only once
     if (luaLoaded) return 0;
@@ -1271,6 +1306,13 @@ PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
         TIMER_MAGIC=CtlConfigMagicNew();
     #endif
 
+    // Load LUA utils functions.
+    err = LuaDoString(lua_utils, NULL);
+    if(err) {
+        AFB_ApiError(apiHandle, "Error loading lua_utils default functions.%s, %d", lua_utils, err);
+        return -1;
+    }
+
     return 0;
 
  OnErrorExit:
@@ -1283,6 +1325,11 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
 
     int err, index;
 
+    // create L2C mapping before any LUA script is loaded
+    if (ctlLua2cFunc && ctlLua2cFunc->l2cCount) {
+        LuaL2cNewLib (ctlLua2cFunc->l2cFunc, ctlLua2cFunc->l2cCount);
+    }
+
     // search for default policy config files
     char fullprefix[CONTROL_MAXPATH_LEN] = "";
     if(prefix)
@@ -1293,7 +1340,7 @@ PUBLIC int LuaConfigExec (AFB_ApiT apiHandle, const char* prefix) {
     strncat (fullprefix, "-", strlen("-"));
 
     const char *dirList= getenv("CONTROL_LUA_PATH");
-    if (!dirList) dirList=CONTROL_LUA_PATH;
+    //if (!dirList) dirList=CONTROL_LUA_PATH;
 
     // special case for no lua even when avaliable
     if (!strcasecmp ("/dev/null", dirList)) {

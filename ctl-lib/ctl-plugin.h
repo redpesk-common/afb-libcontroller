@@ -30,6 +30,9 @@ extern "C" {
 
 #include <json-c/json.h>
 
+#define CONTROL_PLUGIN_EXT ".ctlso"
+#define CONTROL_SCRIPT_EXT ".lua"
+
 // Waiting for a clean AppFW-V3 API
 #ifdef USE_API_DYN
     #define AFB_BINDING_VERSION dyn
@@ -212,7 +215,7 @@ typedef struct {
         } subcall;
 
         struct {
-            const char* load;
+            const char* plugin;
             const char* funcname;
         } lua;
 

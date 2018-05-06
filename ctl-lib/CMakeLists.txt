@@ -19,7 +19,7 @@
 # Include LUA only when requested
 if(CONTROL_SUPPORT_LUA)
    message(STATUS "Notice: LUA Controler Support Selected")
-   set(CTL_LUA_SOURCE ctl-lua.c ctl-timer.c)
+   set(CTL_LUA_SOURCE ctl-lua.c ctl-timer.c ctl-lua-utils.c)
    ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA)
 else(CONTROL_SUPPORT_LUA)
    message(STATUS "Warning: LUA Without Support ")

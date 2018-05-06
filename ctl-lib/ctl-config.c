@@ -109,11 +109,6 @@ PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
         }
     }
 
-#ifdef CONTROL_SUPPORT_LUA
-    int err = LuaConfigExec(apiHandle, ctlConfig->api);
-    if (err) goto OnErrorExit;
-#endif
-
     // Loop on every section and process config
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {

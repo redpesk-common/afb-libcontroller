@@ -39,11 +39,6 @@ extern "C" {
 #define CONTROL_LUA_EVENT "luaevt"
 #endif
 
-// default use same search path for config.json and script.lua
-#ifndef CONTROL_LUA_PATH
-#define CONTROL_LUA_PATH CONTROL_CONFIG_PATH
-#endif
-
 // standard lua include file
 #ifdef CONTROL_SUPPORT_LUA
 #include "lua.h"
@@ -62,7 +57,8 @@ typedef enum {
     LUA_DOSCRIPT,
 } LuaDoActionT;
 
-
+extern const char *lua_utils;
+PUBLIC int luaLoadScript(const char *luaScriptPath);
 PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle);
 PUBLIC int LuaConfigExec(AFB_ApiT apiHandle, const char * prefix);
 PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count);

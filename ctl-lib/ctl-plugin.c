@@ -84,77 +84,19 @@ STATIC int DispatchOneL2c(void* luaState, char *funcname, Lua2cFunctionT callbac
 #endif
 }
 
-STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void* handle) {
-    json_object *lua2csJ = NULL, *pluginPathJ = NULL;
-    const char*ldSearchPath = NULL, *basename = NULL;
-    void *dlHandle;
+STATIC int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_object *lua2csJ, void * handle, CtlPluginT *ctlPlugin)
+{
+    void *dlHandle = dlopen(pluginpath, RTLD_NOW);
 
-
-    // plugin initialises at 1st load further init actions should be place into onload section
-    if (!pluginJ) return 0;
-
-    int err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?s,s?o !}",
-            "uid", &ctlPlugin->uid,
-            "info", &ctlPlugin->info,
-            "ldpath", &ldSearchPath,
-            "basename", &basename,
-            "lua2c", &lua2csJ);
-    if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|basename|[ldpath]|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
-        goto OnErrorExit;
-    }
-
-    // default basename equal uid
-    if (!basename) basename=ctlPlugin->uid;
-
-    // if search path not in Json config file, then try default
-    if (!ldSearchPath)
-    {
-        char path[CONTROL_MAXPATH_LEN];
-        memset(path, 0, sizeof(path));
-        const char *envpath = getenv("CONTROL_PLUGIN_PATH");
-        envpath ?
-            strncat(path, envpath, strlen(envpath)):
-            strncat(path, CONTROL_PLUGIN_PATH, strlen(CONTROL_PLUGIN_PATH));
-        const char *bPath = GetBindingDirPath();
-        strncat(path, ":", strlen(":"));
-        strncat(path, bPath, strlen(bPath));
-        ldSearchPath = path;
-    }
-
-    // search for default policy config file
-    pluginPathJ = ScanForConfig(ldSearchPath, CTL_SCAN_RECURSIVE, basename, CTL_PLUGIN_EXT);
-    if (!pluginPathJ || json_object_array_length(pluginPathJ) == 0) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing plugin=%s*%s (config ldpath?) search=\n-- %s", basename, CTL_PLUGIN_EXT, ldSearchPath);
-        goto OnErrorExit;
-    }
-
-    char *filename;
-    char*fullpath;
-    err = wrap_json_unpack(json_object_array_get_idx(pluginPathJ, 0), "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
-    if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE HOOPs invalid plugin file path=\n-- %s", json_object_get_string(pluginPathJ));
-        goto OnErrorExit;
-    }
-
-    if (json_object_array_length(pluginPathJ) > 1) {
-        AFB_ApiWarning(apiHandle, "CTL-PLUGIN-LOADONE plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
-    }
-
-    char pluginpath[CONTROL_MAXPATH_LEN];
-    strncpy(pluginpath, fullpath, strlen (fullpath)+1);
-    strncat(pluginpath, "/", strlen ("/"));
-    strncat(pluginpath, filename, strlen (filename));
-    dlHandle = dlopen(pluginpath, RTLD_NOW);
     if (!dlHandle) {
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Fail to load pluginpath=%s err= %s", pluginpath, dlerror());
-        goto OnErrorExit;
+        return -1;
     }
 
     CtlPluginMagicT *ctlPluginMagic = (CtlPluginMagicT*) dlsym(dlHandle, "CtlPluginMagic");
     if (!ctlPluginMagic || ctlPluginMagic->magic != CTL_PLUGIN_MAGIC) {
         AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE symbol'CtlPluginMagic' missing or !=  CTL_PLUGIN_MAGIC plugin=%s", pluginpath);
-        goto OnErrorExit;
+        return -1;
     } else {
         AFB_ApiNotice(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->uid);
     }
@@ -175,7 +117,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
 #else
     // Lua2cWrapper is part of binder and not expose to dynamic link
     if (lua2csJ && lua2cInPlug) {
-        *lua2cInPlug = DispatchOneL2c;
+        *lua2cInPlug = (Lua2cWrapperT)DispatchOneL2c;
 
         int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
             if(ctlLua2cFunc->l2cCount)
@@ -219,7 +161,7 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         }
         if (errCount) {
             AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE %d symbols not found in plugin='%s'", errCount, pluginpath);
-            goto OnErrorExit;
+            return -1;
         }
         int total = ctlLua2cFunc->l2cCount + count;
         if(ctlLua2cFunc->l2cCount) {
@@ -240,21 +182,171 @@ STATIC int PluginLoadOne (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object
         ctlPlugin->context = (*ctlPluginOnload) (ctlPlugin, handle);
     }
 
+    return 0;
+}
+
+STATIC int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_object *lua2csJ, void *handle, CtlPluginT *ctlPlugin)
+{
+    char pluginpath[CONTROL_MAXPATH_LEN];
+    char *filename;
+    char *fullpath;
+    char *ext;
+    int i;
+    size_t len;
+    json_object *object = NULL;
+
+    if (!json_object_is_type(scanResult, json_type_array))
+        return -1;
+
+    len = json_object_array_length(scanResult);
+
+    for (i = 0; i < len; ++i) {
+        object = json_object_array_get_idx(scanResult, i);
+        int err = wrap_json_unpack(object, "{s:s, s:s !}",
+                "fullpath", &fullpath,
+                "filename", &filename);
+
+        if (err) {
+            AFB_ApiError(apiHandle, "HOOPs invalid plugin file path=\n-- %s", json_object_get_string(scanResult));
+            return -1;
+        }
+
+        /* Make sure you don't load two found libraries */
+        ext = strrchr(filename, '.');
+        strncpy(pluginpath, fullpath, strlen (fullpath)+1);
+        strncat(pluginpath, "/", strlen ("/"));
+        strncat(pluginpath, filename, strlen (filename));
+
+        if(!strcasecmp(ext, CONTROL_PLUGIN_EXT)) {
+            if(ext && !strcasecmp(ext, CONTROL_PLUGIN_EXT) && i > 0) {
+                AFB_ApiWarning(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
+                return 0;
+            }
+            PluginLoadCOne(apiHandle, pluginpath, lua2csJ, handle, ctlPlugin);
+        }
+        else if(!strcasecmp(ext, CONTROL_SCRIPT_EXT)) {
+            ctlPlugin->api = apiHandle;
+            ctlPlugin->context = handle;
+            luaLoadScript(pluginpath);
+        }
+    }
+
+    return 0;
+}
+
+STATIC char *GetDefaultSearchPath()
+{
+    char *searchPath;
+    const char *bPath;
+    const char *envPath;
+    size_t bPath_len, envPath_len, CTL_PLGN_len;
+
+    bPath = GetBindingDirPath();
+    envPath = getenv("CONTROL_PLUGIN_PATH");
+    bPath_len = strlen(bPath);
+    envPath_len = envPath ? strlen(envPath) : 0;
+    CTL_PLGN_len = envPath_len ? 0 : strlen(CONTROL_PLUGIN_PATH);
+
+    /* Allocating with the size of binding root dir path + environment if found
+     * + 2 for the NULL terminating character and the additionnal separator
+     * between bPath and envPath concatenation.
+     */
+    if(envPath)  {
+        searchPath = calloc(1, sizeof(char) *((bPath_len + envPath_len) + 2));
+        strncat(searchPath, envPath, envPath_len);
+    }
+    else {
+        searchPath = calloc(1, sizeof(char) * ((bPath_len + CTL_PLGN_len) + 2));
+        strncat(searchPath, CONTROL_PLUGIN_PATH, CTL_PLGN_len);
+    }
+
+    strncat(searchPath, ":", 1);
+    strncat(searchPath, bPath, bPath_len);
+
+    return searchPath;
+}
+
+STATIC int FindPlugins(AFB_ApiT apiHandle, const char *searchPath, const char *file, json_object **pluginPathJ)
+{
+    *pluginPathJ = ScanForConfig(searchPath, CTL_SCAN_RECURSIVE, file, NULL);
+    if (!*pluginPathJ || json_object_array_length(*pluginPathJ) == 0) {
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing plugin=%s* (config ldpath?) search=\n-- %s", file, searchPath);
+        return -1;
+    }
+
+    return 0;
+}
+
+STATIC int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle)
+{
+    int err = 0, i = 0;
+    char *searchPath;
+    const char *sPath = NULL, *file = NULL;
+    json_object *lua2csJ = NULL, *fileJ = NULL, *pluginPathJ = NULL;
+
+    // plugin initialises at 1st load further init actions should be place into onload section
+    if (!pluginJ) return 0;
+
+    err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?o,s?o !}",
+            "uid", &ctlPlugin->uid,
+            "info", &ctlPlugin->info,
+            "spath", &sPath,
+            "file", &fileJ,
+            "lua2c", &lua2csJ);
+    if (err) {
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|file|[ldpath]|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
+        goto OnErrorExit;
+    }
+
+    // if search path not in Json config file, then try default
+    if(sPath)
+        searchPath = strdup(sPath);
+     else
+        searchPath = GetDefaultSearchPath();
+
+    // default file equal uid
+    if (!fileJ) {
+        file = ctlPlugin->uid;
+        if(FindPlugins(apiHandle, searchPath, file, &pluginPathJ))
+            goto OnErrorExit;
+        LoadFoundPlugins(apiHandle, pluginPathJ, lua2csJ, handle, ctlPlugin);
+    }
+    else if(json_object_is_type(fileJ, json_type_string)) {
+        file = json_object_get_string(fileJ);
+        if(FindPlugins(apiHandle, searchPath, file, &pluginPathJ))
+            goto OnErrorExit;
+        LoadFoundPlugins(apiHandle, pluginPathJ, lua2csJ, handle, ctlPlugin);
+    }
+    else if(json_object_is_type(fileJ, json_type_array)) {
+        for(i = 0; i < json_object_array_length(fileJ);++i) {
+            file = json_object_get_string(json_object_array_get_idx(fileJ, i));
+            if(FindPlugins(apiHandle, searchPath, file, &pluginPathJ))
+                goto OnErrorExit;
+            LoadFoundPlugins(apiHandle, pluginPathJ, lua2csJ, handle, ctlPlugin);
+        }
+    }
+
+    if(err)
+        goto OnErrorExit;
+
+    free(searchPath);
     json_object_put(pluginPathJ); // No more needs for that json_object.
     return 0;
 
 OnErrorExit:
+    free(searchPath);
     json_object_put(pluginPathJ); // No more needs for that json_object.
     return 1;
 }
 
 
 PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
-    int err=0;
+    int err = 0;
+    int idx = 0;
+    size_t length = 0;
 
     if (ctlPlugins)
     {
-        int idx = 0;
         while(ctlPlugins[idx].uid != NULL)
         {
             // Jose hack to make verbosity visible from sharedlib and
@@ -267,15 +359,15 @@ PUBLIC int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *p
     else
     {
         if (json_object_get_type(pluginsJ) == json_type_array) {
-            size_t length = json_object_array_length(pluginsJ);
+            length = json_object_array_length(pluginsJ);
             ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
-            for (int idx=0; idx < length; idx++) {
+            for (idx=0; idx < length; idx++) {
                 json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-                err += PluginLoadOne(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
+                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
             }
         } else {
             ctlPlugins = calloc (2, sizeof(CtlPluginT));
-            err += PluginLoadOne(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
+            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
         }
     }
 
