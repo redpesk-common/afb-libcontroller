@@ -63,6 +63,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
 
             if(queryJ) {
                 json_object_object_foreach(queryJ, key, val) {
+                    json_object_get(val);
                     json_object_object_add(subcallArgsJ, key, val);
                 }
             }
@@ -97,7 +98,6 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(Lua) uid=%s func=%s args=%s", source->uid, action->exec.lua.funcname, json_object_get_string(action->argsJ));
             }
-            json_object_put(queryJ);
             break;
 #endif
 
@@ -106,16 +106,15 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
             }
-            json_object_put(queryJ);
             break;
 
         default:
         {
             AFB_ApiError(action->api, "ActionExecOne(unknown) API type uid=%s", source->uid);
-            json_object_put(queryJ);
             break;
         }
     }
+    json_object_put(queryJ);
 }
 
 
