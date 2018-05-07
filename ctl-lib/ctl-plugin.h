@@ -30,9 +30,6 @@ extern "C" {
 
 #include <json-c/json.h>
 
-#define CONTROL_PLUGIN_EXT ".ctlso"
-#define CONTROL_SCRIPT_EXT ".lua"
-
 // Waiting for a clean AppFW-V3 API
 #ifdef USE_API_DYN
     #define AFB_BINDING_VERSION dyn
@@ -165,6 +162,15 @@ extern "C" {
   #define UNUSED_FUNCTION(x) __attribute__((__unused__)) UNUSED_ ## x
 #endif
 
+#ifdef CONTROL_SUPPORT_LUA
+  typedef struct luaL_Reg luaL_Reg;
+
+  typedef struct CtlLua2cFuncT {
+    luaL_Reg *l2cFunc;
+    const char *prefix;
+    int l2cCount;
+} CtlLua2cFuncT;
+#endif
 
 typedef struct {
   const char *uid;
@@ -177,6 +183,9 @@ typedef struct {
     AFB_ApiT api;
     void *dlHandle;
     void *context;
+#ifdef CONTROL_SUPPORT_LUA
+    CtlLua2cFuncT *ctlL2cFunc;
+#endif
 } CtlPluginT;
 
 typedef enum {
@@ -227,8 +236,9 @@ typedef struct {
     } exec;
 } CtlActionT;
 
+extern CtlPluginT *ctlPlugins;
 
-typedef void*(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
+typedef int(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg
 #define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC}; struct afb_binding_data_v2;

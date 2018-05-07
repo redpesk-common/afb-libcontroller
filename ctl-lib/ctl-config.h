@@ -33,6 +33,10 @@ extern "C" {
 #include <filescan-utils.h>
 #include <wrap-json.h>
 
+#ifdef CONTROL_SUPPORT_LUA
+  #include "ctl-lua.h"
+#endif
+
 #ifndef CONTROL_MAXPATH_LEN
   #define CONTROL_MAXPATH_LEN 255
 #endif
@@ -43,6 +47,7 @@ extern "C" {
 
 #ifndef CTL_PLUGIN_EXT
   #define CTL_PLUGIN_EXT ".ctlso"
+  #define CTL_SCRIPT_EXT ".lua"
 #endif
 
 #define LUA_ACTION_PREFIX "lua://"
@@ -68,16 +73,6 @@ typedef struct {
     CtlSectionT *sections;
 } CtlConfigT;
 
-
-#ifdef CONTROL_SUPPORT_LUA
-  #include "ctl-lua.h"
-
-  typedef struct CtlLua2cFuncT {
-    luaL_Reg *l2cFunc;
-    int l2cCount;
-} CtlLua2cFuncT;
-#endif
-
 // This should not be global as application may want to define their own sections
 typedef enum {
   CTL_SECTION_PLUGIN,
@@ -89,14 +84,12 @@ typedef enum {
   CTL_SECTION_ENDTAG,
 } SectionEnumT;
 
-
 // ctl-action.c
 PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
 PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
 PUBLIC void ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
 PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
 PUBLIC int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
-
 
 // ctl-config.c
 PUBLIC int CtlConfigMagicNew();
