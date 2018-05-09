@@ -233,34 +233,34 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     return 0;
 }
 
-static char *GetDefaultSearchPath()
+static char *GetDefaultSearchPath(AFB_ApiT apiHandle)
 {
     char *searchPath;
-    const char *bPath;
+    const char *bindingPath;
     const char *envPath;
-    size_t bPath_len, envPath_len, CTL_PLGN_len;
+    size_t bindingPath_len, envPath_len, CTL_PLGN_len;
 
-    bPath = GetBindingDirPath();
+    bindingPath = GetBindingDirPath(apiHandle);
     envPath = getenv("CONTROL_PLUGIN_PATH");
-    bPath_len = strlen(bPath);
+    bindingPath_len = strlen(bindingPath);
     envPath_len = envPath ? strlen(envPath) : 0;
     CTL_PLGN_len = envPath_len ? 0 : strlen(CONTROL_PLUGIN_PATH);
 
     /* Allocating with the size of binding root dir path + environment if found
      * + 2 for the NULL terminating character and the additionnal separator
-     * between bPath and envPath concatenation.
+     * between bindingPath and envPath concatenation.
      */
     if(envPath)  {
-        searchPath = calloc(1, sizeof(char) *((bPath_len + envPath_len) + 2));
+        searchPath = calloc(1, sizeof(char) *((bindingPath_len + envPath_len) + 2));
         strncat(searchPath, envPath, envPath_len);
     }
     else {
-        searchPath = calloc(1, sizeof(char) * ((bPath_len + CTL_PLGN_len) + 2));
+        searchPath = calloc(1, sizeof(char) * ((bindingPath_len + CTL_PLGN_len) + 2));
         strncat(searchPath, CONTROL_PLUGIN_PATH, CTL_PLGN_len);
     }
 
     strncat(searchPath, ":", 1);
-    strncat(searchPath, bPath, bPath_len);
+    strncat(searchPath, bindingPath, bindingPath_len);
 
     return searchPath;
 }
@@ -301,7 +301,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     // if search path not in Json config file, then try default
     searchPath = (sPath) ?
         strdup(sPath) :
-        GetDefaultSearchPath();
+        GetDefaultSearchPath(apiHandle);
 
     // default file equal uid
     if (!fileJ) {
@@ -331,7 +331,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
                 json_object_put(pluginPathJ); // No more needs for that json_object.
                 return 1;
             }
-            LoadFoundPlugins(apiHandle, pluginPathJ, lua2c_prefix, lua2csJ, handle, ctlPlugin);
+            LoadFoundPlugins(apiHandle, pluginPathJ, lua2csJ, lua2c_prefix, handle, ctlPlugin);
         }
     }
 
