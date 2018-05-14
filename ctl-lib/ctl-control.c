@@ -23,7 +23,7 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
 
     // Load time parse actions in config file
     if (actionsJ != NULL) {
@@ -31,12 +31,8 @@ PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *
 
         if (!section->actions) {
             AFB_ApiError (apiHandle, "ControlLoad config fail processing onload actions");
-            goto OnErrorExit;
+            return 1;
         }
     }
     return 0;
-
-OnErrorExit:
-    return 1;
-
 }

@@ -48,8 +48,7 @@ extern "C" {
 
 #include "ctl-timer.h"
 
-PUBLIC int LuaLibInit ();
-
+int LuaLibInit ();
 
 typedef enum {
     LUA_DOCALL,
@@ -58,15 +57,14 @@ typedef enum {
 } LuaDoActionT;
 
 extern const char *lua_utils;
-PUBLIC int luaLoadScript(const char *luaScriptPath);
-PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle);
-PUBLIC int LuaConfigExec(AFB_ApiT apiHandle, const char * prefix);
-PUBLIC void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
-PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
-PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
-PUBLIC void ctlapi_lua_docall (afb_req request);
-PUBLIC void ctlapi_lua_dostring (afb_req request);
-PUBLIC void ctlapi_lua_doscript (afb_req request);
+int LuaLoadScript(const char *luaScriptPath);
+int LuaConfigLoad (AFB_ApiT apiHandle);
+void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
+int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
+int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
+void ctlapi_lua_docall (afb_req request);
+void ctlapi_lua_dostring (afb_req request);
+void ctlapi_lua_doscript (afb_req request);
 
 #ifdef __cplusplus
 }

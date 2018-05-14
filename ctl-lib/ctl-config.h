@@ -85,38 +85,38 @@ typedef enum {
 } SectionEnumT;
 
 // ctl-action.c
-PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
-PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
-PUBLIC void ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
-PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
-PUBLIC int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
+CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
+void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
+void ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
+int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
+int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 
 // ctl-config.c
-PUBLIC int CtlConfigMagicNew();
-PUBLIC json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
-PUBLIC char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
-PUBLIC char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
-PUBLIC int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
-PUBLIC CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
-PUBLIC int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+int CtlConfigMagicNew();
+json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
+char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
+char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
+int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
+CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
+int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
 
 // ctl-event.c
-PUBLIC int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
+int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
 #ifdef AFB_BINDING_PREV3
-PUBLIC void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
+void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
 #else
-PUBLIC void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
+void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
 #endif
 
 // ctl-control.c
-PUBLIC int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-onload.c
-PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-PUBLIC int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
-PUBLIC int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
+int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
 
 #ifdef __cplusplus
 }

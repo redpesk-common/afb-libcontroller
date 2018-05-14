@@ -149,14 +149,6 @@ extern "C" {
   #define CTL_PLUGIN_MAGIC 852369147
 #endif
 
-#ifndef PUBLIC
-  #define PUBLIC
-#endif
-
-#ifndef STATIC
-  #define STATIC static
-#endif
-
 #ifndef UNUSED_ARG
   #define UNUSED_ARG(x) UNUSED_ ## x __attribute__((__unused__))
   #define UNUSED_FUNCTION(x) __attribute__((__unused__)) UNUSED_ ## x

@@ -23,7 +23,7 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
 
     // Load time parse actions in control file
     if (actionsJ != NULL) {
@@ -31,14 +31,14 @@ PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
 
         if (!section->actions) {
             AFB_ApiError (apiHandle, "OnloadConfig control fail processing onload actions");
-            goto OnErrorExit;
+            return 1;
         }
 
     } else {
         // Exec time process onload action now
         if (!section->actions) {
             AFB_ApiError (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
-            goto OnErrorExit;
+            return 1;
         }
 
         for (int idx=0; section->actions[idx].uid != NULL; idx ++) {
@@ -52,8 +52,4 @@ PUBLIC int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
     }
 
     return 0;
-
-OnErrorExit:
-    return 1;
-
 }

@@ -69,7 +69,7 @@ typedef struct {
  * handle while waiting for someone smarter than me to find a better solution
  *  https://stackoverflow.com/questions/45596493/lua-using-lua-newuserdata-from-lua-pcall
 */
-STATIC CtlSourceT *LuaSourcePop (lua_State *luaState, int index) {
+static CtlSourceT *LuaSourcePop (lua_State *luaState, int index) {
   LuaAfbSourceT *afbSource;
   luaL_checktype(luaState, index, LUA_TLIGHTUSERDATA);
   afbSource = (LuaAfbSourceT *) lua_touserdata(luaState, index);
@@ -80,7 +80,7 @@ STATIC CtlSourceT *LuaSourcePop (lua_State *luaState, int index) {
   return afbSource->source;
 }
 
-STATIC LuaAfbSourceT *LuaSourcePush (lua_State *luaState, CtlSourceT *source) {
+static LuaAfbSourceT *LuaSourcePush (lua_State *luaState, CtlSourceT *source) {
   LuaAfbSourceT *afbSource = (LuaAfbSourceT *)calloc(1, sizeof(LuaAfbSourceT));
   if (!afbSource) {
       AFB_ApiError(source->api, "LuaSourcePush fail to allocate user data context");
@@ -94,7 +94,7 @@ STATIC LuaAfbSourceT *LuaSourcePush (lua_State *luaState, CtlSourceT *source) {
 }
 
 // Push a json structure on the stack as a LUA table
-STATIC int LuaPushArgument (CtlSourceT *source, json_object *argsJ) {
+static int LuaPushArgument (CtlSourceT *source, json_object *argsJ) {
 
     //AFB_NOTICE("LuaPushArgument argsJ=%s", json_object_get_string(argsJ));
 
@@ -144,12 +144,12 @@ STATIC int LuaPushArgument (CtlSourceT *source, json_object *argsJ) {
     return 1;
 }
 
-STATIC  json_object *LuaPopOneArg (CtlSourceT *source, lua_State* luaState, int idx);
+static  json_object *LuaPopOneArg (CtlSourceT *source, lua_State* luaState, int idx);
 
 // Move a table from Internal Lua representation to Json one
 // Numeric table are transformed in json array, string one in object
 // Mix numeric/string key are not supported
-STATIC json_object *LuaTableToJson (CtlSourceT *source, lua_State* luaState, int index) {
+static json_object *LuaTableToJson (CtlSourceT *source, lua_State* luaState, int index) {
     #define LUA_KEY_INDEX -2
     #define LUA_VALUE_INDEX -1
 
@@ -201,7 +201,7 @@ STATIC json_object *LuaTableToJson (CtlSourceT *source, lua_State* luaState, int
     return tableJ;
 }
 
-STATIC  json_object *LuaPopOneArg (CtlSourceT *source, lua_State* luaState, int idx) {
+static  json_object *LuaPopOneArg (CtlSourceT *source, lua_State* luaState, int idx) {
     json_object *value=NULL;
 
     int luaType = lua_type(luaState, idx);
@@ -254,25 +254,23 @@ static json_object *LuaPopArgs (CtlSourceT *source, lua_State* luaState, int sta
         responseJ= json_object_new_array();
         for (int idx=start; idx <= stop; idx++) {
             json_object *argJ=LuaPopOneArg (source, luaState, idx);
-            if (!argJ) goto OnErrorExit;
+            if (!argJ)
+                return NULL;
             json_object_array_add(responseJ, argJ);
        }
     }
 
     return responseJ;
-
-  OnErrorExit:
-    return NULL;
 }
 
 
 
-STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
+static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
     char *message;
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
-    if (!source) goto OnErrorExit;
-\
+    if (!source)
+        return 1;
 
     // if log level low then silently ignore message
 #ifdef AFB_BINDING_PREV3
@@ -285,7 +283,7 @@ STATIC int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 
     if (!responseJ) {
         luaL_error(luaState,"LuaFormatMessage empty message");
-        goto OnErrorExit;
+        return 1;
     }
 
     // if we have only on argument just return the value.
@@ -353,41 +351,40 @@ PrintMessage:
     AFB_ApiVerbose(source->api, level,__FILE__,__LINE__,source->uid, "%s", message);
     json_object_put(responseJ);
     return 0;  // nothing return to lua
-
-  OnErrorExit: // on argument to return (the error message)
-    json_object_put(responseJ);
-    return 1;
 }
 
 
-STATIC int LuaPrintInfo(lua_State* luaState) {
+static int LuaPrintInfo(lua_State* luaState) {
     int err=LuaFormatMessage (luaState, AFB_VERBOSITY_LEVEL_INFO, _AFB_SYSLOG_LEVEL_INFO_);
     return err;
 }
 
-STATIC int LuaPrintError(lua_State* luaState) {
+static int LuaPrintError(lua_State* luaState) {
     int err=LuaFormatMessage (luaState, AFB_VERBOSITY_LEVEL_ERROR,  _AFB_SYSLOG_LEVEL_ERROR_);
     return err; // no value return
 }
 
-STATIC int LuaPrintWarning(lua_State* luaState) {
+static int LuaPrintWarning(lua_State* luaState) {
     int err=LuaFormatMessage (luaState, AFB_VERBOSITY_LEVEL_WARNING,  _AFB_SYSLOG_LEVEL_WARNING_);
     return err;
 }
 
-STATIC int LuaPrintNotice(lua_State* luaState) {
+static int LuaPrintNotice(lua_State* luaState) {
     int err=LuaFormatMessage (luaState, AFB_VERBOSITY_LEVEL_NOTICE,  _AFB_SYSLOG_LEVEL_NOTICE_);
     return err;
 }
 
-STATIC int LuaPrintDebug(lua_State* luaState) {
+static int LuaPrintDebug(lua_State* luaState) {
     int err=LuaFormatMessage (luaState, AFB_VERBOSITY_LEVEL_DEBUG,  _AFB_SYSLOG_LEVEL_DEBUG_);
     return err;
 }
 
-STATIC int LuaAfbSuccess(lua_State* luaState) {
+static int LuaAfbSuccess(lua_State* luaState) {
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
-    if (!source) goto OnErrorExit;
+    if (!source) {
+        lua_error(luaState);
+        return 1;
+    }
 
     // ignore context argument
     json_object *responseJ= LuaPopArgs(source, luaState, LUA_FIST_ARG+1);
@@ -397,15 +394,14 @@ STATIC int LuaAfbSuccess(lua_State* luaState) {
 
     json_object_put(responseJ);
     return 0;
-
- OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbFail(lua_State* luaState) {
+static int LuaAfbFail(lua_State* luaState) {
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
-    if (!source) goto OnErrorExit;
+    if (!source) {
+        lua_error(luaState);
+        return 1;
+    }
 
     json_object *responseJ= LuaPopArgs(source, luaState, LUA_FIST_ARG+1);
     if (responseJ == JSON_ERROR) return 1;
@@ -414,16 +410,12 @@ STATIC int LuaAfbFail(lua_State* luaState) {
 
     json_object_put(responseJ);
     return 0;
-
- OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
 #ifdef AFB_BINDING_PREV3
-STATIC void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ, AFB_ApiT apiHandle) {
+static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ, AFB_ApiT apiHandle) {
 #else
-STATIC void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ) {
+static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ) {
 #endif
     LuaCbHandleT *handleCb= (LuaCbHandleT*)handle;
     int count=1;
@@ -449,19 +441,21 @@ STATIC void LuaAfbServiceCB(void *handle, int iserror, struct json_object *respo
 }
 
 
-STATIC int LuaAfbService(lua_State* luaState) {
+static int LuaAfbService(lua_State* luaState) {
     int count = lua_gettop(luaState);
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbService-Fail Invalid request handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // note: argument start at 2 because of AFB: table
     if (count <6 || !lua_isstring(luaState, 3) || !lua_isstring(luaState, 4) || !lua_isstring(luaState, 6)) {
         lua_pushliteral (luaState, "ERROR: syntax AFB:service(source, api, verb, {[Lua Table]})");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // get api/verb+query
@@ -481,26 +475,24 @@ STATIC int LuaAfbService(lua_State* luaState) {
     AFB_ServiceCall(source->api, api, verb, queryJ, LuaAfbServiceCB, handleCb);
 
     return 0; // no value return
-
-  OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbServiceSync(lua_State* luaState) {
+static int LuaAfbServiceSync(lua_State* luaState) {
     int count = lua_gettop(luaState);
     json_object *responseJ;
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbServiceSync-Fail Invalid request handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // note: argument start at 2 because of AFB: table
     if (count != 5 || !lua_isstring(luaState, LUA_FIST_ARG+1) || !lua_isstring(luaState, LUA_FIST_ARG+2) || !lua_istable(luaState, LUA_FIST_ARG+3)) {
         lua_pushliteral (luaState, "ERROR: syntax AFB:servsync(api, verb, {[Lua Table]})");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
 
@@ -516,103 +508,102 @@ STATIC int LuaAfbServiceSync(lua_State* luaState) {
     count+= LuaPushArgument(source, responseJ);
 
     return count; // return count values
-
-  OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbEventPush(lua_State* luaState) {
+static int LuaAfbEventPush(lua_State* luaState) {
     LuaAfbEvent *afbevt;
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // if no private event handle then use default binding event
     if (!lua_islightuserdata(luaState, LUA_FIST_ARG+1)) {
         lua_pushliteral (luaState, "LuaAfbMakePush-Fail missing event handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIST_ARG+1);
 
     if (!AFB_EventIsValid(afbevt->event)) {
         lua_pushliteral (luaState, "LuaAfbMakePush-Fail invalid event");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     json_object *ctlEventJ= LuaTableToJson(source, luaState, LUA_FIST_ARG+2);
     if (!ctlEventJ) {
         lua_pushliteral (luaState, "LuaAfbEventPush-Syntax is AFB:signal ([evtHandle], {lua table})");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     int done = AFB_EventPush(afbevt->event, ctlEventJ);
     if (!done) {
         lua_pushliteral (luaState, "LuaAfbEventPush-Fail No Subscriber to event");
         AFB_ApiError(source->api, "LuaAfbEventPush-Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
     afbevt->count++;
     return 0;
-
-OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbEventSubscribe(lua_State* luaState) {
+static int LuaAfbEventSubscribe(lua_State* luaState) {
     LuaAfbEvent *afbevt;
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // if no private event handle then use default binding event
     if (!lua_islightuserdata(luaState, LUA_FIST_ARG+1)) {
         lua_pushliteral (luaState, "LuaAfbMakePush-Fail missing event handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIST_ARG+1);
 
     if (!AFB_EventIsValid(afbevt->event)) {
         lua_pushliteral (luaState, "LuaAfbMakePush-Fail invalid event handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     int err = AFB_ReqSubscribe(source->request, afbevt->event);
     if (err) {
         lua_pushliteral (luaState, "LuaAfbEventSubscribe-Fail No Subscriber to event");
         AFB_ApiError(source->api, "LuaAfbEventPush-Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
     afbevt->count++;
     return 0;
-
-  OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbEventMake(lua_State* luaState) {
+static int LuaAfbEventMake(lua_State* luaState) {
     int count = lua_gettop(luaState);
     LuaAfbEvent *afbevt=calloc(1,sizeof(LuaAfbEvent));
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbEventMake-Fail Invalid request handle");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     if (count != LUA_FIST_ARG+1 || !lua_isstring(luaState, LUA_FIST_ARG+1)) {
         lua_pushliteral (luaState, "LuaAfbEventMake-Syntax is evtHandle= AFB:event ('myEventName')");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // event name should be the only argument
@@ -623,63 +614,51 @@ STATIC int LuaAfbEventMake(lua_State* luaState) {
     if (!AFB_EventIsValid(afbevt->event)) {
         AFB_ApiError (source->api,"Fail to CreateEvent evtname=%s",  afbevt->name);
         lua_pushliteral (luaState, "LuaAfbEventMake-Fail to Create Binder event");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1;
     }
 
     // push event handler as a LUA opaque handle
     lua_pushlightuserdata(luaState, afbevt);
     return 1;
-
-  OnErrorExit:
-        lua_error(luaState);
-        return 1;
 }
 
-STATIC int LuaAfbGetUid (lua_State* luaState) {
+static int LuaAfbGetUid (lua_State* luaState) {
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
-        goto OnErrorExit;
+        return 0;
     }
 
     // extract and return afbSource from timer handle
     lua_pushstring(luaState, source->uid);
 
     return 1; // return argument
-
-OnErrorExit:
-    return 0;
 }
 
-STATIC int LuaAfbGetStatus (lua_State* luaState) {
+static int LuaAfbGetStatus (lua_State* luaState) {
 
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
     if (!source) {
         lua_pushliteral (luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
-        goto OnErrorExit;
+        return 0;
     }
 
     // extract and return afbSource from timer handle
     lua_pushinteger(luaState, source->status);
 
     return 1; // return argument
-
-OnErrorExit:
-    return 0;
 }
 
 // Function call from LUA when lua2c plugin L2C is used
-// Rfor: Not using LUA_FIRST_ARG here because we didn't use
-// luaL_newlib function, so first args is on stack at first
-// position.
-PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback) {
+int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback) {
     lua_State* luaState = (lua_State*)luaHandle;
     json_object *responseJ=NULL;
 
-    CtlSourceT *source= LuaSourcePop(luaState, 1);
+    CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
 
-    json_object *argsJ= LuaPopArgs(source, luaState, 2);
+    json_object *argsJ= LuaPopArgs(source, luaState, LUA_FIST_ARG+1);
     int err= (*callback) (source, argsJ, &responseJ);
 
     // push error code and eventual response to LUA
@@ -691,9 +670,9 @@ PUBLIC int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback
 }
 
 // Call a Lua function from a control action
-PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) {
+int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) {
 
-    int err, count;
+    int err = 0, count = 1;
 
     json_object* argsJ   = action->argsJ;
     const char*  func    = action->exec.lua.funcname;
@@ -702,16 +681,17 @@ PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *que
     lua_getglobal(luaState, func);
 
     // push source on the stack
-    count=1;
     // Push AFB client context on the stack
-    LuaAfbSourceT *afbSource= LuaSourcePush(luaState, source);
-    if (!afbSource) goto OnErrorExit;
+    LuaAfbSourceT *afbSource = LuaSourcePush(luaState, source);
+    if (!afbSource)
+        return -1;
 
     // push argsJ on the stack
     if (!argsJ) {
-        lua_pushnil(luaState); count++;
+        lua_pushnil(luaState);
+        count++;
     } else {
-        count+= LuaPushArgument (source, argsJ);
+        count += LuaPushArgument(source, argsJ);
     }
 
     // push queryJ on the stack
@@ -719,25 +699,22 @@ PUBLIC int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *que
         lua_pushnil(luaState);
         count++;
     } else {
-        count+= LuaPushArgument (source, queryJ);
+        count += LuaPushArgument(source, queryJ);
     }
 
     // effectively exec LUA script code
-    err=lua_pcall(luaState, count, 1, 0);
+    err = lua_pcall(luaState, count, 1, 0);
     if (err)  {
         AFB_ApiError(source->api, "LuaCallFunc Fail calling %s error=%s", func, lua_tostring(luaState,-1));
-        goto OnErrorExit;
+        return -1;
     }
 
     // return LUA script value
     int rc= (int)lua_tointeger(luaState, -1);
     return rc;
-
-  OnErrorExit:
-    return -1;
 }
 
-PUBLIC int luaLoadScript(const char *luaScriptPath)
+int LuaLoadScript(const char *luaScriptPath)
 {
     int err = 0;
 
@@ -754,7 +731,7 @@ PUBLIC int luaLoadScript(const char *luaScriptPath)
     return err;
 }
 
-STATIC int LuaDoScript(json_object *queryJ, CtlSourceT *source)
+static int LuaDoScript(json_object *queryJ, CtlSourceT *source)
 {
     const char *uid = NULL, *func = NULL;
     char luaScriptPath[CONTROL_MAXPATH_LEN];
@@ -830,7 +807,7 @@ STATIC int LuaDoScript(json_object *queryJ, CtlSourceT *source)
     return 0;
 }
 
-STATIC int LuaDoCall(json_object *queryJ, CtlSourceT *source)
+static int LuaDoCall(json_object *queryJ, CtlSourceT *source)
 {
     int err = 0;
     int count = 0;
@@ -863,7 +840,7 @@ STATIC int LuaDoCall(json_object *queryJ, CtlSourceT *source)
     return count;
 }
 
-STATIC int LuaDoString(const char *script, CtlSourceT *source)
+static int LuaDoString(const char *script, CtlSourceT *source)
 {
     int err = 0;
 
@@ -882,7 +859,7 @@ STATIC int LuaDoString(const char *script, CtlSourceT *source)
 }
 
 // Execute LUA code from received API request
-STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
+static void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
     int err, count=0;
     CtlSourceT *source = alloca(sizeof(CtlSourceT));
     source->request = request;
@@ -915,36 +892,34 @@ STATIC void LuaDoAction (LuaDoActionT action, AFB_ReqT request) {
 
         default:
             AFB_ApiError(source->api, "LUA-DOSCRIPT-ACTION unknown query=%s", json_object_get_string(queryJ));
-            goto OnErrorExit;
+            AFB_ReqFail(request,"LUA:ERROR", lua_tostring(luaState,-1));
+            return;
     }
 
     if(count >= 0)
         err=lua_pcall(luaState, count+1, 0, 0);
     if (err) {
         AFB_ApiError(source->api, "LUA-DO-EXEC:FAIL query=%s err=%s", json_object_get_string(queryJ), lua_tostring(luaState,-1));
-        goto OnErrorExit;
+        AFB_ReqFail(request,"LUA:ERROR", lua_tostring(luaState,-1));
+        return;
     }
-    return;
-
- OnErrorExit:
-    AFB_ReqFail(request,"LUA:ERROR", lua_tostring(luaState,-1));
     return;
 }
 
-PUBLIC void ctlapi_execlua (AFB_ReqT request) {
+void ctlapi_execlua (AFB_ReqT request) {
     LuaDoAction (LUA_DOSTRING, request);
 }
 
-PUBLIC void ctlapi_request (AFB_ReqT request) {
+void ctlapi_request (AFB_ReqT request) {
     LuaDoAction (LUA_DOCALL, request);
 }
 
-PUBLIC void ctlapi_debuglua (AFB_ReqT request) {
+void ctlapi_debuglua (AFB_ReqT request) {
     LuaDoAction (LUA_DOSCRIPT, request);
 }
 
 
-STATIC TimerHandleT *LuaTimerPop (lua_State *luaState, int index) {
+static TimerHandleT *LuaTimerPop (lua_State *luaState, int index) {
   TimerHandleT *timerHandle;
 
   luaL_checktype(luaState, index, LUA_TLIGHTUSERDATA);
@@ -958,11 +933,12 @@ STATIC TimerHandleT *LuaTimerPop (lua_State *luaState, int index) {
   return timerHandle;
 }
 
-STATIC int LuaTimerClear (lua_State* luaState) {
+static int LuaTimerClear (lua_State* luaState) {
 
     // retrieve useful information opaque handle
     TimerHandleT *timerHandle = LuaTimerPop(luaState, LUA_FIST_ARG);
-    if (!timerHandle) goto OnErrorExit;
+    if (!timerHandle)
+        return 1;
 
 #ifdef AFB_BINDING_PREV3
     // API handle does not exit in API-V2
@@ -972,15 +948,13 @@ STATIC int LuaTimerClear (lua_State* luaState) {
     TimerEvtStop(timerHandle);
 
     return 0; //happy end
-
-OnErrorExit:
-    return 1;
 }
-STATIC int LuaTimerGet (lua_State* luaState) {
+static int LuaTimerGet (lua_State* luaState) {
 
     // retrieve useful information opaque handle
     TimerHandleT *timerHandle = LuaTimerPop(luaState, LUA_FIST_ARG);
-    if (!timerHandle) goto OnErrorExit;
+    if (!timerHandle)
+        return 0;
     LuaCbHandleT *luaCbHandle = (LuaCbHandleT*) timerHandle->context;
 
     // create response as a JSON object
@@ -996,15 +970,12 @@ STATIC int LuaTimerGet (lua_State* luaState) {
     json_object_put(responseJ);
 
     return count; // return argument
-
-OnErrorExit:
-    return 0;
 }
 
 // Timer Callback
 
 // Set timer
-STATIC int LuaTimerSetCB (TimerHandleT *timer) {
+static int LuaTimerSetCB (TimerHandleT *timer) {
     LuaCbHandleT *LuaCbHandle = (LuaCbHandleT*) timer->context;
     int count;
 
@@ -1014,12 +985,14 @@ STATIC int LuaTimerSetCB (TimerHandleT *timer) {
     // Push AFB client context on the stack
     count=1;
     LuaAfbSourceT *afbSource= LuaSourcePush(luaState, LuaCbHandle->source);
-    if (!afbSource) goto OnErrorExit;
+    if (!afbSource)
+        return 1;
 
     // Push AFB client context on the stack
     count ++;
     lua_pushlightuserdata(luaState, timer);
-    if (!afbSource) goto OnErrorExit;
+    if (!afbSource)
+        return 1;
 
     // Push user Context
     count+= LuaPushArgument(LuaCbHandle->source, LuaCbHandle->context);
@@ -1027,7 +1000,7 @@ STATIC int LuaTimerSetCB (TimerHandleT *timer) {
     int err=lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
         AFB_ApiError (LuaCbHandle->source->api,"LUA-TIMER-CB:FAIL response=%s err=%s", json_object_get_string(LuaCbHandle->context), lua_tostring(luaState,-1));
-        goto OnErrorExit;
+        return 1;
     }
 
     // get return parameter
@@ -1036,13 +1009,10 @@ STATIC int LuaTimerSetCB (TimerHandleT *timer) {
     }
 
     return 0;  // By default we are happy
-
- OnErrorExit:
-    return 1;  // stop timer
 }
 
 // Free Timer context handle
-STATIC int LuaTimerCtxFree(void *handle) {
+static int LuaTimerCtxFree(void *handle) {
     LuaCbHandleT *LuaCbHandle = (LuaCbHandleT*) handle;
 
     free (LuaCbHandle->source);
@@ -1051,13 +1021,16 @@ STATIC int LuaTimerCtxFree(void *handle) {
     return 0;
 }
 
-STATIC int LuaTimerSet(lua_State* luaState) {
+static int LuaTimerSet(lua_State* luaState) {
     const char *uid=NULL, *info=NULL;
     int delay=0, count=0;
 
     // Get source handle
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
-    if (!source) goto OnErrorExit;
+    if (!source) {
+        lua_error(luaState);
+        return 1; // return error code
+    }
 
     json_object *timerJ = LuaPopOneArg(source, luaState, LUA_FIST_ARG+1);
     const char *callback = lua_tostring(luaState, LUA_FIST_ARG + 2);
@@ -1065,7 +1038,8 @@ STATIC int LuaTimerSet(lua_State* luaState) {
 
     if (lua_gettop(luaState) != LUA_FIST_ARG+3 || !timerJ || !callback || !contextJ) {
         lua_pushliteral(luaState, "LuaTimerSet: Syntax timerset (source, timerT, 'callback', contextT)");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1; // return error code
     }
 
     int err = wrap_json_unpack(timerJ, "{ss, s?s si, si !}",
@@ -1076,7 +1050,8 @@ STATIC int LuaTimerSet(lua_State* luaState) {
     if (err) {
 
         lua_pushliteral(luaState, "LuaTimerSet: Syntax timerT={uid:xxx delay:ms, count:xx}");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1; // return error code
     }
 
     // Allocate handle to store context and callback
@@ -1103,10 +1078,6 @@ STATIC int LuaTimerSet(lua_State* luaState) {
     lua_pushnil(luaState);
     lua_pushlightuserdata(luaState, timerHandle);
     return 2;
-
-OnErrorExit:
-    lua_error(luaState);
-    return 1; // return error code
 }
 
 typedef struct {
@@ -1116,7 +1087,7 @@ typedef struct {
 } LuaClientCtxT;
 
 
-STATIC void *LuaClientCtxNew (void * handle) {
+static void *LuaClientCtxNew (void * handle) {
 
     LuaClientCtxT *clientCtx = (LuaClientCtxT*) handle;
     int count=1;
@@ -1129,7 +1100,8 @@ STATIC void *LuaClientCtxNew (void * handle) {
 
     // Push AFB client context on the stack
     LuaAfbSourceT *afbSource= LuaSourcePush(luaState, clientCtx->source);
-    if (!afbSource) goto OnErrorExit;
+    if (!afbSource)
+        return NULL;
 
     // Push user Context
     count+= LuaPushArgument(clientCtx->source, clientCtx->clientCtxJ);
@@ -1137,23 +1109,19 @@ STATIC void *LuaClientCtxNew (void * handle) {
     int err=lua_pcall(luaState, count, 1, 0);
     if (err) {
         AFB_ApiError (clientCtx->source->api,"LuaClientCtxNew:FAIL response=%s err=%s", json_object_get_string(clientCtx->clientCtxJ), lua_tostring(luaState,-1));
-        goto OnErrorExit;
+        return NULL;
     }
 
     // If function return an error status then free client context
     if (lua_tointeger(luaState, -1)) {
         free (clientCtx);
-        goto OnErrorExit;
+        return NULL;
     }
 
     return handle;  // By default we are happy
-
-OnErrorExit:
-    return NULL;
-
 }
 
-STATIC void LuaClientCtxFree (void * handle) {
+static void LuaClientCtxFree (void * handle) {
 
     LuaClientCtxT *clientCtx = (LuaClientCtxT*) handle;
     int count=1;
@@ -1168,7 +1136,8 @@ STATIC void LuaClientCtxFree (void * handle) {
 
     // Push AFB client context on the stack
     LuaAfbSourceT *afbSource= LuaSourcePush(luaState, clientCtx->source);
-    if (!afbSource) goto OnErrorExit;
+    if (!afbSource)
+        return;
 
     // Push user Context
     count+= LuaPushArgument(clientCtx->source, clientCtx->clientCtxJ);
@@ -1176,38 +1145,38 @@ STATIC void LuaClientCtxFree (void * handle) {
     int err=lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
         AFB_ApiError (clientCtx->source->api,"LuaClientCtxFree:FAIL response=%s err=%s", json_object_get_string(clientCtx->clientCtxJ), lua_tostring(luaState,-1));
-        goto OnErrorExit;
+        return;
     }
 
     // If function return an error status then free client context
     if (lua_toboolean(luaState, -1)) {
         free (clientCtx);
-        goto OnErrorExit;
+        return;
     }
 
     return;  // No return status
-
-OnErrorExit:
-    return;
-
 }
 
 // set a context that will be free when WS is closed
-STATIC int LuaClientCtx(lua_State* luaState) {
-
+static int LuaClientCtx(lua_State* luaState) {
     // Get source handle
     CtlSourceT *source= LuaSourcePop(luaState, LUA_FIST_ARG);
-    if (!source) goto OnErrorExit;
+    if (!source) {
+        lua_error(luaState);
+        return 1; // return error code
+    }
 
     if (!AFB_ReqIsValid (source->request)) {
         lua_pushliteral(luaState, "LuaSessionSet-Syntax should be called within client request context");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1; // return error code
     }
 
     // in only one arg then we should free the clientCtx
     if (lua_gettop(luaState) == LUA_FIST_ARG) {
         AFB_ClientCtxClear(source->request);
-        goto OnSuccessExit;
+        lua_pushnil(luaState);
+        return 1;
     }
 
     const char *callback = lua_tostring(luaState, LUA_FIST_ARG + 1);
@@ -1215,7 +1184,8 @@ STATIC int LuaClientCtx(lua_State* luaState) {
 
     if (lua_gettop(luaState) != LUA_FIST_ARG+2 || !clientCtxJ || !callback) {
         lua_pushliteral(luaState, "LuaClientCtx-Syntax clientCtx (source, callback, clientCtx)");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1; // return error code
     }
 
     // Allocate handle to store clientCtx and callback
@@ -1229,16 +1199,11 @@ STATIC int LuaClientCtx(lua_State* luaState) {
     void *done = AFB_ClientCtxSet (source->request, 1, LuaClientCtxNew, LuaClientCtxFree, clientCtx);
     if (!done) {
         lua_pushliteral(luaState, "LuaClientCtx-Fail to allocate client context)");
-        goto OnErrorExit;
+        lua_error(luaState);
+        return 1; // return error code
     }
 
-OnSuccessExit:
-    lua_pushnil(luaState);
     return 1;
-
-OnErrorExit:
-    lua_error(luaState);
-    return 1; // return error code
 }
 
 
@@ -1275,7 +1240,7 @@ static const luaL_Reg afbFunction[] = {
 };
 
 // Load Lua Interpreter
-PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
+int LuaConfigLoad (AFB_ApiT apiHandle) {
     static int luaLoaded=0, err = 0;
     //int err = 0;
 
@@ -1287,7 +1252,8 @@ PUBLIC int LuaConfigLoad (AFB_ApiT apiHandle) {
     luaState = luaL_newstate();
     if (!luaState)  {
         AFB_ApiError(apiHandle, "LUA_INIT: Fail to open lua interpretor");
-        goto OnErrorExit;
+        free(luaState);
+        return 1;
     }
 
     // load auxiliary libraries

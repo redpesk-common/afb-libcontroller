@@ -25,7 +25,7 @@
 
 // Event dynamic API-V3 mode
 #ifdef AFB_BINDING_PREV3
-PUBLIC void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ) {
+void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ) {
     AFB_ApiNotice (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
 
     // retrieve section config from api handle
@@ -54,7 +54,7 @@ PUBLIC void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, stru
 extern CtlConfigT *ctrlConfig;
 
 // call action attached to even name if any
-PUBLIC void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
+void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
     CtlActionT* actions = ctrlConfig->sections[CTL_SECTION_EVENT].actions;
 
     int index= ActionLabelToIndex(actions, evtLabel);
@@ -74,7 +74,7 @@ PUBLIC void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
 #endif
 
 // onload section receive one action or an array of actions
-PUBLIC int EventConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int EventConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
 
     // Load time parse actions in config file
     if (actionsJ != NULL) {
@@ -82,13 +82,9 @@ PUBLIC int EventConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *ac
 
         if (!section->actions) {
             AFB_ApiError (apiHandle, "EventLoad config fail processing onload actions");
-            goto OnErrorExit;
+            return 1;
         }
     }
 
     return 0;
-
-OnErrorExit:
-    return 1;
-
 }

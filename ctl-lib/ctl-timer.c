@@ -31,13 +31,16 @@ typedef struct {
 } AutoTestCtxT;
 
 
-STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
+static int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     TimerHandleT *timerHandle = (TimerHandleT*) handle;
     int done;
     uint64_t usec;
 
     done= timerHandle->callback(timerHandle);
-    if (!done) goto OnErrorExit;
+    if (!done) {
+        AFB_ApiWarning(timerHandle->api, "TimerNext Callback Fail Tag=%s", timerHandle->uid);
+        return -1;
+    }
 
     // Rearm timer if needed
     timerHandle->count --;
@@ -55,20 +58,16 @@ STATIC int TimerNext (sd_event_source* source, uint64_t timer, void* handle) {
     }
 
     return 0;
-
-OnErrorExit:
-    AFB_ApiWarning(timerHandle->api, "TimerNext Callback Fail Tag=%s", timerHandle->uid);
-    return -1;
 }
 
-PUBLIC void TimerEvtStop(TimerHandleT *timerHandle) {
+void TimerEvtStop(TimerHandleT *timerHandle) {
 
     sd_event_source_unref(timerHandle->evtSource);
     free (timerHandle);
 }
 
 
-PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
+void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context) {
     uint64_t usec;
 
     // populate CB handle
@@ -83,7 +82,7 @@ PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCa
 
 
 // Create Binding Event at Init
-PUBLIC int TimerEvtInit (AFB_ApiT apiHandle) {
+int TimerEvtInit (AFB_ApiT apiHandle) {
 
     AFB_ApiDebug (apiHandle, "Timer-Init Done");
     return 0;

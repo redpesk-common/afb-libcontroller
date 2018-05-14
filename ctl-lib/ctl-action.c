@@ -24,14 +24,14 @@
 
 #include "ctl-config.h"
 
-PUBLIC int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
+int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
     for (int idx = 0; actions[idx].uid; idx++) {
         if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
     }
     return -1;
 }
 
-PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ)
+void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ)
 {
     for(int i=0; ctlConfig->sections[i].key != NULL; i++)
     {
@@ -53,7 +53,7 @@ PUBLIC void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *u
     }
 }
 
-PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
+void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err = 0;
 
     switch (action->type) {
@@ -120,7 +120,7 @@ PUBLIC void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *q
 
 // Direct Request Call in APIV3
 #ifdef AFB_BINDING_PREV3
-STATIC void ActionDynRequest (AFB_ReqT request) {
+static void ActionDynRequest (AFB_ReqT request) {
 
    // retrieve action handle from request and execute the request
    json_object *queryJ = afb_request_json(request);
@@ -249,7 +249,7 @@ static int BuildOneAction(AFB_ApiT apiHandle, CtlActionT *action, const char *ur
 }
 
 // unpack individual action object
-PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
+int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
     int err = 0;
     const char *uri = NULL, *function = NULL;
 
@@ -264,7 +264,7 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
         err = afb_dynapi_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0);
         if (err) {
             AFB_ApiError(apiHandle,"ACTION-LOAD-ONE fail to register API verb=%s", action->uid);
-            goto OnErrorExit;
+            return NULL;
         }
         action->api = apiHandle;
     }
@@ -294,7 +294,7 @@ PUBLIC int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *ac
     return err;
 }
 
-PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportApi) {
+CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportApi) {
     int err;
     CtlActionT *actions;
 
@@ -307,17 +307,16 @@ PUBLIC CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int e
             json_object *actionJ = json_object_array_get_idx(actionsJ, idx);
 
             err = ActionLoadOne(apiHandle, &actions[idx], actionJ, exportApi);
-            if (err) goto OnErrorExit;
+            if (err)
+                return NULL;
         }
 
     } else {
         actions = calloc(2, sizeof (CtlActionT));
         err = ActionLoadOne(apiHandle, &actions[0], actionsJ, exportApi);
-        if (err) goto OnErrorExit;
+        if (err)
+            return NULL;
     }
 
     return actions;
-
-OnErrorExit:
-    return NULL;
 }

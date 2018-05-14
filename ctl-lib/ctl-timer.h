@@ -42,9 +42,9 @@ typedef struct TimerHandleS {
 
 typedef int (*timerCallbackT)(TimerHandleT *context);
 
-PUBLIC int TimerEvtInit (AFB_ApiT apiHandle);
-PUBLIC void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
-PUBLIC void TimerEvtStop(TimerHandleT *timerHandle);
+int TimerEvtInit (AFB_ApiT apiHandle);
+void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
+void TimerEvtStop(TimerHandleT *timerHandle);
 
 #ifdef __cplusplus
 }
