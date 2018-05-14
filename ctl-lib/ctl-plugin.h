@@ -242,9 +242,9 @@ typedef int (*Lua2cFunctionT)(CtlSourceT *source, json_object *argsJ, json_objec
 typedef int (*Lua2cWrapperT) (void*luaHandle, const char *funcname, Lua2cFunctionT callback);
 
 #define CTLP_LUA_REGISTER(pluglabel) Lua2cWrapperT Lua2cWrap; CTLP_CAPI_REGISTER(pluglabel);
-#define CTLP_LUA2C(funcname, source, argsJ, responseJ) static int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ);\
+#define CTLP_LUA2C(funcname, source, argsJ, responseJ) int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ);\
         int lua2c_ ## funcname (void* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(funcname), funcname));};\
-        static int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ)
+        int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ)
 
 #ifdef __cplusplus
 }

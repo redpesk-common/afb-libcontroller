@@ -65,6 +65,7 @@ int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
 void ctlapi_lua_docall (afb_req request);
 void ctlapi_lua_dostring (afb_req request);
 void ctlapi_lua_doscript (afb_req request);
+int LuaConfigExec(AFB_ApiT apiHandle);
 
 #ifdef __cplusplus
 }
