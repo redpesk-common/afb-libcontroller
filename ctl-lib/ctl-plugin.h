@@ -240,7 +240,7 @@ typedef int(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg
 #define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC}; struct afb_binding_data_v2;
-#define CTLP_ONLOAD(plugin, handle) void* CtlPluginOnload(CtlPluginT *plugin, void* handle)
+#define CTLP_ONLOAD(plugin, handle) int CtlPluginOnload(CtlPluginT *plugin, void* handle)
 #define CTLP_CAPI(funcname, source, argsJ, queryJ) int funcname(CtlSourceT *source, json_object* argsJ, json_object* queryJ)
 
 // LUA2c Wrapper macro. Allows to call C code from Lua script

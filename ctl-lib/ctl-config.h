@@ -87,7 +87,7 @@ typedef enum {
 // ctl-action.c
 CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
 void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
-void ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
+int ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
 int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
 int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 

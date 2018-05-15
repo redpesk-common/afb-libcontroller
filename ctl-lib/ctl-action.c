@@ -51,7 +51,7 @@ void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, jso
     }
 }
 
-void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
+int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err = 0;
 
     switch (action->type) {
@@ -114,6 +114,7 @@ void ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) 
         }
     }
     json_object_put(queryJ);
+    return err;
 }
 
 
