@@ -44,8 +44,10 @@ int CtlConfigMagicNew() {
 
  json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     char controlFile [CONTROL_MAXPATH_LEN];
+    const char *binderName = GetBinderName();
+
     strncpy(controlFile, prefix, strlen(prefix)+1);
-    strncat(controlFile, GetBinderName(), strlen(GetBinderName()));
+    strncat(controlFile, binderName, strlen(binderName));
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
@@ -112,7 +114,7 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     // load static LUA utilities
     LuaConfigExec(apiHandle);
 #endif
-    
+
     // Loop on every section and process config
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
