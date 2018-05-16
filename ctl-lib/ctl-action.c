@@ -21,8 +21,6 @@
 #define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
-#include <assert.h>
-
 
 #include "ctl-config.h"
 
@@ -310,7 +308,8 @@ int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, 
         if (!err) {
             // in API V3 each control is optionally map to a verb
 #ifdef AFB_BINDING_PREV3
-            assert(apiHandle);
+            if(!apiHandle)
+                return -1;
             action->api = apiHandle;
             if (exportApi) {
                 err = afb_dynapi_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0);
