@@ -27,9 +27,12 @@
 #include "ctl-config.h"
 
 int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
-    for (int idx = 0; actions[idx].uid; idx++) {
-        if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
+    if (actions) {
+        for (int idx = 0; actions[idx].uid; idx++) {
+            if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
+        }
     }
+
     return -1;
 }
 
