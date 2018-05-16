@@ -281,21 +281,31 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     int err = 0, i = 0;
     char *searchPath;
     const char *sPath = NULL, *file = NULL, *lua2c_prefix = NULL;
-    json_object *lua2csJ = NULL, *fileJ = NULL, *pluginPathJ = NULL;
+    json_object *luaJ = NULL, *lua2csJ = NULL, *fileJ = NULL, *pluginPathJ = NULL;
 
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
 
-    err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?o,s?o,s?s !}",
+    err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?o,s?o !}",
             "uid", &ctlPlugin->uid,
             "info", &ctlPlugin->info,
             "spath", &sPath,
-            "files", &fileJ,
-            "lua2c", &lua2csJ,
-            "lua2c_prefix", &lua2c_prefix);
+            "libs", &fileJ,
+            "lua", &luaJ
+            );
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|file|[ldpath]|[lua2c] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|libs|[spath]|[lua] in:\n-- %s", json_object_get_string(pluginJ));
         return 1;
+    }
+
+    if(luaJ) {
+        err = wrap_json_unpack(luaJ, "{ss,s?o !}",
+            "prefix", &lua2c_prefix,
+            "functions", &lua2csJ);
+        if(err) {
+            AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing 'function' in:\n-- %s", json_object_get_string(pluginJ));
+            return 1;
+        }
     }
 
     // if search path not in Json config file, then try default
