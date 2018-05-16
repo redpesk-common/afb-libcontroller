@@ -752,7 +752,7 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
     err = wrap_json_unpack(queryJ, "{s:s,s?s,s?s,s?o !}",
             "uid", &uid,
             "spath", &luaScriptPathJ,
-            "function", &func,
+            "action", &func,
             "args", &argsJ);
 
     if (err) {
