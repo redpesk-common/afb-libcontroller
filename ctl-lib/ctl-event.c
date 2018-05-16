@@ -26,27 +26,35 @@
 // Event dynamic API-V3 mode
 #ifdef AFB_BINDING_PREV3
 void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ) {
+    int idx = 0;
+    CtlActionT* actions = NULL;
     AFB_ApiNotice (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
 
     // retrieve section config from api handle
     CtlConfigT *ctrlConfig = (CtlConfigT*) afb_dynapi_get_userdata(apiHandle);
 
-    CtlActionT* actions = ctrlConfig->sections[CTL_SECTION_EVENT].actions;
+    for (idx = 0; ctrlConfig->sections[idx].key != NULL; ++idx)
+    {
+        if(! strcasecmp(ctrlConfig->sections[idx].key, "events")) {
+            actions = ctrlConfig->sections[idx].actions;
+            break;
+        }
+    }
 
-    int index= ActionLabelToIndex(actions, evtLabel);
-    if (index < 0) {
+    idx = ActionLabelToIndex(actions, evtLabel);
+    if (idx < 0) {
         AFB_ApiWarning(apiHandle, "CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
         return;
     }
 
     // create a dummy source for action
     CtlSourceT source;
-    source.uid = actions[index].uid;
-    source.api   = actions[index].api;
+    source.uid = actions[idx].uid;
+    source.api = actions[idx].api;
     source.request = NULL;
 
     // Best effort ignoring error to exec corresponding action
-    (void) ActionExecOne (&source, &actions[index], eventJ);
+    (void) ActionExecOne (&source, &actions[idx], json_object_get(eventJ));
 
 }
 #else
@@ -69,7 +77,7 @@ void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
     source.request = AFB_ReqNone;
 
     // Best effort ignoring error to exec corresponding action
-    (void) ActionExecOne (&source, &actions[index], eventJ);
+    (void) ActionExecOne (&source, &actions[index], json_object_get(eventJ));
 }
 #endif
 
