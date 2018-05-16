@@ -494,7 +494,7 @@ static int LuaAfbServiceSync(lua_State* luaState) {
 
     // note: argument start at 2 because of AFB: table
     if (count != 5 || !lua_isstring(luaState, LUA_FIST_ARG + 1) || !lua_isstring(luaState, LUA_FIST_ARG + 2) || !lua_istable(luaState, LUA_FIST_ARG + 3)) {
-        lua_pushliteral(luaState, "ERROR: syntax AFB:servsync(api, verb, {[Lua Table]})");
+        lua_pushliteral(luaState, "ERROR: syntax AFB:servsync(source, api, verb, {[Lua Table]})");
         lua_error(luaState);
         return 1;
     }
@@ -1253,7 +1253,7 @@ static const luaL_Reg afbFunction[] = {
 
 int LuaConfigExec(AFB_ApiT apiHandle) {
     int err;
-    
+
     // Load LUA utils functions.
     err = LuaDoString(lua_utils, NULL);
     if (err) {
