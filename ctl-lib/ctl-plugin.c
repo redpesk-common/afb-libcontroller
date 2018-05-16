@@ -290,7 +290,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
             "uid", &ctlPlugin->uid,
             "info", &ctlPlugin->info,
             "spath", &sPath,
-            "file", &fileJ,
+            "files", &fileJ,
             "lua2c", &lua2csJ,
             "lua2c_prefix", &lua2c_prefix);
     if (err) {
