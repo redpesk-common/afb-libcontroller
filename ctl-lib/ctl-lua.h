@@ -29,11 +29,6 @@ extern "C" {
 #define _GNU_SOURCE
 #endif
 
-// prefix start debug script
-#ifndef CONTROL_DOSCRIPT_PRE
-#define CONTROL_DOSCRIPT_PRE "debug"
-#endif
-
 // default event name used by LUA
 #ifndef CONTROL_LUA_EVENT
 #define CONTROL_LUA_EVENT "luaevt"

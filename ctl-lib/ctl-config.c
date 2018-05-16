@@ -42,12 +42,14 @@ int CtlConfigMagicNew() {
   return ((long)rand());
 }
 
- json_object* CtlConfigScan(const char *dirList, const char *prefix) {
-    char controlFile [CONTROL_MAXPATH_LEN];
+json_object* CtlConfigScan(const char *dirList, const char *prefix) {
+    char controlFile[CONTROL_MAXPATH_LEN];
     const char *binderName = GetBinderName();
 
-    strncpy(controlFile, prefix, strlen(prefix)+1);
-    strncat(controlFile, binderName, strlen(binderName));
+    controlFile[CONTROL_MAXPATH_LEN - 1] = '\0';
+
+    strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN - 1);
+    strncat(controlFile, binderName, CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
 
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
@@ -57,33 +59,38 @@ int CtlConfigMagicNew() {
 
 char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
-    char filepath[CONTROL_MAXPATH_LEN];
+    size_t p_length;
+    char *filepath;
+    const char *filename;
+    const char*fullpath;
+
     for (int index = 0; index < json_object_array_length(responseJ); index++) {
         json_object *entryJ = json_object_array_get_idx(responseJ, index);
 
-        char *filename;
-        char*fullpath;
         int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
             AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
         }
 
-        if (index == 0) {
-            strncpy(filepath, fullpath, strlen(fullpath)+1);
-            strncat(filepath, "/", strlen("/"));
-            strncat(filepath, filename, strlen(filename));
+        p_length = strlen(fullpath) + 1 + strlen(filename);
+        filepath = malloc(p_length + 1);
+        if (index == 0 && filepath) {
+            strncpy(filepath, fullpath, p_length);
+            strncat(filepath, "/", p_length - strlen(filepath));
+            strncat(filepath, filename, p_length - strlen(filepath));
         }
     }
 
     json_object_put(responseJ);
-    return strndup(filepath, sizeof(filepath));
+    return filepath;
 }
 
 char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
 
-    if(responseJ) return ConfigSearch(apiHandle, responseJ);
+    if(responseJ)
+        return ConfigSearch(apiHandle, responseJ);
 
     return NULL;
 }
@@ -172,6 +179,7 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
 json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ, json_object *filesJ) {
 
     json_object *sectionArrayJ;
+    char *oneFile;
     const char *bindingPath = GetBindingDirPath(apiHandle);
 
     if(! json_object_is_type(sectionJ, json_type_array)) {
@@ -196,7 +204,7 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
                 AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, bindingPath);
                 return sectionArrayJ;
             }
-            const char *oneFile = ConfigSearch(apiHandle, responseJ);
+            oneFile = ConfigSearch(apiHandle, responseJ);
             if (oneFile) {
                 json_object *newSectionJ, *newFileJ = json_object_from_file(oneFile);
                 json_object_object_get_ex(newFileJ, key, &newSectionJ);
@@ -215,12 +223,13 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
             AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, bindingPath);
             return sectionArrayJ;
         }
-        const char *oneFile = ConfigSearch(apiHandle, responseJ);
+        oneFile = ConfigSearch(apiHandle, responseJ);
         json_object *newSectionJ = json_object_from_file(oneFile);
         LoadAdditionalsFiles(apiHandle, ctlHandle, key, newSectionJ);
         wrap_json_optarray_for_all(newSectionJ, wrap_json_array_add, sectionArrayJ);
     }
 
+    free(oneFile);
     return sectionArrayJ;
 }
 

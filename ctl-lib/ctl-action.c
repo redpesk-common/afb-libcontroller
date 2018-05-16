@@ -139,29 +139,28 @@ static void ActionDynRequest(AFB_ReqT request) {
 
 void ParseURI(const char *uri, char **first, char **second)
 {
-    size_t first_len = 0, second_len = 0;
-    const char *tmp;
+    char *tmp;
 
     if(! uri || ! first || ! second) {
         return;
     }
 
-    tmp = strchr(uri, '#');
-    first_len = strlen(uri);
-
+    tmp = strdup(uri);
     if (!tmp) {
-        *first = calloc(1, sizeof(char) * first_len);
-        strcpy(*first, uri);
+        *first = NULL;
+        *second = NULL;
+        return;
+    }
+
+    *first = tmp;
+
+    tmp = strchrnul(tmp, '#');
+    if(tmp[0] == '\0') {
+        *second = NULL;
     }
     else {
-        second_len = strlen(tmp);
-        first_len = first_len - second_len;
-
-        *first = calloc(1, sizeof(char) * first_len);
-        *second = calloc(1, sizeof(char) * second_len);
-
-        strncpy(*first, uri, first_len);
-        strncpy(*second, tmp+1, second_len);
+        tmp[0] = '\0';
+        *second = &tmp[1];
     }
 }
 

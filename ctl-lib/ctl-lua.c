@@ -738,12 +738,13 @@ int LuaLoadScript(const char *luaScriptPath) {
 }
 
 static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
-    const char *uid = NULL, *func = NULL;
-    char luaScriptPath[CONTROL_MAXPATH_LEN];
-    char *filename, *fullpath;
+    const char *uid = NULL, *func = NULL, *filename = NULL, *fullpath = NULL;
+    char *luaScriptPath = NULL;
     int index, err = 0;
+    size_t p_length = 0;
     json_object *argsJ = NULL;
     static json_object *luaScriptPathJ = NULL;
+
 
     if (!queryJ) {
         return -1;
@@ -756,15 +757,20 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
             "args", &argsJ);
 
     if (err) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN: Miss something in JSON object uid|[spath]|action|[args]: %s", json_object_get_string(queryJ));
         return -1;
     }
 
-    // search for filename=script in CONTROL_LUA_PATH
+    // search for filename=uid*.lua or fallback on bindername*.lua in current directory
     if (!luaScriptPathJ) {
-        strncpy(luaScriptPath, CONTROL_DOSCRIPT_PRE, strlen(CONTROL_DOSCRIPT_PRE) + 1);
-        strncat(luaScriptPath, "-", strlen("-"));
-        strncat(luaScriptPath, uid, strlen(uid));
-        luaScriptPathJ = ScanForConfig(luaScriptPath, CTL_SCAN_RECURSIVE, luaScriptPath, ".lua");
+        luaScriptPathJ = ScanForConfig(".", CTL_SCAN_RECURSIVE, uid, ".lua");
+        if (!luaScriptPathJ)
+            luaScriptPathJ = ScanForConfig(".", CTL_SCAN_RECURSIVE, GetBinderName(), ".lua");
+    }
+
+    if(!luaScriptPathJ) {
+        AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN: No script found");
+        return -1;
     }
 
     for (index = 0; index < json_object_array_length(luaScriptPathJ); index++) {
@@ -773,14 +779,17 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
         err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
             AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN:HOOPs invalid config file path = %s", json_object_get_string(entryJ));
-            return -2;
+            return -1;
         }
 
         // Ignoring other found script. Only take the first one.
         if (!index) {
-            strncpy(luaScriptPath, fullpath, strlen(fullpath) + 1);
-            strncat(luaScriptPath, "/", strlen("/"));
-            strncat(luaScriptPath, filename, strlen(filename));
+            p_length = strlen(fullpath) + 1 + strlen(filename);
+            luaScriptPath = malloc(p_length + 1);
+
+            strncpy(luaScriptPath, fullpath, CONTROL_MAXPATH_LEN - 1);
+            strncat(luaScriptPath, "/", CONTROL_MAXPATH_LEN - strlen(luaScriptPath) - 1);
+            strncat(luaScriptPath, filename, CONTROL_MAXPATH_LEN - strlen(luaScriptPath) - 1);
         }
     }
 
@@ -792,13 +801,13 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
 
     // if no func name given try to deduct from filename
     if (!func && (func = (char*) GetMidleName(filename)) != NULL) {
-        strncpy(luaScriptPath, "_", strlen("_") + 1);
-        strncat(luaScriptPath, func, strlen(func));
+        strncpy(luaScriptPath, "_", CONTROL_MAXPATH_LEN - 1);
+        strncat(luaScriptPath, func, CONTROL_MAXPATH_LEN - strlen(luaScriptPath) - 1);
         func = luaScriptPath;
     }
     if (!func) {
         AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to deduct funcname from %s", filename);
-        return -5;
+        return -1;
     }
 
     // load function (should exist in CONTROL_PATH_LUA
@@ -807,7 +816,7 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
     // Push AFB client context on the stack
     LuaAfbSourceT *afbSource = LuaSourcePush(luaState, source);
     if (!afbSource)
-        return -6;
+        return -1;
 
     return 0;
 }

@@ -112,9 +112,12 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
         int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
             if(ctlPlugin->ctlL2cFunc->l2cCount)
                 {index += ctlPlugin->ctlL2cFunc->l2cCount+1;}
-            char funcName[CONTROL_MAXPATH_LEN];
-            strncpy(funcName, "lua2c_", strlen ("lua2c_")+1);
-            strncat(funcName, l2cName, strlen (l2cName));
+            char *funcName;
+            size_t p_length = 6 + strlen(l2cName);
+            funcName = malloc(p_length + 1);
+
+            strncpy(funcName, "lua2c_", p_length);
+            strncat(funcName, l2cName, p_length - strlen (funcName));
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
             if (!l2cFunction) {
@@ -194,6 +197,8 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     size_t len;
     json_object *object = NULL;
 
+    pluginpath[CONTROL_MAXPATH_LEN - 1] = '\0';
+
     if (!json_object_is_type(scanResult, json_type_array))
         return -1;
 
@@ -210,13 +215,13 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
             return -1;
         }
 
-        /* Make sure you don't load two found libraries */
         ext = strrchr(filename, '.');
-        strncpy(pluginpath, fullpath, strlen (fullpath)+1);
-        strncat(pluginpath, "/", strlen ("/"));
-        strncat(pluginpath, filename, strlen (filename));
+        strncpy(pluginpath, fullpath, CONTROL_MAXPATH_LEN - 1);
+        strncat(pluginpath, "/", CONTROL_MAXPATH_LEN - strlen(pluginpath) - 1);
+        strncat(pluginpath, filename, CONTROL_MAXPATH_LEN - strlen (pluginpath) - 1);
 
         if(!strcasecmp(ext, CTL_PLUGIN_EXT)) {
+            /* Make sure you don't load two found libraries */
             if(ext && !strcasecmp(ext, CTL_PLUGIN_EXT) && i > 0) {
                 AFB_ApiWarning(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
                 return 0;
@@ -259,7 +264,7 @@ static char *GetDefaultSearchPath(AFB_ApiT apiHandle)
         strncat(searchPath, CONTROL_PLUGIN_PATH, CTL_PLGN_len);
     }
 
-    strncat(searchPath, ":", 1);
+    strncat(searchPath, ":", sizeof(searchPath) - 1);
     strncat(searchPath, bindingPath, bindingPath_len);
 
     return searchPath;
