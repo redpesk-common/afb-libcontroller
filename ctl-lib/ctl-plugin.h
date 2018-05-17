@@ -74,11 +74,14 @@ extern "C" {
 
     #define AFB_RequireApi(api, ...) afb_dynapi_require_api(api, __VA_ARGS__)
 
+
     #define AFB_GetEventLoop(api) afb_dynapi_get_event_loop(api)
+    #define AFB_RootDirGetFD(api) afb_dynapi_rootdir_get_fd(api)
 
     #define AFB_ClientCtxSet(request, replace, createCB, freeCB, handle) afb_request_context(request, replace, createCB, freeCB, handle)
     #define AFB_ClientCtxClear(request) afb_request_context_clear(request)
 
+    #define AFB_ReqSetLOA(request, level) afb_request_session_set_LOA(request, level)
 
     typedef struct {
             const char *verb;                       /* name of the verb, NULL only at end of the array */
@@ -130,6 +133,9 @@ extern "C" {
     #define AFB_RequireApi(api, ...)  afb_daemon_require_api(__VA_ARGS__)
 
     #define AFB_GetEventLoop(api) afb_daemon_get_event_loop()
+    #define AFB_RootDirGetFD(api) afb_daemon_rootdir_get_fd()
+
+    #define AFB_ReqSetLOA(request, level) afb_req_session_set_LOA(request, level)
 
     static inline void* AFB_ClientCtxSet(afb_req request, int replace, void *(*create_context)(void *closure), void (*free_context)(void*), void *closure)
     {
