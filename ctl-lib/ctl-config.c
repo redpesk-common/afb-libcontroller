@@ -48,9 +48,14 @@ json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 
     controlFile[CONTROL_MAXPATH_LEN - 1] = '\0';
 
-    strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN - 1);
-    strncat(controlFile, binderName, CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
-
+    if(prefix[0] != '\0') {
+        strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN - 1);
+        strncat(controlFile, "-", CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
+        strncat(controlFile, binderName, CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
+    }
+    else {
+        strncpy(controlFile, binderName, CONTROL_MAXPATH_LEN - 1);
+    }
     // search for default dispatch config file
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
 
