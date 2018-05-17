@@ -745,12 +745,11 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
     json_object *argsJ = NULL;
     static json_object *luaScriptPathJ = NULL;
 
-
     if (!queryJ) {
         return -1;
     }
 
-    err = wrap_json_unpack(queryJ, "{s:s,s?s,s?s,s?o !}",
+    err = wrap_json_unpack(queryJ, "{s:s,s?s,ss,s?o !}",
             "uid", &uid,
             "spath", &luaScriptPathJ,
             "action", &func,
@@ -796,17 +795,6 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
     err = LuaLoadScript(luaScriptPath);
     if (err) {
         AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState, -1));
-        return err;
-    }
-
-    // if no func name given try to deduct from filename
-    if (!func && (func = (char*) GetMidleName(filename)) != NULL) {
-        strncpy(luaScriptPath, "_", CONTROL_MAXPATH_LEN - 1);
-        strncat(luaScriptPath, func, CONTROL_MAXPATH_LEN - strlen(luaScriptPath) - 1);
-        func = luaScriptPath;
-    }
-    if (!func) {
-        AFB_ApiError(source->api, "LUA-DOSCRIPT:FAIL to deduct funcname from %s", filename);
         return -1;
     }
 
