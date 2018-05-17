@@ -132,7 +132,7 @@ static void ActionDynRequest(AFB_ReqT request) {
     source.api = action->api;
 
     // provide request and execute the action
-    ActionExecOne(&source, action, queryJ);
+    ActionExecOne(&source, action, json_object_get(queryJ));
 }
 #endif
 
