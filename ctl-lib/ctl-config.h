@@ -71,6 +71,7 @@ typedef struct {
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
+    void *external;
 } CtlConfigT;
 
 // This should not be global as application may want to define their own sections
