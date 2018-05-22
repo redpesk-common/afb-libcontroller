@@ -194,7 +194,7 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     char *fullpath;
     char *ext;
     int i;
-    size_t len;
+    int len;
     json_object *object = NULL;
 
     pluginpath[CONTROL_MAXPATH_LEN - 1] = '\0';
@@ -365,7 +365,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
 int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
     int err = 0;
     int idx = 0;
-    size_t length = 0;
+    int length = 0;
 
     if (ctlPlugins)
     {

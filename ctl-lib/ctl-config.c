@@ -65,7 +65,7 @@ json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
     size_t p_length;
-    char *filepath;
+    char *filepath = NULL;
     const char *filename;
     const char*fullpath;
 
@@ -184,7 +184,7 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
 json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ, json_object *filesJ) {
 
     json_object *sectionArrayJ;
-    char *oneFile;
+    char *oneFile = NULL;
     const char *bindingPath = GetBindingDirPath(apiHandle);
 
     if(! json_object_is_type(sectionJ, json_type_array)) {
@@ -199,7 +199,7 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
     json_object_object_add(ctlHandle->configJ, key, sectionArrayJ);
 
     if (json_object_get_type(filesJ) == json_type_array) {
-        size_t length = json_object_array_length(filesJ);
+        int length = json_object_array_length(filesJ);
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
             json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
@@ -242,7 +242,7 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
 {
     json_object *filesJ, *filesArrayJ = json_object_new_array();
     if (json_object_get_type(sectionJ) == json_type_array) {
-        size_t length = json_object_array_length(sectionJ);
+        int length = json_object_array_length(sectionJ);
         for (int idx=0; idx < length; idx++) {
             json_object *obj = json_object_array_get_idx(sectionJ, idx);
             int hasFiles = json_object_object_get_ex(obj, "files", &filesJ);

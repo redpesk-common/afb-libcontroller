@@ -114,7 +114,7 @@ static int LuaPushArgument(CtlSourceT *source, json_object *argsJ) {
         }
         case json_type_array:
         {
-            size_t length = json_object_array_length(argsJ);
+            int length = json_object_array_length(argsJ);
             lua_newtable(luaState);
             for (int idx = 0; idx < length; idx++) {
                 json_object *val = json_object_array_get_idx(argsJ, idx);
@@ -861,7 +861,7 @@ static int LuaDoString(const char *script, CtlSourceT *source) {
 // Execute LUA code from received API request
 
 static void LuaDoAction(LuaDoActionT action, AFB_ReqT request) {
-    int err, count = 0;
+    int err = 0, count = 0;
     CtlSourceT *source = alloca(sizeof (CtlSourceT));
     source->request = request;
 
