@@ -57,36 +57,38 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     switch (action->type) {
         case CTL_TYPE_API:
         {
-            json_object *returnJ, *subcallArgsJ = json_object_new_object();
+            json_object *returnJ, *toReturnJ;
 
-            if (queryJ) {
-
-                json_object_object_foreach(queryJ, key, val) {
-                    json_object_get(val);
-                    json_object_object_add(subcallArgsJ, key, val);
-                }
-            }
+            json_type typeJ = json_object_get_type(queryJ);
 
             if (action->argsJ) {
-                // Merge queryJ and argsJ before sending request
-                if (json_object_get_type(action->argsJ) == json_type_object) {
-
-                    json_object_object_foreach(action->argsJ, key, val) {
-                        json_object_get(val);
-                        json_object_object_add(subcallArgsJ, key, val);
+                switch(typeJ) {
+                    case json_type_object: {
+                        json_object_object_foreach(action->argsJ, key, val) {
+                            json_object_get(val);
+                            json_object_object_add(queryJ, key, val);
+                        }
+                        break;
                     }
-                } else {
-                    json_object_get(action->argsJ);
-                    json_object_object_add(subcallArgsJ, "args", action->argsJ);
+                    case json_type_null:
+                        break;
+                    default:
+                        AFB_ApiError(action->api, "ActionExecOne(queryJ should be an object) uid=%s args=%s", source->uid, json_object_get_string(queryJ));
+                        return err;
                 }
             }
 
-            json_object_object_add(subcallArgsJ, "uid", json_object_new_string(source->uid));
-
             /* AFB Subcall will release the json_object doing the json_object_put() call */
-            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, subcallArgsJ, &returnJ);
-            if (err) {
+            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, json_object_get(queryJ), &returnJ);
+            if(err && source->request)
+                AFB_ReqFailF(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+            else if(err && ! source->request)
                 AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+            else if(source->request) {
+                if(wrap_json_unpack(returnJ, "{s:o}", "response", &toReturnJ))
+                    AFB_ApiError(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+                else
+                    AFB_ReqSucess(source->request, toReturnJ, NULL);
             }
             break;
         }
@@ -113,7 +115,7 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
             break;
         }
     }
-    json_object_put(queryJ);
+
     return err;
 }
 
@@ -133,7 +135,7 @@ static void ActionDynRequest(AFB_ReqT request) {
     source.api = action->api;
 
     // provide request and execute the action
-    ActionExecOne(&source, action, json_object_get(queryJ));
+    ActionExecOne(&source, action, queryJ);
 }
 #endif
 
