@@ -48,7 +48,7 @@ json_object* CtlConfigScan(const char *dirList, const char *prefix) {
 
     controlFile[CONTROL_MAXPATH_LEN - 1] = '\0';
 
-    if(prefix[0] != '\0') {
+    if(prefix && prefix[0] != '\0') {
         strncpy(controlFile, prefix, CONTROL_MAXPATH_LEN - 1);
         strncat(controlFile, "-", CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
         strncat(controlFile, binderName, CONTROL_MAXPATH_LEN - strlen(controlFile) - 1);
