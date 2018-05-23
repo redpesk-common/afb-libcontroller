@@ -64,10 +64,12 @@ typedef struct ConfigSectionS {
 } CtlSectionT;
 
 typedef struct {
-    const char* api;
-    const char* uid;
+    const char *api;
+    const char *uid;
     const char *info;
     const char *version;
+    const char *author;
+    const char *date;
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;

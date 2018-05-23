@@ -158,14 +158,16 @@ CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
         ctlHandle = calloc(1, sizeof (CtlConfigT));
-        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o !}",
+        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o,s?s,s?s !}",
                 "uid", &ctlHandle->uid,
                 "version", &ctlHandle->version,
                 "api", &ctlHandle->api,
                 "info", &ctlHandle->info,
-                "require", &ctlHandle->requireJ);
+                "require", &ctlHandle->requireJ,
+                "author", &ctlHandle->author,
+                "date", &ctlHandle->date);
         if (err) {
-            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require] in:\n-- %s", json_object_get_string(metadataJ));
+            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require]|[author]|[date] in:\n-- %s", json_object_get_string(metadataJ));
             free(ctlHandle);
             return NULL;
         }
