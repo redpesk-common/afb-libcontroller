@@ -340,7 +340,7 @@ CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportAp
 
     // action array is close with a nullvalue;
     if (json_object_is_type(actionsJ, json_type_array)) {
-        int count = json_object_array_length(actionsJ);
+        int count = (int)json_object_array_length(actionsJ);
         actions = calloc(count + 1, sizeof (CtlActionT));
 
         for (int idx = 0; idx < count; idx++) {

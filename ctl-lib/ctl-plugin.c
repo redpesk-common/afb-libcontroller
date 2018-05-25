@@ -202,7 +202,7 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     if (!json_object_is_type(scanResult, json_type_array))
         return -1;
 
-    len = json_object_array_length(scanResult);
+    len = (int)json_object_array_length(scanResult);
 
     for (i = 0; i < len; ++i) {
         object = json_object_array_get_idx(scanResult, i);
@@ -381,7 +381,7 @@ int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ
     else
     {
         if (json_object_get_type(pluginsJ) == json_type_array) {
-            length = json_object_array_length(pluginsJ);
+            length = (int)json_object_array_length(pluginsJ);
             ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
             for (idx=0; idx < length; idx++) {
                 json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
