@@ -77,12 +77,16 @@ char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
             AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
         }
 
-        p_length = strlen(fullpath) + 1 + strlen(filename);
-        filepath = malloc(p_length + 1);
-        if (index == 0 && filepath) {
+        if (index == 0) {
+            p_length = strlen(fullpath) + 1 + strlen(filename);
+            filepath = malloc(p_length + 1);
+
             strncpy(filepath, fullpath, p_length);
             strncat(filepath, "/", p_length - strlen(filepath));
             strncat(filepath, filename, p_length - strlen(filepath));
+        }
+        else {
+            AFB_ApiWarning(apiHandle, "CTL-INIT JSON file found but not used : %s/%s", fullpath, filename);
         }
     }
 
