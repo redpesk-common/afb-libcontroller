@@ -32,7 +32,7 @@
 #include "ctl-config.h"
 
 #define LUA_FIST_ARG 2 // when using luaL_newlib calllback receive libtable as 1st arg
-#define LUA_MSG_MAX_LENGTH 512
+#define LUA_MSG_MAX_LENGTH 2048
 #define JSON_ERROR (json_object*)-1
 
 static lua_State* luaState;
