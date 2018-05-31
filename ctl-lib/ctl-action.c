@@ -80,11 +80,11 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
 
             /* AFB Subcall will release the json_object doing the json_object_put() call */
             int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, json_object_get(queryJ), &returnJ);
-            if(err && source->request)
+            if(err && AFB_ReqIsValid(source->request))
                 AFB_ReqFailF(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(err && ! source->request)
+            else if(err && ! AFB_ReqIsValid(source->request))
                 AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(source->request) {
+            else if(AFB_ReqIsValid(source->request)) {
                 if(wrap_json_unpack(returnJ, "{s:o}", "response", &toReturnJ))
                     AFB_ApiError(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
                 else
