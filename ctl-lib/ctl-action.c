@@ -301,7 +301,7 @@ int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, 
     memset(action, 0, sizeof (CtlActionT));
 
     if (actionJ) {
-        err = wrap_json_unpack(actionJ, "{ss,s?s,ss,s?s,s?o !}",
+        err = wrap_json_unpack(actionJ, "{ss,s?s,ss,s?s,s?o}",
                 "uid", &action->uid,
                 "info", &action->info,
                 "action", &uri,
