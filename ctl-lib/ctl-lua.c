@@ -305,10 +305,9 @@ static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 
     for (int idx = 0; format[idx] != '\0'; idx++) {
 
-        if (format[idx] == '%' && format[idx] != '\0') {
+        if (format[idx] == '%' && format[idx+1] != '\0') {
             json_object *slotJ = json_object_array_get_idx(responseJ, arrayIdx);
             //if (slotJ) AFB_NOTICE("**** idx=%d slotJ=%s", arrayIdx, json_object_get_string(slotJ));
-
 
             switch (format[++idx]) {
                 case 'd':
@@ -340,8 +339,11 @@ static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
 
         } else {
             if (uidIdx >= LUA_MSG_MAX_LENGTH) {
-                AFB_ApiWarning(source->api, "LuaFormatMessage: message[%s] owerverflow LUA_MSG_MAX_LENGTH=%d", format, LUA_MSG_MAX_LENGTH);
-                uidIdx--; // move backward for EOL
+                const char *trunc = "... <truncated> ";
+
+                AFB_ApiWarning(source->api, "LuaFormatMessage: message[%s] overflow LUA_MSG_MAX_LENGTH=%d\n", format, LUA_MSG_MAX_LENGTH);
+                uidIdx = LUA_MSG_MAX_LENGTH - 1;
+                memcpy(&message[uidIdx - strlen(trunc)], trunc, strlen(trunc));
                 break;
             } else {
                 message[uidIdx++] = format[idx];
