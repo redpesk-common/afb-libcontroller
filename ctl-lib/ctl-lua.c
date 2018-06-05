@@ -397,7 +397,6 @@ static int LuaAfbSuccess(lua_State* luaState) {
 
     AFB_ReqSuccess(source->request, responseJ, NULL);
 
-    json_object_put(responseJ);
     return 0;
 }
 
