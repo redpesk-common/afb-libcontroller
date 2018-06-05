@@ -252,7 +252,7 @@ static char *GetDefaultSearchPath(AFB_ApiT apiHandle)
     CTL_PLGN_len = envPath_len ? 0 : strlen(CONTROL_PLUGIN_PATH);
 
     /* Allocating with the size of binding root dir path + environment if found
-     * + 2 for the NULL terminating character and the additionnal separator
+     * + 2 for the NULL terminating character and the additional separator
      * between bindingPath and envPath concatenation.
      */
     if(envPath)  {

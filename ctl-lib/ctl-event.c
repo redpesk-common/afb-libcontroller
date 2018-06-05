@@ -28,7 +28,7 @@
 void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ) {
     int idx = 0;
     CtlActionT* actions = NULL;
-    AFB_ApiNotice (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
+    AFB_ApiDebug (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
 
     // retrieve section config from api handle
     CtlConfigT *ctrlConfig = (CtlConfigT*) afb_dynapi_get_userdata(apiHandle);

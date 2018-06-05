@@ -31,7 +31,7 @@
 
 #include "ctl-config.h"
 
-#define LUA_FIST_ARG 2 // when using luaL_newlib calllback receive libtable as 1st arg
+#define LUA_FIST_ARG 2 // when using luaL_newlib callback receive libtable as 1st arg
 #define LUA_MSG_MAX_LENGTH 2048
 #define JSON_ERROR (json_object*)-1
 
@@ -393,7 +393,7 @@ static int LuaAfbSuccess(lua_State* luaState) {
     json_object *responseJ = LuaPopArgs(source, luaState, LUA_FIST_ARG + 1);
     if (responseJ == JSON_ERROR) return 1;
 
-    AFB_ReqSucess(source->request, responseJ, NULL);
+    AFB_ReqSuccess(source->request, responseJ, NULL);
 
     json_object_put(responseJ);
     return 0;

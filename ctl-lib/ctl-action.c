@@ -86,7 +86,7 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
                 if(wrap_json_unpack(returnJ, "{s:o}", "response", &toReturnJ))
                     AFB_ApiError(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
                 else
-                    AFB_ReqSucess(source->request, toReturnJ, NULL);
+                    AFB_ReqSuccess(source->request, toReturnJ, NULL);
             }
             break;
         }
