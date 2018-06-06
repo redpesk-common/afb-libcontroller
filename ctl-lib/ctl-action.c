@@ -59,10 +59,8 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
         {
             json_object *returnJ, *toReturnJ;
 
-            json_type typeJ = json_object_get_type(queryJ);
-
             if (action->argsJ) {
-                switch(typeJ) {
+                switch(json_object_get_type(queryJ)) {
                     case json_type_object: {
                         json_object_object_foreach(action->argsJ, key, val) {
                             json_object_get(val);
