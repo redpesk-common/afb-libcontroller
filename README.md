@@ -83,6 +83,8 @@ As today matadata is only used for documentation purpose.
 * **api**: mandatory
 * **info**: optional
 * **require**: optional
+* **author**: optional
+* **date**: optional
 
 ### OnLoad section
 
