@@ -39,8 +39,8 @@
 
     #define AFB_ReqJson(request) afb_request_json(request)
 
-    #define AFB_ReqSucess  afb_request_success
-    #define AFB_ReqSucessF afb_request_success_f
+    #define AFB_ReqSuccess  afb_request_success
+    #define AFB_ReqSuccessF afb_request_success_f
     #define AFB_ReqFail    afb_request_fail
     #define AFB_ReqFailF   afb_request_fail_f
 
@@ -97,8 +97,8 @@
     #define AFB_EventMake(api, name) afb_daemon_make_event(name)
 
     #define AFB_ReqJson(request) afb_req_json(request)
-    #define AFB_ReqSucess  afb_req_success
-    #define AFB_ReqSucessF afb_req_success_f
+    #define AFB_ReqSuccess  afb_req_success
+    #define AFB_ReqSuccessF afb_req_success_f
     #define AFB_ReqFail    afb_req_fail
     #define AFB_ReqFailF   afb_req_fail_f
 
