@@ -104,25 +104,25 @@ char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefi
     return NULL;
 }
 
+static void DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
+    const char* requireBinding = json_object_get_string(bindindJ);
+    int err = AFB_RequireApi(apiHandle, requireBinding, 1);
+    if (err) {
+        AFB_ApiWarning(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
+    }
+}
+
 int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
 
     // best effort to initialise everything before starting
     if (ctlConfig->requireJ) {
 
-        void DispatchRequireOneApi(json_object * bindindJ) {
-            const char* requireBinding = json_object_get_string(bindindJ);
-            int err = AFB_RequireApi(apiHandle, requireBinding, 1);
-            if (err) {
-                AFB_ApiWarning(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
-            }
-        }
-
         if (json_object_get_type(ctlConfig->requireJ) == json_type_array) {
             for (int idx = 0; idx < json_object_array_length(ctlConfig->requireJ); idx++) {
-                DispatchRequireOneApi(json_object_array_get_idx(ctlConfig->requireJ, idx));
+                DispatchRequireOneApi(apiHandle, json_object_array_get_idx(ctlConfig->requireJ, idx));
             }
         } else {
-            DispatchRequireOneApi(ctlConfig->requireJ);
+            DispatchRequireOneApi(apiHandle, ctlConfig->requireJ);
         }
     }
 
