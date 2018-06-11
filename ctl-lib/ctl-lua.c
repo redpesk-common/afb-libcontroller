@@ -96,7 +96,7 @@ static LuaAfbSourceT *LuaSourcePush(lua_State *luaState, CtlSourceT *source) {
 
 static int LuaPushArgument(CtlSourceT *source, json_object *argsJ) {
 
-    //AFB_NOTICE("LuaPushArgument argsJ=%s", json_object_get_string(argsJ));
+    //AFB_NOTICE("LuaPushArgument argsJ=%s", json_object_to_json_string(argsJ));
 
     json_type jtype = json_object_get_type(argsJ);
     switch (jtype) {
@@ -136,12 +136,12 @@ static int LuaPushArgument(CtlSourceT *source, json_object *argsJ) {
             lua_pushnumber(luaState, json_object_get_double(argsJ));
             break;
         case json_type_null:
-            AFB_ApiWarning(source->api, "LuaPushArgument: NULL object type %s", json_object_get_string(argsJ));
-            return 0;
+            AFB_ApiNotice(source->api, "LuaPushArgument: NULL object type %s", json_object_to_json_string(argsJ));
+            lua_pushnil(luaState);
             break;
 
         default:
-            AFB_ApiError(source->api, "LuaPushArgument: unsupported Json object type %s", json_object_get_string(argsJ));
+            AFB_ApiError(source->api, "LuaPushArgument: unsupported Json object type %s", json_object_to_json_string(argsJ));
             return 0;
     }
     return 1;
@@ -441,7 +441,7 @@ static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *respo
 
     int err = lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
-        AFB_ApiError(apiHandle, "LUA-SERVICE-CB:FAIL response=%s err=%s", json_object_get_string(responseJ), lua_tostring(luaState, -1));
+        AFB_ApiError(apiHandle, "LUA-SERVICE-CB:FAIL response=%s err=%s", json_object_to_json_string(responseJ), lua_tostring(luaState, -1));
     }
 
     free(handleCb->source);
@@ -759,7 +759,7 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
             "args", &argsJ);
 
     if (err) {
-        AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN: Miss something in JSON object uid|[spath]|action|[args]: %s", json_object_get_string(queryJ));
+        AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN: Miss something in JSON object uid|[spath]|action|[args]: %s", json_object_to_json_string(queryJ));
         return -1;
     }
 
@@ -780,7 +780,7 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
 
         err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
-            AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN:HOOPs invalid config file path = %s", json_object_get_string(entryJ));
+            AFB_ApiError(source->api, "LUA-DOSCRIPT-SCAN:HOOPs invalid config file path = %s", json_object_to_json_string(entryJ));
             return -1;
         }
 
@@ -893,12 +893,12 @@ static void LuaDoAction(LuaDoActionT action, AFB_ReqT request) {
         { // Fulup need to fix argument passing
             count = LuaDoScript(queryJ, source);
             if (count)
-                AFB_ApiError(source->api, "DOSCRIPT goes wrong error=%d query=%s", count, json_object_get_string(queryJ));
+                AFB_ApiError(source->api, "DOSCRIPT goes wrong error=%d query=%s", count, json_object_to_json_string(queryJ));
             break;
         }
 
         default:
-            AFB_ApiError(source->api, "LUA-DOSCRIPT-ACTION unknown query=%s", json_object_get_string(queryJ));
+            AFB_ApiError(source->api, "LUA-DOSCRIPT-ACTION unknown query=%s", json_object_to_json_string(queryJ));
             AFB_ReqFail(request, "LUA:ERROR", lua_tostring(luaState, -1));
             return;
     }
@@ -906,7 +906,7 @@ static void LuaDoAction(LuaDoActionT action, AFB_ReqT request) {
     if (count >= 0)
         err = lua_pcall(luaState, count + 1, 0, 0);
     if (err) {
-        AFB_ApiError(source->api, "LUA-DO-EXEC:FAIL query=%s err=%s", json_object_get_string(queryJ), lua_tostring(luaState, -1));
+        AFB_ApiError(source->api, "LUA-DO-EXEC:FAIL query=%s err=%s", json_object_to_json_string(queryJ), lua_tostring(luaState, -1));
         AFB_ReqFail(request, "LUA:ERROR", lua_tostring(luaState, -1));
         return;
     }
@@ -1007,7 +1007,7 @@ static int LuaTimerSetCB(TimerHandleT *timer) {
 
     int err = lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
-        AFB_ApiError(LuaCbHandle->source->api, "LUA-TIMER-CB:FAIL response=%s err=%s", json_object_get_string(LuaCbHandle->context), lua_tostring(luaState, -1));
+        AFB_ApiError(LuaCbHandle->source->api, "LUA-TIMER-CB:FAIL response=%s err=%s", json_object_to_json_string(LuaCbHandle->context), lua_tostring(luaState, -1));
         return 1;
     }
 
@@ -1116,7 +1116,7 @@ static void *LuaClientCtxNew(void * handle) {
 
     int err = lua_pcall(luaState, count, 1, 0);
     if (err) {
-        AFB_ApiError(clientCtx->source->api, "LuaClientCtxNew:FAIL response=%s err=%s", json_object_get_string(clientCtx->clientCtxJ), lua_tostring(luaState, -1));
+        AFB_ApiError(clientCtx->source->api, "LuaClientCtxNew:FAIL response=%s err=%s", json_object_to_json_string(clientCtx->clientCtxJ), lua_tostring(luaState, -1));
         return NULL;
     }
 
@@ -1152,7 +1152,7 @@ static void LuaClientCtxFree(void * handle) {
 
     int err = lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
-        AFB_ApiError(clientCtx->source->api, "LuaClientCtxFree:FAIL response=%s err=%s", json_object_get_string(clientCtx->clientCtxJ), lua_tostring(luaState, -1));
+        AFB_ApiError(clientCtx->source->api, "LuaClientCtxFree:FAIL response=%s err=%s", json_object_to_json_string(clientCtx->clientCtxJ), lua_tostring(luaState, -1));
         return;
     }
 
