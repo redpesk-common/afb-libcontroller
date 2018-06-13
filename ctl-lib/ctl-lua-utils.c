@@ -82,6 +82,56 @@ printf = function(s,...)\n\
     return\n\
 end\n\
 \n\
+function sleep(n)\n\
+    os.execute(\"sleep \" .. tonumber(n))\n\
+end\n\
+\n\
+function table_eq(table1, table2)\n\
+	local avoid_loops = {}\n\
+	local function recurse(t1, t2)\n\
+	-- compare value types\n\
+	if type(t1) ~= type(t2) then return false end\n\
+	-- Base case: compare simple values\n\
+	if type(t1) ~= \"table\" then return t1 == t2 end\n\
+	-- Now, on to tables.\n\
+	-- First, let's avoid looping forever.\n\
+	if avoid_loops[t1] then return avoid_loops[t1] == t2 end\n\
+	avoid_loops[t1] = t2\n\
+	-- Copy keys from t2\n\
+	local t2keys = {}\n\
+	local t2tablekeys = {}\n\
+	for k, _ in pairs(t2) do\n\
+	if type(k) == \"table\" then table.insert(t2tablekeys, k) end\n\
+	t2keys[k] = true\n\
+	end\n\
+	-- Let's iterate keys from t1\n\
+	for k1, v1 in pairs(t1) do\n\
+	local v2 = t2[k1]\n\
+	if type(k1) == \"table\" then\n\
+		-- if key is a table, we need to find an equivalent one.\n\
+		local ok = false\n\
+		for i, tk in ipairs(t2tablekeys) do\n\
+		if table_eq(k1, tk) and recurse(v1, t2[tk]) then\n\
+		table.remove(t2tablekeys, i)\n\
+		t2keys[tk] = nil\n\
+		ok = true\n\
+		break\n\
+		end\n\
+		end\n\
+		if not ok then return false end\n\
+	else\n\
+		-- t1 has a key which t2 doesn't have, fail.\n\
+		if v2 == nil then return false end\n\
+		t2keys[k1] = nil\n\
+		if not recurse(v1, v2) then return false end\n\
+	end\n\
+	end\n\
+	-- if t2 has a key which t1 doesn't have, fail.\n\
+	if next(t2keys) then return false end\n\
+	return true\n\
+	end\n\
+	return recurse(table1, table2)\n\
+end\n\
 -- lock global variable\n\
 GLOBAL_lock(_G)\n\
 ";
