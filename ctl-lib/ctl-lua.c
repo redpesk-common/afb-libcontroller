@@ -277,10 +277,12 @@ static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
         return 1;
 
     // if log level low then silently ignore message
-#ifdef AFB_BINDING_PREV3
+#ifndef AFB_BINDING_PREV3
+    if (afb_get_verbosity() < verbosity) return 0;
+#elif !defined(AFB_BINDING_INTERFACE_VERSION)
     if (source->api->verbosity < verbosity) return 0;
 #else
-    if (afb_get_verbosity() < verbosity) return 0;
+    if (!afb_dynapi_wants_log_level(source->api, level)) return 0;
 #endif
 
     json_object *responseJ = LuaPopArgs(source, luaState, LUA_FIST_ARG + 1);

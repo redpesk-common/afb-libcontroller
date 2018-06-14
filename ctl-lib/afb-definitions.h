@@ -28,10 +28,10 @@
 
     #define AFB_BINDING_PREV3
     #define AFB_ReqNone NULL
-    typedef afb_request* AFB_ReqT;
-    typedef afb_dynapi*  AFB_ApiT;
+    typedef struct afb_request* AFB_ReqT;
+    typedef struct afb_dynapi*  AFB_ApiT;
 
-    typedef afb_eventid* AFB_EventT;
+    typedef struct afb_eventid* AFB_EventT;
     #define AFB_EventIsValid(eventid) eventid
     #define AFB_EventPush afb_eventid_push
     #define AFB_ReqSubscribe  afb_request_subscribe
@@ -86,11 +86,11 @@
     #define AFB_BINDING_VERSION 2
     #include <afb/afb-binding.h>
 
-    typedef afb_req AFB_ReqT;
+    typedef struct afb_req AFB_ReqT;
     typedef void* AFB_ApiT;
     #define AFB_ReqNone (struct afb_req){0,0}
 
-    typedef afb_event AFB_EventT;
+    typedef struct afb_event AFB_EventT;
     #define AFB_EventPush afb_event_push
     #define AFB_ReqSubscribe  afb_req_subscribe
     #define AFB_EventIsValid(event) afb_event_is_valid(event)
