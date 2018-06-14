@@ -57,9 +57,6 @@ int LuaConfigLoad (AFB_ApiT apiHandle);
 void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
 int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
 int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
-void ctlapi_lua_docall (afb_req request);
-void ctlapi_lua_dostring (afb_req request);
-void ctlapi_lua_doscript (afb_req request);
 int LuaConfigExec(AFB_ApiT apiHandle);
 
 #ifdef __cplusplus
