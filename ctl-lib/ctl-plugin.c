@@ -193,7 +193,6 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     char *filename;
     char *fullpath;
     char *ext;
-    int i;
     int len;
     json_object *object = NULL;
 
@@ -204,8 +203,9 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
 
     len = (int)json_object_array_length(scanResult);
 
-    for (i = 0; i < len; ++i) {
-        object = json_object_array_get_idx(scanResult, i);
+    // TODO/Proposal RFOR: load a plugin after a first fail.
+    if(len) {
+        object = json_object_array_get_idx(scanResult, 0);
         int err = wrap_json_unpack(object, "{s:s, s:s !}",
                 "fullpath", &fullpath,
                 "filename", &filename);
@@ -220,20 +220,21 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
         strncat(pluginpath, "/", CONTROL_MAXPATH_LEN - strlen(pluginpath) - 1);
         strncat(pluginpath, filename, CONTROL_MAXPATH_LEN - strlen (pluginpath) - 1);
 
-        if(!strcasecmp(ext, CTL_PLUGIN_EXT)) {
-            /* Make sure you don't load two found libraries */
-            if(ext && !strcasecmp(ext, CTL_PLUGIN_EXT) && i > 0) {
-                AFB_ApiWarning(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
-                return 0;
-            }
-            PluginLoadCOne(apiHandle, pluginpath, lua2csJ, lua2c_prefix, handle, ctlPlugin);
+        if(ext && !strcasecmp(ext, CTL_PLUGIN_EXT) && PluginLoadCOne(apiHandle, pluginpath, lua2csJ, lua2c_prefix, handle, ctlPlugin)) {
+            return -1;
         }
-        else if(!strcasecmp(ext, CTL_SCRIPT_EXT)) {
+        else if(ext && !strcasecmp(ext, CTL_SCRIPT_EXT)) {
             ctlPlugin->api = apiHandle;
             ctlPlugin->context = handle;
-            LuaLoadScript(pluginpath);
+            if(LuaLoadScript(pluginpath)) {
+                AFB_ApiError(apiHandle, "There was an error loading the lua file %s", pluginpath);
+                return -1;
+            }
         }
     }
+
+    if(len > 1)
+        AFB_ApiWarning(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
 
     return 0;
 }
