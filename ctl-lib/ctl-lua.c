@@ -34,6 +34,8 @@
 #define LUA_FIST_ARG 2 // when using luaL_newlib callback receive libtable as 1st arg
 #define LUA_MSG_MAX_LENGTH 2048
 #define JSON_ERROR (json_object*)-1
+#define LUA_PATH_VALUE "package.path = package.path .. ';?.lua;"
+#define LUA_GLOB_PATTERN "/?.lua;"
 
 static lua_State* luaState;
 CtlPluginT *ctlPlugins = NULL;
@@ -1273,6 +1275,7 @@ int LuaConfigExec(AFB_ApiT apiHandle) {
 
 int LuaConfigLoad(AFB_ApiT apiHandle) {
     static int luaLoaded = 0;
+    int i;
     //int err = 0;
 
     // Lua loads only once
@@ -1293,6 +1296,36 @@ int LuaConfigLoad(AFB_ApiT apiHandle) {
     // redirect print to AFB_NOTICE
     luaL_newlib(luaState, afbFunction);
     lua_setglobal(luaState, "AFB");
+
+    // set package.path lua variable use the CONTROL_PLUGIN_PATH as it could
+    // have to find external lua packages in those directories
+    size_t base_len = strlen(LUA_PATH_VALUE);
+    size_t spath_len = strlen(CONTROL_PLUGIN_PATH);
+
+    int token_nb = spath_len ? 1:0;
+    char *spath = strdup(CONTROL_PLUGIN_PATH);
+    char *sep = spath;
+    while((sep = strchr(sep, ':')) != NULL) {
+        token_nb++;
+        sep++;
+    }
+
+    // token + the lua glob pattern which is 7 char length
+    size_t total_len = base_len + spath_len + token_nb * 7 + 1;
+    char *lua_str = malloc(total_len + 1);
+    strncpy(lua_str, LUA_PATH_VALUE, total_len);
+    for (i = 0; i < token_nb; i++) {
+        sep = strsep(&spath, ":");
+        strncat(lua_str, sep, total_len - strlen(lua_str));
+        strncat(lua_str, LUA_GLOB_PATTERN, total_len - strlen(lua_str));
+    }
+    strncat(lua_str, "'", 2);
+
+    if(luaL_dostring(luaState, lua_str))
+        printf("Fail change package.path error=%s", lua_tostring(luaState, -1));
+
+    free(spath);
+    free(lua_str);
 
     // initialise static magic for context
 #ifndef CTX_MAGIC
