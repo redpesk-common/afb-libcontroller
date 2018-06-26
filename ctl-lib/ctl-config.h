@@ -99,6 +99,7 @@ int CtlConfigMagicNew();
 json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
 char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
 char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
+void DispatchRequiredApi(AFB_ApiT apiHandle, json_object * requireJ);
 int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
 CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
 int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);

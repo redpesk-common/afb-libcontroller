@@ -104,28 +104,45 @@ char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefi
     return NULL;
 }
 
-static void DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
+static int DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
     const char* requireBinding = json_object_get_string(bindindJ);
     int err = AFB_RequireApi(apiHandle, requireBinding, 1);
     if (err) {
         AFB_ApiWarning(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
     }
+
+    return err;
+}
+
+/**
+ * @brief Best effort to initialise everything before starting
+ * Call afb_require_api at the first call or if there was an error because
+ * the CtlConfigExec could be called anywhere and not in binding init.
+ * So you could call this function at init time.
+ *
+ * @param apiHandle : a afb_daemon api handle, see AFB_ApiT in afb_definitions.h
+ * @param requireJ : json_object array of api name required.
+ */
+void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ) {
+    static int init = 0, err = 0;
+    int idx;
+
+    if ( (! init || err) && requireJ) {
+        if (json_object_get_type(requireJ) == json_type_array) {
+            for (idx = 0; idx < json_object_array_length(requireJ); idx++) {
+                err += DispatchRequireOneApi(apiHandle, json_object_array_get_idx(requireJ, idx));
+            }
+        } else {
+            err += DispatchRequireOneApi(apiHandle, requireJ);
+        }
+    }
+
+    init = 1;
 }
 
 int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
 
-    // best effort to initialise everything before starting
-    if (ctlConfig->requireJ) {
-
-        if (json_object_get_type(ctlConfig->requireJ) == json_type_array) {
-            for (int idx = 0; idx < json_object_array_length(ctlConfig->requireJ); idx++) {
-                DispatchRequireOneApi(apiHandle, json_object_array_get_idx(ctlConfig->requireJ, idx));
-            }
-        } else {
-            DispatchRequireOneApi(apiHandle, ctlConfig->requireJ);
-        }
-    }
-
+    DispatchRequireApi(apiHandle, ctlConfig->requireJ);
 #ifdef CONTROL_SUPPORT_LUA
     // load static LUA utilities
     LuaConfigExec(apiHandle);
