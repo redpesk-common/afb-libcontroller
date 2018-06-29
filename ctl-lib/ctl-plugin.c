@@ -177,12 +177,13 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
 #endif
     DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
     if (ctlPluginOnload) {
-        ctlPlugin->api = apiHandle;
         if((*ctlPluginOnload) (ctlPlugin, handle)) {
             AFB_ApiError(apiHandle, "Plugin Onload function hasn't finish well. Abort initialization");
             return -1;
         }
     }
+
+    ctlPlugin->api = apiHandle;
 
     return 0;
 }
