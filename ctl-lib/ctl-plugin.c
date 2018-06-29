@@ -362,14 +362,67 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     return 0;
 }
 
+static int PluginParse(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ, int *pluginNb) {
+    int idx = 0, err = 0;
+
+    switch (json_object_get_type(pluginsJ)) {
+        case json_type_array: {
+            *pluginNb = (int)json_object_array_length(pluginsJ);
+            ctlPlugins = calloc (*pluginNb + 1, sizeof(CtlPluginT));
+            for (idx=0; idx < *pluginNb; idx++) {
+                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
+                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
+            }
+            break;
+        }
+        case json_type_object: {
+            ctlPlugins = calloc (2, sizeof(CtlPluginT));
+            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
+            (*pluginNb)++;
+            break;
+        }
+        default: {
+            AFB_ApiError(apiHandle, "Wrong JSON object passed: %s", json_object_get_string(pluginsJ));
+            err = -1;
+        }
+    }
+
+        return err;
+}
 
 int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
     int err = 0;
-    int idx = 0;
-    int length = 0;
+    int idx = 0, jdx = 0;
+    int pluginNb = 0, newPluginsNb = 0, totalPluginNb = 0;
 
     if (ctlPlugins)
     {
+        // There is something to add let  that happens
+        if(pluginsJ) {
+            CtlPluginT *ctlPluginsNew = NULL, *ctlPluginsOrig = ctlPlugins;
+            err = PluginParse(apiHandle, section, pluginsJ, &newPluginsNb);
+            ctlPluginsNew = ctlPlugins;
+
+            while(ctlPlugins[pluginNb].uid != NULL) {
+                pluginNb++;
+            }
+
+            totalPluginNb = pluginNb + newPluginsNb;
+            ctlPlugins = calloc(totalPluginNb + 1, sizeof(CtlPluginT));
+            while(ctlPluginsOrig[idx].uid != NULL) {
+                ctlPlugins[idx] = ctlPluginsOrig[idx];
+                idx++;
+            }
+            while(ctlPluginsNew[jdx].uid != NULL && idx <= totalPluginNb) {
+                ctlPlugins[idx] = ctlPluginsNew[jdx];
+                idx++;
+                jdx++;
+            }
+
+            free(ctlPluginsOrig);
+            free(ctlPluginsNew);
+        }
+
         while(ctlPlugins[idx].uid != NULL)
         {
             // Jose hack to make verbosity visible from sharedlib and
@@ -381,17 +434,7 @@ int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ
     }
     else
     {
-        if (json_object_get_type(pluginsJ) == json_type_array) {
-            length = (int)json_object_array_length(pluginsJ);
-            ctlPlugins = calloc (length+1, sizeof(CtlPluginT));
-            for (idx=0; idx < length; idx++) {
-                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
-            }
-        } else {
-            ctlPlugins = calloc (2, sizeof(CtlPluginT));
-            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
-        }
+        err = PluginParse(apiHandle, section, pluginsJ, &pluginNb);
     }
 
     return err;
