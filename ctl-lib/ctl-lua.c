@@ -40,11 +40,15 @@
 static lua_State* luaState;
 CtlPluginT *ctlPlugins = NULL;
 
-#ifndef CTX_MAGIC
+#if CTX_MAGIC_VALUE
+static int CTX_MAGIC = CTX_MAGIC_VALUE;
+#else
 static int CTX_MAGIC;
 #endif
 
-#ifndef TIMER_MAGIC
+#if TIMER_MAGIC_VALUE
+static int TIMER_MAGIC = TIMER_MAGIC_VALUE;
+#else
 static int TIMER_MAGIC;
 #endif
 
@@ -597,6 +601,23 @@ static int LuaAfbEventSubscribe(lua_State* luaState) {
     }
     afbevt->count++;
     return 0;
+}
+
+static int LuaLockWait(lua_State* luaState) {
+    luaL_checktype(luaState, LUA_FIST_ARG, LUA_TLIGHTUSERDATA);
+    luaL_checktype(luaState, LUA_FIST_ARG + 1, LUA_TNUMBER);
+
+    CtlSourceT *source = (CtlSourceT *)LuaSourcePop(luaState, LUA_FIST_ARG);
+    if (!source) {
+        lua_pushliteral(luaState, "LuaLockWait-Fail Invalid request handle");
+        lua_error(luaState);
+        return 1;
+    }
+    uint64_t utimeout = (int)lua_tointeger(luaState, LUA_FIST_ARG + 1);
+
+    uint64_t remain_timeout = LockWait(source->api, utimeout);
+    lua_pushinteger(luaState, remain_timeout);
+    return 1; //return nb of pushed elements
 }
 
 static int LuaAfbEventMake(lua_State* luaState) {
@@ -1247,7 +1268,7 @@ static const luaL_Reg afbFunction[] = {
     {"getuid", LuaAfbGetUid},
     {"status", LuaAfbGetStatus},
     {"context", LuaClientCtx},
-
+    {"lockwait", LuaLockWait},
     {NULL, NULL} /* sentinel */
 };
 
@@ -1328,12 +1349,8 @@ int LuaConfigLoad(AFB_ApiT apiHandle) {
     free(lua_str);
 
     // initialise static magic for context
-#ifndef CTX_MAGIC
+#ifndef CTX_MAGIC_VALUE
     CTX_MAGIC = CtlConfigMagicNew();
-#endif
-
-#ifndef TIMER_MAGIC
-    TIMER_MAGIC = CtlConfigMagicNew();
 #endif
 
     return 0;

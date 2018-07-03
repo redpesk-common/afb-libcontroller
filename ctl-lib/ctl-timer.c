@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <systemd/sd-event.h>
 
 #include "ctl-config.h"
 #include "ctl-timer.h"
@@ -88,3 +89,16 @@ int TimerEvtInit (AFB_ApiT apiHandle) {
     return 0;
 }
 
+uint64_t LockWait(AFB_ApiT apiHandle, uint64_t utimeout) {
+    uint64_t current_usec, pre_usec;
+
+    struct sd_event *event = AFB_GetEventLoop(apiHandle);
+
+    sd_event_now(event, CLOCK_MONOTONIC, &pre_usec);
+    sd_event_run(event, utimeout);
+    sd_event_now(event, CLOCK_MONOTONIC, &current_usec);
+
+    uint64_t diff = current_usec - pre_usec;
+    utimeout = utimeout < diff ? 0 : utimeout - diff;
+    return utimeout;
+}

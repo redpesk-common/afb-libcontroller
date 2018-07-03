@@ -46,6 +46,7 @@ int TimerEvtInit (AFB_ApiT apiHandle);
 void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
 void TimerEvtStop(TimerHandleT *timerHandle);
 
+uint64_t LockWait(AFB_ApiT apiHandle, uint64_t utimeout);
 #ifdef __cplusplus
 }
 #endif
