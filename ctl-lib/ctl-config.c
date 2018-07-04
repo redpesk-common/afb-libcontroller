@@ -154,7 +154,7 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
 
         if (!ctlConfig->sections[idx].loadCB)
             AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
-        else
+        else if (json_object_object_get_ex(ctlConfig->configJ, ctlConfig->sections[idx].key, NULL))
             errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
 
