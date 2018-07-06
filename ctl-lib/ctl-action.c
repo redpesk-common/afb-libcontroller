@@ -57,27 +57,32 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     switch (action->type) {
         case CTL_TYPE_API:
         {
-            json_object *returnJ, *toReturnJ;
+            json_object *returnJ, *toReturnJ, *extendedQueryJ = NULL;
 
             if (action->argsJ) {
                 switch(json_object_get_type(queryJ)) {
                     case json_type_object: {
-                        json_object_object_foreach(action->argsJ, key, val) {
-                            json_object_get(val);
-                            json_object_object_add(queryJ, key, val);
-                        }
+                        extendedQueryJ = wrap_json_clone(queryJ);
+
+                        wrap_json_object_add(extendedQueryJ, action->argsJ);
                         break;
                     }
+
                     case json_type_null:
+                        extendedQueryJ = json_object_get(action->argsJ);
                         break;
+
                     default:
                         AFB_ApiError(action->api, "ActionExecOne(queryJ should be an object) uid=%s args=%s", source->uid, json_object_get_string(queryJ));
-                        return err;
+                        return -1;
                 }
+            }
+            else {
+                extendedQueryJ = json_object_get(queryJ);
             }
 
             /* AFB Subcall will release the json_object doing the json_object_put() call */
-            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, json_object_get(queryJ), &returnJ);
+            int err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, extendedQueryJ, &returnJ);
             if(err && AFB_ReqIsValid(source->request))
                 AFB_ReqFailF(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
             else if(err && ! AFB_ReqIsValid(source->request))
