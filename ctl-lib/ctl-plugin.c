@@ -175,6 +175,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
         LuaL2cNewLib(ctlPlugin->ctlL2cFunc->l2cFunc, ctlPlugin->ctlL2cFunc->l2cCount, ctlPlugin->ctlL2cFunc->prefix);
     }
 #endif
+    ctlPlugin->api = apiHandle;
     DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
     if (ctlPluginOnload) {
         if((*ctlPluginOnload) (ctlPlugin, handle)) {
@@ -182,8 +183,6 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
             return -1;
         }
     }
-
-    ctlPlugin->api = apiHandle;
 
     return 0;
 }
