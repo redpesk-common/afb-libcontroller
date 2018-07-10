@@ -21,9 +21,7 @@
 #define _AFB_DEFINITIONS_INCLUDE_
 
 // Waiting for a clean AppFW-V3 API
-#ifdef USE_API_DYN
-    #define AFB_BINDING_VERSION 0
-    #define AFB_BINDING_WANT_DYNAPI
+#if((AFB_BINDING_VERSION == 0 || AFB_BINDING_VERSION == 3) && defined(AFB_BINDING_WANT_DYNAPI))
     #include <afb/afb-binding.h>
 
     #define AFB_BINDING_PREV3
@@ -82,8 +80,7 @@
             uint32_t session;
     } AFB_ApiVerbs;
 
-#else
-    #define AFB_BINDING_VERSION 2
+#elif(AFB_BINDING_VERSION == 2)
     #include <afb/afb-binding.h>
 
     typedef struct afb_req AFB_ReqT;
