@@ -133,6 +133,8 @@ typedef int (*Lua2cWrapperT) (void*luaHandle, const char *funcname, Lua2cFunctio
         int lua2c_ ## funcname (void* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(funcname), funcname));};\
         int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ)
 
+extern char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix);
+
 #ifdef __cplusplus
 }
 #endif

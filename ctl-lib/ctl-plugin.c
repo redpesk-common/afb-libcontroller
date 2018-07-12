@@ -239,34 +239,31 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
     return 0;
 }
 
-static char *GetDefaultSearchPath(AFB_ApiT apiHandle)
+char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
 {
     char *searchPath;
     const char *bindingPath;
-    const char *envPath;
-    size_t bindingPath_len, envPath_len, CTL_PLGN_len;
+    const char *envDirList;
+    size_t bindingPath_len, envDirList_len;
 
     bindingPath = GetBindingDirPath(apiHandle);
-    envPath = getenv("CONTROL_PLUGIN_PATH");
     bindingPath_len = strlen(bindingPath);
-    envPath_len = envPath ? strlen(envPath) : 0;
-    CTL_PLGN_len = envPath_len ? 0 : strlen(CONTROL_PLUGIN_PATH);
+    envDirList = getEnvDirList(prefix, "PLUGIN_PATH");
 
     /* Allocating with the size of binding root dir path + environment if found
      * + 2 for the NULL terminating character and the additional separator
-     * between bindingPath and envPath concatenation.
+     * between bindingPath and envDirList concatenation.
      */
-    if(envPath)  {
-        searchPath = calloc(1, sizeof(char) *((bindingPath_len + envPath_len) + 2));
-        strncat(searchPath, envPath, envPath_len);
+    if(envDirList)  {
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + bindingPath_len;
+        searchPath = malloc(envDirList_len + 1);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", bindingPath, envDirList, CONTROL_PLUGIN_PATH);
     }
     else {
-        searchPath = calloc(1, sizeof(char) * ((bindingPath_len + CTL_PLGN_len) + 2));
-        strncat(searchPath, CONTROL_PLUGIN_PATH, CTL_PLGN_len);
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + bindingPath_len;
+        searchPath = malloc(envDirList_len + 1);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s", bindingPath, CONTROL_PLUGIN_PATH);
     }
-
-    strncat(searchPath, ":", sizeof(searchPath) - 1);
-    strncat(searchPath, bindingPath, bindingPath_len);
 
     return searchPath;
 }
@@ -282,7 +279,7 @@ static int FindPlugins(AFB_ApiT apiHandle, const char *searchPath, const char *f
     return 0;
 }
 
-static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle)
+static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle, const char *prefix)
 {
     int err = 0, i = 0;
     char *searchPath;
@@ -317,7 +314,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     // if search path not in Json config file, then try default
     searchPath = (sPath) ?
         strdup(sPath) :
-        GetDefaultSearchPath(apiHandle);
+        GetDefaultPluginSearchPath(apiHandle, prefix);
 
     // default file equal uid
     if (!fileJ) {
@@ -371,13 +368,13 @@ static int PluginParse(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pl
             ctlPlugins = calloc (*pluginNb + 1, sizeof(CtlPluginT));
             for (idx=0; idx < *pluginNb; idx++) {
                 json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle);
+                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle, section->prefix);
             }
             break;
         }
         case json_type_object: {
             ctlPlugins = calloc (2, sizeof(CtlPluginT));
-            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle);
+            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle, section->prefix);
             (*pluginNb)++;
             break;
         }

@@ -1294,10 +1294,11 @@ int LuaConfigExec(AFB_ApiT apiHandle) {
 
 // Load Lua Interpreter
 
-int LuaConfigLoad(AFB_ApiT apiHandle) {
+int LuaConfigLoad(AFB_ApiT apiHandle, const char *prefix) {
+    size_t total_len = 0, base_len = 0, spath_len = 0;
     static int luaLoaded = 0;
-    int i;
-    //int err = 0;
+    int token_nb = 0, i = 0;
+    char *spath = NULL, *sep = NULL, *lua_str = NULL;
 
     // Lua loads only once
     if (luaLoaded) return 0;
@@ -1320,20 +1321,20 @@ int LuaConfigLoad(AFB_ApiT apiHandle) {
 
     // set package.path lua variable use the CONTROL_PLUGIN_PATH as it could
     // have to find external lua packages in those directories
-    size_t base_len = strlen(LUA_PATH_VALUE);
-    size_t spath_len = strlen(CONTROL_PLUGIN_PATH);
+    base_len = strlen(LUA_PATH_VALUE);
+    spath_len = strlen(CONTROL_PLUGIN_PATH);
 
-    int token_nb = spath_len ? 1:0;
-    char *spath = strdup(CONTROL_PLUGIN_PATH);
-    char *sep = spath;
+    token_nb = spath_len ? 1:0;
+    spath = GetDefaultPluginSearchPath(apiHandle, prefix);
+    sep = spath;
     while((sep = strchr(sep, ':')) != NULL) {
         token_nb++;
         sep++;
     }
 
     // token + the lua glob pattern which is 7 char length
-    size_t total_len = base_len + spath_len + token_nb * 7 + 1;
-    char *lua_str = malloc(total_len + 1);
+    total_len = base_len + spath_len + token_nb * 7 + 1;
+    lua_str = malloc(total_len + 1);
     strncpy(lua_str, LUA_PATH_VALUE, total_len);
     for (i = 0; i < token_nb; i++) {
         sep = strsep(&spath, ":");

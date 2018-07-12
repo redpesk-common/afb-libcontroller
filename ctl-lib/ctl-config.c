@@ -161,7 +161,7 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     return errcount;
 }
 
-CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
+CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) {
     json_object *ctlConfigJ;
     CtlConfigT *ctlHandle=NULL;
     int err;
@@ -195,7 +195,12 @@ CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
     }
 
     ctlHandle->configJ = ctlConfigJ;
+    ctlHandle->prefix = prefix;
     return ctlHandle;
+}
+
+CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
+    return CtlLoadMetaDataUsingPrefix(apiHandle, filepath, NULL);
 }
 
 void wrap_json_array_add(void* array, json_object *val) {
@@ -302,7 +307,7 @@ int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sect
     int err;
 
 #ifdef CONTROL_SUPPORT_LUA
-    err= LuaConfigLoad(apiHandle);
+    err= LuaConfigLoad(apiHandle, ctlHandle->prefix);
     if (err)
         return 1;
 #endif
@@ -313,6 +318,7 @@ int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sect
         json_object * sectionJ;
         int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
         if (done) {
+            sections[idx].prefix = ctlHandle->prefix;
             json_object* updatedSectionJ = LoadAdditionalsFiles(apiHandle, ctlHandle, sections[idx].key, sectionJ);
             err += sections[idx].loadCB(apiHandle, &sections[idx], updatedSectionJ);
         }

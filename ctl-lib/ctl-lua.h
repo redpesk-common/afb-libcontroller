@@ -52,12 +52,12 @@ typedef enum {
 } LuaDoActionT;
 
 extern const char *lua_utils;
-int LuaLoadScript(const char *luaScriptPath);
-int LuaConfigLoad (AFB_ApiT apiHandle);
-void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
-int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
-int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
-int LuaConfigExec(AFB_ApiT apiHandle);
+extern int LuaLoadScript(const char *luaScriptPath);
+extern int LuaConfigLoad (AFB_ApiT apiHandle, const char *prefix);
+extern void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
+extern int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
+extern int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
+extern int LuaConfigExec(AFB_ApiT apiHandle);
 
 #ifdef __cplusplus
 }

@@ -42,11 +42,11 @@ typedef struct TimerHandleS {
 
 typedef int (*timerCallbackT)(TimerHandleT *context);
 
-int TimerEvtInit (AFB_ApiT apiHandle);
-void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
-void TimerEvtStop(TimerHandleT *timerHandle);
+extern int TimerEvtInit (AFB_ApiT apiHandle);
+extern void TimerEvtStart(AFB_ApiT apiHandle, TimerHandleT *timerHandle, timerCallbackT callback, void *context);
+extern void TimerEvtStop(TimerHandleT *timerHandle);
 
-uint64_t LockWait(AFB_ApiT apiHandle, uint64_t utimeout);
+extern uint64_t LockWait(AFB_ApiT apiHandle, uint64_t utimeout);
 #ifdef __cplusplus
 }
 #endif

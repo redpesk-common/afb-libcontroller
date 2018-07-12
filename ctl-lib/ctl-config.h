@@ -58,6 +58,7 @@ typedef struct ConfigSectionS {
   const char *key;
   const char *uid;
   const char *info;
+  const char *prefix;
   int (*loadCB)(AFB_ApiT apihandle, struct ConfigSectionS *section, json_object *sectionJ);
   void *handle;
   CtlActionT *actions;
@@ -70,6 +71,7 @@ typedef struct {
     const char *version;
     const char *author;
     const char *date;
+    const char *prefix;
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
@@ -88,39 +90,40 @@ typedef enum {
 } SectionEnumT;
 
 // ctl-action.c
-CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
-void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
-int ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
-int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
-int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
+extern CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
+extern void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
+extern int ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
+extern int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
+extern int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 
 // ctl-config.c
-int CtlConfigMagicNew();
-json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
-char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
-char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
-void DispatchRequiredApi(AFB_ApiT apiHandle, json_object * requireJ);
-int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
-CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
-int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+extern int CtlConfigMagicNew();
+extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
+extern char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
+extern char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
+extern void DispatchRequiredApi(AFB_ApiT apiHandle, json_object * requireJ);
+extern int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
+extern CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
+extern CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) ;
+extern int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
 
 // ctl-event.c
-int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
+extern int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
 #ifdef AFB_BINDING_PREV3
-void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
+extern void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
 #else
-void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
+extern void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
 #endif
 
 // ctl-control.c
-int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+extern int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-onload.c
-int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+extern int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
-int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
+extern int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+extern int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
 
 #ifdef __cplusplus
 }
