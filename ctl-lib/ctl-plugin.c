@@ -255,12 +255,12 @@ char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
      * between bindingPath and envDirList concatenation.
      */
     if(envDirList)  {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + bindingPath_len;
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + bindingPath_len + 2;
         searchPath = malloc(envDirList_len + 1);
         snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", bindingPath, envDirList, CONTROL_PLUGIN_PATH);
     }
     else {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + bindingPath_len;
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + bindingPath_len + 1;
         searchPath = malloc(envDirList_len + 1);
         snprintf(searchPath, envDirList_len + 1, "%s:%s", bindingPath, CONTROL_PLUGIN_PATH);
     }
