@@ -101,7 +101,7 @@ extern int CtlConfigMagicNew();
 extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
 extern char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
-extern void DispatchRequiredApi(AFB_ApiT apiHandle, json_object * requireJ);
+extern void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ);
 extern int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
 extern CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
 extern CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) ;
