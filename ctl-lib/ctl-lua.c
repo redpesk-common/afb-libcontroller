@@ -692,11 +692,12 @@ int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback) {
 
     json_object *argsJ = LuaPopArgs(source, luaState, LUA_FIRST_ARG + 1);
     int err = (*callback) (source, argsJ, &responseJ);
+    json_object_put(argsJ);
 
     // push error code and eventual response to LUA
     int count = 1;
     lua_pushinteger(luaState, err);
-    if (responseJ)count += LuaPushArgument(source, responseJ);
+    if (responseJ) count += LuaPushArgument(source, responseJ);
 
     return count;
 }
