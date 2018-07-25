@@ -103,9 +103,10 @@ extern char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
 extern void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ);
 extern int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
-extern CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle,const char* filepath) ;
+extern CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle,json_object *ctlConfigJ, const char *prefix) ;
 extern CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) ;
 extern int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+#define CtlLoadMetaData(api, filepath, prefix) CtlLoadMetaDataUsingPrefix(api, filepath, NULL)
 
 // ctl-event.c
 extern int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);

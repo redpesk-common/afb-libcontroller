@@ -161,21 +161,11 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     return errcount;
 }
 
-CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) {
-    json_object *ctlConfigJ;
+CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle, json_object *ctlConfigJ, const char *prefix) {
+    json_object *metadataJ;
     CtlConfigT *ctlHandle=NULL;
     int err;
 
-    // Load JSON file
-    ctlConfigJ = json_object_from_file(filepath);
-    if (!ctlConfigJ) {
-        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
-        return NULL;
-    }
-
-    AFB_ApiInfo(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
-
-    json_object *metadataJ;
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
         ctlHandle = calloc(1, sizeof (CtlConfigT));
@@ -199,8 +189,20 @@ CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, 
     return ctlHandle;
 }
 
-CtlConfigT *CtlLoadMetaData(AFB_ApiT apiHandle, const char* filepath) {
-    return CtlLoadMetaDataUsingPrefix(apiHandle, filepath, NULL);
+CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) {
+    json_object *ctlConfigJ;
+
+
+    // Load JSON file
+    ctlConfigJ = json_object_from_file(filepath);
+    if (!ctlConfigJ) {
+        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
+        return NULL;
+    }
+
+    AFB_ApiInfo(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
+
+    return CtlLoadMetaDataJson(apiHandle, ctlConfigJ, prefix);
 }
 
 void wrap_json_array_add(void* array, json_object *val) {
