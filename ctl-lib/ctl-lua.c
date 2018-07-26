@@ -748,19 +748,26 @@ int LuaCallFunc(CtlSourceT *source, CtlActionT *action, json_object *queryJ) {
     return rc;
 }
 
-int LuaLoadScript(const char *luaScriptPath) {
+int LuaLoadScript(AFB_ApiT apiHandle, const char *luaScriptPath) {
     int err = 0;
 
-    if (!luaScriptPath)
+    if (!luaScriptPath) {
+        AFB_ApiError(apiHandle, "Error: provided path is NULL");
         return -1;
+    }
 
     err = luaL_loadfile(luaState, luaScriptPath);
-    if (err)
+    if (err) {
+        AFB_ApiError(apiHandle, "Error at load for %s: %s", luaScriptPath, lua_tostring(luaState, -1));
         return err;
+    }
 
     // Script was loaded we need to parse to make it executable
     err = lua_pcall(luaState, 0, 0, 0);
-
+    if (err) {
+        AFB_ApiError(apiHandle, "Error at execution for %s: %s", luaScriptPath, lua_tostring(luaState, -1));
+        return err;
+    }
     return err;
 }
 
@@ -819,11 +826,9 @@ static int LuaDoScript(json_object *queryJ, CtlSourceT *source) {
         }
     }
 
-    err = LuaLoadScript(luaScriptPath);
-    if (err) {
-        AFB_ApiError(source->api, "LUA-DOSCRIPT HOOPs Error in LUA loading scripts=%s err=%s", luaScriptPath, lua_tostring(luaState, -1));
+    err = LuaLoadScript(source->api, luaScriptPath);
+    if (err)
         return -1;
-    }
 
     // load function (should exist in CONTROL_PATH_LUA
     lua_getglobal(luaState, func);

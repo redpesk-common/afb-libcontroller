@@ -226,10 +226,8 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
         else if(ext && !strcasecmp(ext, CTL_SCRIPT_EXT)) {
             ctlPlugin->api = apiHandle;
             ctlPlugin->context = handle;
-            if(LuaLoadScript(pluginpath)) {
-                AFB_ApiError(apiHandle, "There was an error loading the lua file %s", pluginpath);
+            if(LuaLoadScript(apiHandle, pluginpath))
                 return -1;
-            }
         }
     }
 
