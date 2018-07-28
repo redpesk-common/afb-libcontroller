@@ -86,6 +86,27 @@ function sleep(n)\n\
     os.execute(\"sleep \" .. tonumber(n))\n\
 end\n\
 \n\
+function table_size(t)\n\
+	local size = 0\n\
+	for _ in pairs(t) do\n\
+		size = size + 1\n\
+	end\n\
+	return size\n\
+end\n\
+function deep_copy(orig)\n\
+    local orig_type = type(orig)\n\
+    local copy\n\
+    if orig_type == 'table' then\n\
+        copy = {}\n\
+        for orig_key, orig_value in next, orig, nil do\n\
+            copy[deep_copy(orig_key)] = deep_copy(orig_value)\n\
+        end\n\
+        setmetatable(copy, deep_copy(getmetatable(orig)))\n\
+    else -- number, string, boolean, etc\n\
+        copy = orig\n\
+    end\n\
+    return copy\n\
+end\n\
 function table_eq(table1, table2)\n\
 	local avoid_loops = {}\n\
 	local function recurse(t1, t2)\n\
