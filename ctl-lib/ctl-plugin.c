@@ -239,30 +239,46 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
 
 char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
 {
-    char *searchPath;
+    char *searchPath, *rootDir, *path;
     const char *bindingPath;
     const char *envDirList;
-    size_t bindingPath_len, envDirList_len;
+    size_t envDirList_len;
+    json_object *settings = afb_api_settings(apiHandle);
+    json_object *bpath;
+
+    if(json_object_object_get_ex(settings, "binding-path", &bpath)) {
+        rootDir = strdup(json_object_get_string(bpath));
+        path = rindex(rootDir, '/');
+        if(strlen(path) < 3)
+			return NULL;
+        *++path = '.';
+        *++path = '.';
+        *++path = '\0';
+    }
+    else {
+        rootDir = malloc(1);
+        strcpy(rootDir, "");
+    }
 
     bindingPath = GetBindingDirPath(apiHandle);
-    bindingPath_len = strlen(bindingPath);
     envDirList = getEnvDirList(prefix, "PLUGIN_PATH");
 
     /* Allocating with the size of binding root dir path + environment if found
-     * + 2 for the NULL terminating character and the additional separator
+     * for the NULL terminating character and the additional separator
      * between bindingPath and envDirList concatenation.
      */
     if(envDirList)  {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + bindingPath_len + 2;
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + strlen(bindingPath) + strlen(rootDir) + 3;
         searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", bindingPath, envDirList, CONTROL_PLUGIN_PATH);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s:%s", rootDir, bindingPath, envDirList, CONTROL_PLUGIN_PATH);
     }
     else {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + bindingPath_len + 1;
+        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(bindingPath) + strlen(rootDir) + 2;
         searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s", bindingPath, CONTROL_PLUGIN_PATH);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", rootDir, bindingPath, CONTROL_PLUGIN_PATH);
     }
 
+    free(rootDir);
     return searchPath;
 }
 
