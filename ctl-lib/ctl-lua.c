@@ -35,7 +35,9 @@
 #define LUA_MSG_MAX_LENGTH 2048
 #define JSON_ERROR (json_object*)-1
 #define LUA_PATH_VALUE "package.path = package.path .. ';?.lua;"
+#ifndef LUA_GLOB_PATTERN
 #define LUA_GLOB_PATTERN "/?.lua;"
+#endif
 
 static lua_State* luaState;
 CtlPluginT *ctlPlugins = NULL;
@@ -1338,8 +1340,7 @@ int LuaConfigLoad(AFB_ApiT apiHandle, const char *prefix) {
         sep++;
     }
 
-    // token + the lua glob pattern which is 7 char length
-    total_len = base_len + spath_len + token_nb * 7 + 1;
+    total_len = base_len + spath_len + token_nb * strlen(LUA_GLOB_PATTERN) + 1;
     lua_str = malloc(total_len + 1);
     strncpy(lua_str, LUA_PATH_VALUE, total_len);
     for (i = 0; i < token_nb; i++) {
