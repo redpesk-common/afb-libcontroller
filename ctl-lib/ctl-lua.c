@@ -670,6 +670,20 @@ static int LuaAfbGetUid(lua_State* luaState) {
     return 1; // return argument
 }
 
+static int LuaAfbGetRootDir(lua_State* luaState) {
+
+    CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
+    if (!source) {
+        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        return 0;
+    }
+
+    // extract and return afbSource from timer handle
+    lua_pushstring(luaState, GetBindingDirPath(source->api));
+
+    return 1; // return argument
+}
+
 static int LuaAfbGetStatus(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
@@ -1274,6 +1288,7 @@ static const luaL_Reg afbFunction[] = {
     {"evtmake", LuaAfbEventMake},
     {"evtpush", LuaAfbEventPush},
     {"getuid", LuaAfbGetUid},
+    {"getrootdir", LuaAfbGetRootDir},
     {"status", LuaAfbGetStatus},
     {"context", LuaClientCtx},
     {"lockwait", LuaLockWait},
