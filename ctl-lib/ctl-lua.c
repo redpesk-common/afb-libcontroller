@@ -1327,11 +1327,11 @@ int LuaConfigLoad(AFB_ApiT apiHandle, const char *prefix) {
 
     // set package.path lua variable use the CONTROL_PLUGIN_PATH as it could
     // have to find external lua packages in those directories
+    spath = GetDefaultPluginSearchPath(apiHandle, prefix);
     base_len = strlen(LUA_PATH_VALUE);
-    spath_len = strlen(CONTROL_PLUGIN_PATH);
+    spath_len = strlen(spath);
 
     token_nb = spath_len ? 1:0;
-    spath = GetDefaultPluginSearchPath(apiHandle, prefix);
     sep = spath;
     while((sep = strchr(sep, ':')) != NULL) {
         token_nb++;
