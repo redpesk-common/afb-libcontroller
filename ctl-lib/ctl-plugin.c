@@ -243,7 +243,7 @@ char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
     const char *bindingPath;
     const char *envDirList;
     size_t envDirList_len;
-    json_object *settings = afb_api_settings(apiHandle);
+    json_object *settings = AFB_GetApiSettings(apiHandle);
     json_object *bpath;
 
     if(json_object_object_get_ex(settings, "binding-path", &bpath)) {

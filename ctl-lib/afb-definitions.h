@@ -55,6 +55,12 @@
     #define AFB_ApiError(api, ...)    AFB_DYNAPI_ERROR (api, __VA_ARGS__)
     #define AFB_ApiInfo(api, ...)     AFB_DYNAPI_INFO (api, __VA_ARGS__)
 
+#if(AFB_BINDING_VERSION == 3)
+    #define AFB_GetApiSettings  afb_api_settings
+#else
+    #define AFB_GetApiSettings(api) json_object_new_object()
+#endif
+
     #define AFB_ReqIsValid(request)   request
     #define AFB_EvtIsValid(evtHandle) evtHandle
 
@@ -111,6 +117,8 @@
     #define AFB_ApiDebug(api, ...)    AFB_DEBUG (__VA_ARGS__)
     #define AFB_ApiError(api, ...)    AFB_ERROR (__VA_ARGS__)
     #define AFB_ApiInfo(api, ...)     AFB_INFO (__VA_ARGS__)
+
+     #define AFB_GetApiSettings(api) json_object_new_object()
 
     #define AFB_ReqIsValid(request)   afb_req_is_valid(request)
     #define AFB_EvtIsValid(evtHandle) afb_event_is_valid(evtHandle)
