@@ -370,27 +370,27 @@ PrintMessage:
 }
 
 static int LuaPrintInfo(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_INFO, _AFB_SYSLOG_LEVEL_INFO_);
+    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_INFO, AFB_SYSLOG_LEVEL_INFO);
     return err;
 }
 
 static int LuaPrintError(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_ERROR, _AFB_SYSLOG_LEVEL_ERROR_);
+    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_ERROR, AFB_SYSLOG_LEVEL_ERROR);
     return err; // no value return
 }
 
 static int LuaPrintWarning(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_WARNING, _AFB_SYSLOG_LEVEL_WARNING_);
+    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_WARNING, AFB_SYSLOG_LEVEL_WARNING);
     return err;
 }
 
 static int LuaPrintNotice(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_NOTICE, _AFB_SYSLOG_LEVEL_NOTICE_);
+    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_NOTICE, AFB_SYSLOG_LEVEL_NOTICE);
     return err;
 }
 
 static int LuaPrintDebug(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_DEBUG, _AFB_SYSLOG_LEVEL_DEBUG_);
+    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_DEBUG, AFB_SYSLOG_LEVEL_DEBUG);
     return err;
 }
 
@@ -426,13 +426,7 @@ static int LuaAfbFail(lua_State* luaState) {
     return 0;
 }
 
-#ifdef AFB_BINDING_PREV3
-
 static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ, AFB_ApiT apiHandle) {
-#else
-
-static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ) {
-#endif
     LuaCbHandleT *handleCb = (LuaCbHandleT*) handle;
     int count = 1;
 
@@ -991,11 +985,14 @@ static int LuaTimerClear(lua_State* luaState) {
     if (!timerHandle)
         return 1;
 
-#ifdef AFB_BINDING_PREV3
+#if(AFB_BINDING_VERSION == 3) || ((AFB_BINDING_VERSION == 0) && defined(AFB_BINDING_WANT_DYNAPI))
     // API handle does not exit in API-V2
     LuaCbHandleT *luaCbHandle = (LuaCbHandleT*) timerHandle->context;
-#endif
     AFB_ApiNotice(luaCbHandle->source->api, "LuaTimerClear timer=%s", timerHandle->uid);
+#else
+    AFB_NOTICE("LuaTimerClear timer=%s", timerHandle->uid);
+#endif
+
     TimerEvtStop(timerHandle);
 
     return 0; //happy end

@@ -94,7 +94,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
 
-#ifndef AFB_BINDING_PREV3
+#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
     // Jose hack to make verbosity visible from sharelib with API-V2
     struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
     if (afbHidenData) *afbHidenData = afbBindingV2data;

@@ -22,16 +22,19 @@
 
 #include "ctl-config.h"
 
-
 // Event dynamic API-V3 mode
-#ifdef AFB_BINDING_PREV3
+#if defined AFB_BINDING_PREV3 || AFB_BINDING_VERSION == 3
 void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ) {
     int idx = 0;
     CtlActionT* actions = NULL;
     AFB_ApiDebug (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
 
     // retrieve section config from api handle
+    #ifdef AFB_BINDING_PREV3
     CtlConfigT *ctrlConfig = (CtlConfigT*) afb_dynapi_get_userdata(apiHandle);
+    #elif AFB_BINDING_VERSION == 3
+    CtlConfigT *ctrlConfig = (CtlConfigT*) afb_api_get_userdata(apiHandle);
+    #endif
 
     for (idx = 0; ctrlConfig->sections[idx].key != NULL; ++idx)
     {
@@ -67,7 +70,7 @@ void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
 
     int index= ActionLabelToIndex(actions, evtLabel);
     if (index < 0) {
-        AFB_WARNING ("CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
+        AFB_WARNING_V2("CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
         return;
     }
 

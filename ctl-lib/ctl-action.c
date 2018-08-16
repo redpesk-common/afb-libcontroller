@@ -124,13 +124,13 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
 
 
 // Direct Request Call in APIV3
-#ifdef AFB_BINDING_PREV3
+#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
 
 static void ActionDynRequest(AFB_ReqT request) {
 
     // retrieve action handle from request and execute the request
-    json_object *queryJ = afb_request_json(request);
-    CtlActionT* action = (CtlActionT*) afb_request_get_vcbdata(request);
+    json_object *queryJ = AFB_ReqJson(request);
+    CtlActionT* action = (CtlActionT*) AFB_ReqVCBData(request);
 
     CtlSourceT source;
     source.uid = action->uid;
@@ -312,12 +312,12 @@ int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, 
                 "args", &action->argsJ);
         if (!err) {
             // in API V3 each control is optionally map to a verb
-#ifdef AFB_BINDING_PREV3
+#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
             if(!apiHandle)
                 return -1;
             action->api = apiHandle;
             if (exportApi) {
-                err = afb_dynapi_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0);
+                err = AFB_ApiAddVerb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0, 0);
                 if (err) {
                     AFB_ApiError(apiHandle, "ACTION-LOAD-ONE fail to register API verb=%s", action->uid);
                     return -1;

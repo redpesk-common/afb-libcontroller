@@ -110,11 +110,8 @@ extern int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSection
 
 // ctl-event.c
 extern int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
-#ifdef AFB_BINDING_PREV3
 extern void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
-#else
 extern void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
-#endif
 
 // ctl-control.c
 extern int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
