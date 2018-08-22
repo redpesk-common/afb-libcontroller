@@ -1352,15 +1352,16 @@ int LuaConfigLoad(AFB_ApiT apiHandle, const char *prefix) {
         sep++;
     }
 
-    total_len = base_len + spath_len + token_nb * strlen(LUA_GLOB_PATTERN) + 1;
-    lua_str = malloc(total_len + 1);
+    /* allocate 2 extra bytes for the ending single quote + NULL char */
+    total_len = base_len + spath_len + token_nb * strlen(LUA_GLOB_PATTERN) + 2;
+    lua_str = malloc(total_len);
     strncpy(lua_str, LUA_PATH_VALUE, total_len);
     for (i = 0; i < token_nb; i++) {
         sep = strsep(&spath, ":");
-        strncat(lua_str, sep, total_len - strlen(lua_str));
-        strncat(lua_str, LUA_GLOB_PATTERN, total_len - strlen(lua_str));
+        strncat(lua_str, sep, total_len - strlen(lua_str) - 1);
+        strncat(lua_str, LUA_GLOB_PATTERN, total_len - strlen(lua_str) -1);
     }
-    strncat(lua_str, "'", 2);
+    strncat(lua_str, "'", total_len - strlen(lua_str) - 1);
 
     if(luaL_dostring(luaState, lua_str))
         printf("Fail change package.path error=%s", lua_tostring(luaState, -1));
