@@ -132,13 +132,17 @@
     #define AFB_ReqIsValid(request)   request
     #define AFB_EvtIsValid(evtHandle) evtHandle
 
+/*
+ * Binder version < FF.RC4, we miss two defined calls.
+ * This is for compatibility purpose that we defined them here.
+ */
 #if ! defined(afb_service_call_legacy) || ! defined(afb_service_call_sync_legacy)
     #define afb_service_call_legacy afb_api_x3_call_legacy
     #define afb_service_call_sync_legacy afb_api_x3_call_sync_legacy
 #endif
 
-    #define AFB_ServiceCall(api, ...) afb_service_call_legacy(api,__VA_ARGS__)
-    #define AFB_ServiceSync(api, ...) afb_service_call_sync_legacy(api, __VA_ARGS__)
+    #define AFB_ServiceCall(api, ...) afb_api_call_legacy(api, __VA_ARGS__)
+    #define AFB_ServiceSync(api, ...) afb_api_call_sync_legacy(api, __VA_ARGS__)
 
     #define AFB_ApiCall(api, ...) afb_api_call(api, __VA_ARGS__)
     #define AFB_ApiSync(api, ...) afb_api_call_sync(api, __VA_ARGS__)
