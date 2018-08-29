@@ -90,6 +90,7 @@ typedef enum {
 } SectionEnumT;
 
 // ctl-action.c
+extern int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi);
 extern CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
 extern void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
 extern int ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);

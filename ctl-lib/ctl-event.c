@@ -86,16 +86,14 @@ void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
 
 // onload section receive one action or an array of actions
 int EventConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
-
+    int err = 0;
     // Load time parse actions in config file
     if (actionsJ != NULL) {
-        section->actions= ActionConfig(apiHandle, actionsJ, 0);
-
-        if (!section->actions) {
-            AFB_ApiError (apiHandle, "EventLoad config fail processing onload actions");
-            return 1;
+        if ( (err= AddActionsToSection(apiHandle, section, actionsJ, 0)) ) {
+            AFB_ApiError (apiHandle, "EventLoad config fail processing actions for section %s", section->uid);
+            return err;
         }
     }
 
-    return 0;
+    return err;
 }

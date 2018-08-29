@@ -363,3 +363,47 @@ CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportAp
 
     return actions;
 }
+
+int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi) {
+    if (actionsJ || section) {
+        CtlActionT *actions = NULL;
+        if(section->actions) {
+            int actionsNb = 0, idx = 0, jdx = 0;
+            CtlActionT *savedActions = section->actions;
+            CtlActionT *newActions = ActionConfig(apiHandle, actionsJ, exportApi);
+
+            while(savedActions[actionsNb].uid)
+                actionsNb++;
+            while(newActions[actionsNb].uid)
+                actionsNb++;
+
+            actions = calloc(actionsNb + 1, sizeof(CtlActionT));
+
+            while(savedActions[idx].uid) {
+                actions[idx] = savedActions[idx];
+                idx++;
+            }
+            while(newActions[jdx].uid && idx <= actionsNb) {
+                actions[idx] = newActions[jdx];
+                idx++;
+                jdx++;
+            }
+            free(savedActions);
+            free(newActions);
+        }
+        else {
+            actions = ActionConfig(apiHandle, actionsJ, exportApi);
+        }
+        section->actions = actions;
+    }
+    else {
+        AFB_ApiError (apiHandle, "Missing actions to add or the section object");
+        return 1;
+    }
+
+    if (!section->actions) {
+        AFB_ApiError (apiHandle, "Adding '%s' fails to section %s", json_object_get_string(actionsJ), section->uid);
+        return 1;
+    }
+        return 0;
+}

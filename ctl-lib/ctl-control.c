@@ -24,15 +24,12 @@
 
 // onload section receive one action or an array of actions
 int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
-
-    // Load time parse actions in config file
-    if (actionsJ != NULL) {
-        section->actions= ActionConfig(apiHandle, actionsJ, 1);
-
-        if (!section->actions) {
-            AFB_ApiError (apiHandle, "ControlLoad config fail processing onload actions");
-            return 1;
+    int err = 0;
+    if (actionsJ) {
+        if ( (err= AddActionsToSection(apiHandle, section, actionsJ, 1)) ) {
+            AFB_ApiError (apiHandle, "ControlLoad config fail processing actions for section %s", section->uid);
+            return err;
         }
     }
-    return 0;
+    return err;
 }
