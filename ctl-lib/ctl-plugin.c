@@ -438,8 +438,17 @@ int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ
         {
             // Jose hack to make verbosity visible from sharedlib and
             // be able to call verb from others api inside the binder
-            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx++].dlHandle, "afbBindingV2data");
+            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx].dlHandle, "afbBindingV2data");
             if (afbHidenData) *afbHidenData = afbBindingV2data;
+
+            DispatchPluginInstallCbT ctlPluginInit = dlsym(ctlPlugins[idx].dlHandle, "CtlPluginInit");
+            if (ctlPluginInit) {
+                if((*ctlPluginInit) (&ctlPlugins[idx], ctlPlugins[idx].context)) {
+                    AFB_ApiError(apiHandle, "Plugin Init function hasn't finish well. Abort initialization");
+                    return -1;
+                }
+            }
+            idx++;
         }
         return 0;
     }
