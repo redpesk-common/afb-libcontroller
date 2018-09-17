@@ -303,15 +303,16 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     // plugin initialises at 1st load further init actions should be place into onload section
     if (!pluginJ) return 0;
 
-    err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?o,s?o !}",
+    err = wrap_json_unpack(pluginJ, "{ss,s?s,s?s,s?o,s?o,s?o !}",
             "uid", &ctlPlugin->uid,
             "info", &ctlPlugin->info,
             "spath", &sPath,
             "libs", &fileJ,
-            "lua", &luaJ
+            "lua", &luaJ,
+            "params", &ctlPlugin->paramsJ
             );
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|libs|[spath]|[lua] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|libs|[spath]|[lua]|[params] in:\n-- %s", json_object_get_string(pluginJ));
         return 1;
     }
 

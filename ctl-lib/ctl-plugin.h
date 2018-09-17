@@ -62,6 +62,7 @@ typedef struct {
     AFB_ApiT api;
     void *dlHandle;
     void *context;
+    json_object *paramsJ;
 #ifdef CONTROL_SUPPORT_LUA
     CtlLua2cFuncT *ctlL2cFunc;
 #endif
