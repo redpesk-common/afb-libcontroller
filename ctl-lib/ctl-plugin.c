@@ -453,7 +453,7 @@ int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ
         }
         return 0;
     }
-    else
+    else if(pluginsJ)
     {
         err = PluginParse(apiHandle, section, pluginsJ, &pluginNb);
     }
