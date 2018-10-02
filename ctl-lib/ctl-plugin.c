@@ -24,6 +24,14 @@
 
 #include "ctl-config.h"
 
+void* getPluginContext(CtlPluginT *plugin) {
+    return plugin->context;
+}
+
+void setPluginContext(CtlPluginT *plugin, void *context) {
+    plugin->context = context;
+}
+
 int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
     json_object *argsJ;

@@ -26,8 +26,13 @@
 #include "filescan-utils.h"
 #include "ctl-config.h"
 
+extern void* getExternalData(CtlConfigT *ctlConfig) {
+    return ctlConfig->external;
+}
 
-// Load control config file
+extern void setExternalData(CtlConfigT *ctlConfig, void *data) {
+    ctlConfig->external = data;
+}
 
 int CtlConfigMagicNew() {
   static int InitRandomDone=0;
