@@ -87,6 +87,7 @@ typedef struct {
     AFB_ApiT api;
     AFB_ReqT request;
     void *context;
+    CtlPluginT *plugin;
     CtlActionStatusT status;
 } CtlSourceT;
 

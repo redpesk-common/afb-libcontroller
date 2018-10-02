@@ -106,6 +106,7 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
 #endif
 
         case CTL_TYPE_CB:
+            source->plugin = action->exec.cb.plugin;
             err = (*action->exec.cb.callback) (source, action->argsJ, queryJ);
             if (err) {
                 AFB_ApiError(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
