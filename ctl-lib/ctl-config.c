@@ -108,7 +108,8 @@ static int DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
     const char* requireBinding = json_object_get_string(bindindJ);
     int err = AFB_RequireApi(apiHandle, requireBinding, 1);
     if (err) {
-        AFB_ApiWarning(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
+        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s. Aborting.", requireBinding);
+        exit(1);
     }
 
     return err;
