@@ -187,11 +187,10 @@ CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle, json_object *ctlConfigJ, con
             free(ctlHandle);
             return NULL;
         }
-    }
 
-    ctlHandle->configJ = ctlConfigJ;
-    ctlHandle->prefix = prefix;
-    ctlHandle->ctlPlugins = &ctlPlugins;
+        ctlHandle->configJ = ctlConfigJ;
+        ctlHandle->prefix = prefix;
+    }
 
     return ctlHandle;
 }

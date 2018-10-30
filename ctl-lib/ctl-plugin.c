@@ -37,6 +37,9 @@ int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ
     json_object *argsJ;
     int idx;
 
+    CtlConfigT *ctlConfig = (CtlConfigT *) AFB_ApiGetUserData(apiHandle);
+    CtlPluginT *ctlPlugins = ctlConfig->ctlPlugins;
+
     if (!ctlPlugins) {
         AFB_ApiError(apiHandle, "PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
         return 1;
@@ -415,6 +418,8 @@ int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ
     int idx = 0, jdx = 0;
     int pluginNb = 0, newPluginsNb = 0, totalPluginNb = 0;
 
+    CtlConfigT *ctlConfig = (CtlConfigT *) AFB_ApiGetUserData(apiHandle);
+    CtlPluginT *ctlPlugins = ctlConfig->ctlPlugins;
     if (ctlPlugins)
     {
         // There is something to add let  that happens

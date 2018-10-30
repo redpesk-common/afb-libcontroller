@@ -117,8 +117,6 @@ typedef struct {
     } exec;
 } CtlActionT;
 
-extern CtlPluginT *ctlPlugins;
-
 typedef int(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg

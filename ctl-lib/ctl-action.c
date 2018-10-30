@@ -408,8 +408,3 @@ int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
     }
         return 0;
 }
-
-int AddActionsToSectionFromPlugin(AFB_ApiT apiHandle, CtlPluginT *externalCtlPlugins, CtlSectionT *section, json_object *actionsJ, int exportApi) {
-    ctlPlugins = externalCtlPlugins;
-    return AddActionsToSection(apiHandle, section, actionsJ, exportApi);
-}
