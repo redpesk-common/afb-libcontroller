@@ -498,7 +498,7 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     }
 
     // note: argument start at 2 because of AFB: table
-    if (count != 5 || !lua_isstring(luaState, LUA_FIRST_ARG + 1) || !lua_isstring(luaState, LUA_FIRST_ARG + 2) || !lua_istable(luaState, LUA_FIRST_ARG + 3)) {
+    if (count != 5 || !lua_isstring(luaState, LUA_FIRST_ARG + 1) || !lua_isstring(luaState, LUA_FIRST_ARG + 2) || (!lua_istable(luaState, LUA_FIRST_ARG + 3) && !lua_isstring(luaState, LUA_FIRST_ARG +3))) {
         lua_pushliteral(luaState, "ERROR: syntax AFB:servsync(source, api, verb, {[Lua Table]})");
         lua_error(luaState);
         return 1;
@@ -508,7 +508,12 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     // get source/api/verb+query
     const char *api = lua_tostring(luaState, LUA_FIRST_ARG + 1);
     const char *verb = lua_tostring(luaState, LUA_FIRST_ARG + 2);
-    json_object *queryJ = LuaTableToJson(source, luaState, LUA_FIRST_ARG + 3);
+    json_object *queryJ = NULL;
+    if (lua_istable(luaState, LUA_FIRST_ARG + 3)) {
+        queryJ = LuaTableToJson(source, luaState, LUA_FIRST_ARG + 3);
+    } else {
+        queryJ = json_object_new_string(lua_tostring(luaState, LUA_FIRST_ARG + 3));
+    }
 
     int iserror = AFB_ServiceSync(source->api, api, verb, queryJ, &responseJ);
 
