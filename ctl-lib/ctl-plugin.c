@@ -417,7 +417,8 @@ static int PluginParse(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pl
     memcpy(ctlPluginsNew, ctlPluginsOrig, idx * sizeof(CtlPluginT));
 
     while(idx < totalPluginNumber) {
-        json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
+        json_object *pluginJ = json_object_is_type(pluginsJ, json_type_array) ?
+                               json_object_array_get_idx(pluginsJ, idx) : pluginsJ;
         err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle, section->prefix);
         idx++;
     }
