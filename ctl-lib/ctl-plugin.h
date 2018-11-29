@@ -28,6 +28,7 @@ extern "C" {
 #define _GNU_SOURCE
 #endif
 
+#include <stdio.h>
 #include <json-c/json.h>
 
 #include "afb-definitions.h"

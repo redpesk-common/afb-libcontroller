@@ -235,10 +235,15 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
             return -1;
         }
         else if(ext && !strcasecmp(ext, CTL_SCRIPT_EXT)) {
+#ifndef CONTROL_SUPPORT_LUA
+            AFB_ApiError(apiHandle, "LUA support not selected (cf:CONTROL_SUPPORT_LUA) in config.cmake");
+            return -1;
+#else
             ctlPlugin->api = apiHandle;
             ctlPlugin->context = handle;
             if(LuaLoadScript(apiHandle, pluginpath))
                 return -1;
+#endif
         }
     }
 
