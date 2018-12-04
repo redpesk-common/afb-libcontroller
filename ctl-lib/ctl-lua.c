@@ -132,7 +132,7 @@ static int LuaPushArgument(CtlSourceT *source, json_object *argsJ) {
             break;
         }
         case json_type_int:
-            lua_pushinteger(luaState, json_object_get_int(argsJ));
+            lua_pushinteger(luaState, json_object_get_int64(argsJ));
             break;
         case json_type_string:
             lua_pushstring(luaState, json_object_get_string(argsJ));
