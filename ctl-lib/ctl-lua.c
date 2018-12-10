@@ -521,6 +521,7 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     lua_pushboolean(luaState, iserror);
     count += LuaPushArgument(source, responseJ);
 
+    json_object_put(responseJ);
     return count; // return count values
 }
 
@@ -638,7 +639,7 @@ static int LuaAfbEventMake(lua_State* luaState) {
     }
 
     // event name should be the only argument
-    afbevt->name = strdup(lua_tostring(luaState, LUA_FIRST_ARG + 1));
+    afbevt->name = strdupa(lua_tostring(luaState, LUA_FIRST_ARG + 1));
 
     // create a new binder event
     afbevt->event = AFB_EventMake(source->api, afbevt->name);

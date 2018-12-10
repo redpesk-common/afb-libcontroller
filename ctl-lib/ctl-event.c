@@ -57,7 +57,7 @@ void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json
     source.request = NULL;
 
     // Best effort ignoring error to exec corresponding action
-    (void) ActionExecOne (&source, &actions[idx], json_object_get(eventJ));
+    (void) ActionExecOne (&source, &actions[idx], eventJ);
 
 }
 #else
@@ -80,7 +80,7 @@ void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ) {
     source.request = AFB_ReqNone;
 
     // Best effort ignoring error to exec corresponding action
-    (void) ActionExecOne (&source, &actions[index], json_object_get(eventJ));
+    (void) ActionExecOne (&source, &actions[index], eventJ);
 }
 #endif
 
