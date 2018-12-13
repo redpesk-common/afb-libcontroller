@@ -26,13 +26,8 @@
 #include "filescan-utils.h"
 #include "ctl-config.h"
 
-extern void* getExternalData(CtlConfigT *ctlConfig) {
-    return ctlConfig->external;
-}
 
-extern void setExternalData(CtlConfigT *ctlConfig, void *data) {
-    ctlConfig->external = data;
-}
+// Load control config file
 
 int CtlConfigMagicNew() {
   static int InitRandomDone=0;
@@ -67,7 +62,7 @@ json_object* CtlConfigScan(const char *dirList, const char *prefix) {
     return responseJ;
 }
 
-char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
+char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ) {
     // We load 1st file others are just warnings
     size_t p_length;
     char *filepath = NULL;
@@ -79,7 +74,7 @@ char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
 
         int err = wrap_json_unpack(entryJ, "{s:s, s:s !}", "fullpath", &fullpath, "filename", &filename);
         if (err) {
-            AFB_ApiError(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
+            AFB_API_ERROR(apiHandle, "CTL-INIT HOOPs invalid JSON entry= %s", json_object_get_string(entryJ));
         }
 
         if (index == 0) {
@@ -91,7 +86,7 @@ char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
             strncat(filepath, filename, p_length - strlen(filepath));
         }
         else {
-            AFB_ApiWarning(apiHandle, "CTL-INIT JSON file found but not used : %s/%s", fullpath, filename);
+            AFB_API_WARNING(apiHandle, "CTL-INIT JSON file found but not used : %s/%s", fullpath, filename);
         }
     }
 
@@ -99,7 +94,7 @@ char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ) {
     return filepath;
 }
 
-char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) {
+char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) {
     // search for default dispatch config file
     json_object* responseJ = CtlConfigScan (dirList, prefix);
 
@@ -109,12 +104,11 @@ char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefi
     return NULL;
 }
 
-static int DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
+static int DispatchRequireOneApi(afb_api_t apiHandle, json_object * bindindJ) {
     const char* requireBinding = json_object_get_string(bindindJ);
-    int err = AFB_RequireApi(apiHandle, requireBinding, 1);
+    int err = afb_api_require_api(apiHandle, requireBinding, 1);
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s. Aborting.", requireBinding);
-        exit(1);
+        AFB_API_WARNING(apiHandle, "CTL-LOAD-CONFIG:REQUIRE Fail to get=%s", requireBinding);
     }
 
     return err;
@@ -126,10 +120,10 @@ static int DispatchRequireOneApi(AFB_ApiT apiHandle, json_object * bindindJ) {
  * the CtlConfigExec could be called anywhere and not in binding init.
  * So you could call this function at init time.
  *
- * @param apiHandle : a afb_daemon api handle, see AFB_ApiT in afb_definitions.h
+ * @param apiHandle : a afb_daemon api handle, see afb_api_t in afb_definitions.h
  * @param requireJ : json_object array of api name required.
  */
-void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ) {
+void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ) {
     static int init = 0, err = 0;
     int idx;
 
@@ -146,7 +140,7 @@ void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ) {
     init = 1;
 }
 
-int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
+int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
 
     DispatchRequireApi(apiHandle, ctlConfig->requireJ);
 #ifdef CONTROL_SUPPORT_LUA
@@ -158,7 +152,7 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     int errcount=0;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
         if (!ctlConfig->sections[idx].loadCB)
-            AFB_ApiNotice(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
+            AFB_API_NOTICE(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
         else
             errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
     }
@@ -166,7 +160,7 @@ int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) {
     return errcount;
 }
 
-CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle, json_object *ctlConfigJ, const char *prefix) {
+CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ, const char *prefix) {
     json_object *metadataJ;
     CtlConfigT *ctlHandle=NULL;
     int err;
@@ -183,30 +177,31 @@ CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle, json_object *ctlConfigJ, con
                 "author", &ctlHandle->author,
                 "date", &ctlHandle->date);
         if (err) {
-            AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require]|[author]|[date] in:\n-- %s", json_object_get_string(metadataJ));
+            AFB_API_ERROR(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require]|[author]|[date] in:\n-- %s", json_object_get_string(metadataJ));
             free(ctlHandle);
             return NULL;
         }
-
-        ctlHandle->configJ = ctlConfigJ;
-        ctlHandle->prefix = prefix;
     }
+
+    ctlHandle->configJ = ctlConfigJ;
+    ctlHandle->prefix = prefix;
+    ctlHandle->ctlPlugins = &ctlPlugins;
 
     return ctlHandle;
 }
 
-CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) {
+CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath, const char *prefix) {
     json_object *ctlConfigJ;
 
 
     // Load JSON file
     ctlConfigJ = json_object_from_file(filepath);
     if (!ctlConfigJ) {
-        AFB_ApiError(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
+        AFB_API_ERROR(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
         return NULL;
     }
 
-    AFB_ApiInfo(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
+    AFB_API_INFO(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
 
     return CtlLoadMetaDataJson(apiHandle, ctlConfigJ, prefix);
 }
@@ -215,9 +210,9 @@ void wrap_json_array_add(void* array, json_object *val) {
     json_object_array_add(array, (json_object*)val);
 }
 
-json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ);
+json_object* LoadAdditionalsFiles(afb_api_t apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ);
 
-json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ, json_object *filesJ) {
+json_object* CtlUpdateSectionConfig(afb_api_t apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ, json_object *filesJ) {
 
     json_object *sectionArrayJ;
     char *oneFile = NULL;
@@ -238,11 +233,10 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
         int length = (int)json_object_array_length(filesJ);
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
-            json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
-            responseJ = responseJ ? responseJ:
+            json_object *responseJ =
                 ScanForConfig(bindingPath, CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
             if(!responseJ) {
-                AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, bindingPath);
+                AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingPath);
                 return sectionArrayJ;
             }
             oneFile = ConfigSearch(apiHandle, responseJ);
@@ -257,11 +251,10 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
             }
         }
     } else {
-        json_object *responseJ = ScanForConfig(CONTROL_CONFIG_PATH ,CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
-        responseJ = responseJ ? responseJ:
+        json_object *responseJ =
             ScanForConfig(bindingPath, CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
         if(!responseJ) {
-            AFB_ApiError(apiHandle, "No config files found in search path. No changes has been made\n -- %s\n -- %s", CONTROL_CONFIG_PATH, bindingPath);
+            AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingPath);
             return sectionArrayJ;
         }
         oneFile = ConfigSearch(apiHandle, responseJ);
@@ -274,7 +267,7 @@ json_object* CtlUpdateSectionConfig(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, c
     return sectionArrayJ;
 }
 
-json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ)
+json_object* LoadAdditionalsFiles(afb_api_t apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ)
 {
     json_object *filesJ, *filesArrayJ = json_object_new_array();
     if (json_object_get_type(sectionJ) == json_type_array) {
@@ -311,7 +304,7 @@ json_object* LoadAdditionalsFiles(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, con
     return sectionJ;
 }
 
-int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
+int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
     int err;
 
 #ifdef CONTROL_SUPPORT_LUA

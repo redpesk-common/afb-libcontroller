@@ -23,19 +23,19 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ) {
     int err = 0;
 
     // Load time parse actions in control file
     if (actionsJ != NULL) {
         if ( (err= AddActionsToSection(apiHandle, section, actionsJ, 0)) ) {
-            AFB_ApiError (apiHandle, "OnloadConfig control fail processing actions for section %s", section->uid);
+            AFB_API_ERROR (apiHandle, "OnloadConfig control fail processing actions for section %s", section->uid);
             return err;
         }
     } else {
         // Exec time process onload action now
         if (!section->actions) {
-            AFB_ApiWarning (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
+            AFB_API_WARNING (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
             return 1;
         }
 
@@ -43,12 +43,12 @@ int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ
             CtlSourceT source;
             source.uid = section->actions[idx].uid;
             source.api  = section->actions[idx].api;
-            source.request = AFB_ReqNone;
+            source.request = NULL;
 
             if(!err)
                 err = ActionExecOne(&source, &section->actions[idx], NULL);
             else {
-                AFB_ApiError(apiHandle, "Onload action execution failed on: %s", source.uid);
+                AFB_API_ERROR(apiHandle, "Onload action execution failed on: %s", source.uid);
                 return err;
             }
         }

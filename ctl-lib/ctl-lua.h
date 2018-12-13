@@ -41,7 +41,7 @@ extern "C" {
 #include "lualib.h"
 #endif
 
-#include "ctl-timer.h"
+#include <afb-timer.h>
 
 int LuaLibInit ();
 
@@ -52,12 +52,12 @@ typedef enum {
 } LuaDoActionT;
 
 extern const char *lua_utils;
-extern int LuaLoadScript(AFB_ApiT apiHandle, const char *luaScriptPath);
-extern int LuaConfigLoad (AFB_ApiT apiHandle, const char *prefix);
+extern int LuaLoadScript(afb_api_t apiHandle, const char *luaScriptPath);
+extern int LuaConfigLoad (afb_api_t apiHandle, const char *prefix);
 extern void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
 extern int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
 extern int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;
-extern int LuaConfigExec(AFB_ApiT apiHandle);
+extern int LuaConfigExec(afb_api_t apiHandle);
 
 #ifdef __cplusplus
 }

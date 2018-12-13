@@ -59,7 +59,7 @@ typedef struct ConfigSectionS {
   const char *uid;
   const char *info;
   const char *prefix;
-  int (*loadCB)(AFB_ApiT apihandle, struct ConfigSectionS *section, json_object *sectionJ);
+  int (*loadCB)(afb_api_t apihandle, struct ConfigSectionS *section, json_object *sectionJ);
   void *handle;
   CtlActionT *actions;
 } CtlSectionT;
@@ -75,7 +75,7 @@ typedef struct {
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
-    CtlPluginT *ctlPlugins;
+    CtlPluginT **ctlPlugins;
     void *external;
 } CtlConfigT;
 
@@ -91,43 +91,39 @@ typedef enum {
 } SectionEnumT;
 
 // ctl-action.c
-extern int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi);
-extern CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ,  int exportApi);
-extern void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
+extern int AddActionsToSection(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi);
+extern CtlActionT *ActionConfig(afb_api_t apiHandle, json_object *actionsJ,  int exportApi);
+extern void ActionExecUID(afb_req_t request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ);
 extern int ActionExecOne( CtlSourceT *source, CtlActionT* action, json_object *queryJ);
-extern int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *, int exportApi);
+extern int ActionLoadOne(afb_api_t apiHandle, CtlActionT *action, json_object *, int exportApi);
 extern int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 
 // ctl-config.c
 extern int CtlConfigMagicNew();
-extern void* getExternalData(CtlConfigT *ctlConfig);
-extern void setExternalData(CtlConfigT *ctlConfig, void *data);
 extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
-extern char* ConfigSearch(AFB_ApiT apiHandle, json_object *responseJ);
-extern char* CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix) ;
-extern void DispatchRequireApi(AFB_ApiT apiHandle, json_object * requireJ);
-extern int CtlConfigExec(AFB_ApiT apiHandle, CtlConfigT *ctlConfig) ;
-extern CtlConfigT *CtlLoadMetaDataJson(AFB_ApiT apiHandle,json_object *ctlConfigJ, const char *prefix) ;
-extern CtlConfigT *CtlLoadMetaDataUsingPrefix(AFB_ApiT apiHandle,const char* filepath, const char *prefix) ;
-extern int CtlLoadSections(AFB_ApiT apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+extern char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ);
+extern char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
+extern void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ);
+extern int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) ;
+extern CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle,json_object *ctlConfigJ, const char *prefix) ;
+extern CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath, const char *prefix) ;
+extern int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
 #define CtlLoadMetaData(api, filepath) CtlLoadMetaDataUsingPrefix(api, filepath, NULL)
 
 // ctl-event.c
-extern int EventConfig(AFB_ApiT apihandle, CtlSectionT *section, json_object *actionsJ);
-extern void CtrlDispatchApiEvent (AFB_ApiT apiHandle, const char *evtLabel, struct json_object *eventJ);
+extern int EventConfig(afb_api_t apihandle, CtlSectionT *section, json_object *actionsJ);
+extern void CtrlDispatchApiEvent (afb_api_t apiHandle, const char *evtLabel, struct json_object *eventJ);
 extern void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
 
 // ctl-control.c
-extern int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+extern int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-onload.c
-extern int OnloadConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ);
+extern int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-extern int PluginConfig(AFB_ApiT UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
-extern int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ);
-extern void* getPluginContext(CtlPluginT *plugin);
-extern void setPluginContext(CtlPluginT *plugin, void *context);
+extern int PluginConfig(afb_api_t UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+extern int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ);
 #ifdef __cplusplus
 }
 #endif

@@ -34,7 +34,7 @@ int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
     return -1;
 }
 
-void ActionExecUID(AFB_ReqT request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ) {
+void ActionExecUID(afb_req_t request, CtlConfigT *ctlConfig, const char *uid, json_object *queryJ) {
     for (int i = 0; ctlConfig->sections[i].key != NULL; i++) {
         if (ctlConfig->sections[i].actions) {
             for (int j = 0; ctlConfig->sections[i].actions[j].uid != NULL; j++) {
@@ -73,7 +73,7 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
                         break;
 
                     default:
-                        AFB_ApiError(action->api, "ActionExecOne(queryJ should be an object) uid=%s args=%s", source->uid, json_object_get_string(queryJ));
+                        AFB_API_ERROR(action->api, "ActionExecOne(queryJ should be an object) uid=%s args=%s", source->uid, json_object_get_string(queryJ));
                         return -1;
                 }
             }
@@ -82,16 +82,16 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
             }
 
             /* AFB Subcall will release the json_object doing the json_object_put() call */
-            err = AFB_ServiceSync(action->api, action->exec.subcall.api, action->exec.subcall.verb, extendedQueryJ, &returnJ);
-            if(err && AFB_ReqIsValid(source->request))
-                AFB_ReqFailF(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(err && ! AFB_ReqIsValid(source->request))
-                AFB_ApiError(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(AFB_ReqIsValid(source->request)) {
+            err = afb_api_call_sync_legacy(action->api, action->exec.subcall.api, action->exec.subcall.verb, extendedQueryJ, &returnJ);
+            if(err && afb_req_is_valid(source->request))
+                afb_req_fail_f(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+            else if(err && ! afb_req_is_valid(source->request))
+                AFB_API_ERROR(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+            else if(afb_req_is_valid(source->request)) {
                 if(wrap_json_unpack(returnJ, "{s:o}", "response", &toReturnJ))
-                    AFB_ApiError(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
+                    AFB_API_ERROR(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
                 else
-                    AFB_ReqSuccess(source->request, toReturnJ, NULL);
+                    afb_req_success(source->request, toReturnJ, NULL);
             }
             break;
         }
@@ -100,7 +100,7 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
         case CTL_TYPE_LUA:
             err = LuaCallFunc(source, action, queryJ);
             if (err) {
-                AFB_ApiError(action->api, "ActionExecOne(Lua) uid=%s func=%s args=%s", source->uid, action->exec.lua.funcname, json_object_get_string(action->argsJ));
+                AFB_API_ERROR(action->api, "ActionExecOne(Lua) uid=%s func=%s args=%s", source->uid, action->exec.lua.funcname, json_object_get_string(action->argsJ));
             }
             break;
 #endif
@@ -109,13 +109,13 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
             source->plugin = action->exec.cb.plugin;
             err = (*action->exec.cb.callback) (source, action->argsJ, queryJ);
             if (err) {
-                AFB_ApiError(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
+                AFB_API_ERROR(action->api, "ActionExecOne(Callback) uid%s plugin=%s function=%s args=%s", source->uid, action->exec.cb.plugin->uid, action->exec.cb.funcname, json_object_get_string(action->argsJ));
             }
             break;
 
         default:
         {
-            AFB_ApiError(action->api, "ActionExecOne(unknown) API type uid=%s", source->uid);
+            AFB_API_ERROR(action->api, "ActionExecOne(unknown) API type uid=%s", source->uid);
             break;
         }
     }
@@ -125,13 +125,10 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
 
 
 // Direct Request Call in APIV3
-#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
-
-static void ActionDynRequest(AFB_ReqT request) {
-
+static void ActionDynRequest(afb_req_t request) {
     // retrieve action handle from request and execute the request
-    json_object *queryJ = AFB_ReqJson(request);
-    CtlActionT* action = (CtlActionT*) AFB_ReqVCBData(request);
+    json_object *queryJ = afb_req_json(request);
+    CtlActionT* action = (CtlActionT*) afb_req_get_vcbdata(request);
 
     CtlSourceT source;
     source.uid = action->uid;
@@ -141,10 +138,8 @@ static void ActionDynRequest(AFB_ReqT request) {
     // provide request and execute the action
     ActionExecOne(&source, action, queryJ);
 }
-#endif
 
-void ParseURI(const char *uri, char **first, char **second)
-{
+void ParseURI(const char *uri, char **first, char **second) {
     char *tmp;
 
     if(! uri || ! first || ! second) {
@@ -175,12 +170,12 @@ void ParseURI(const char *uri, char **first, char **second)
  * the function
  *
  */
-static int BuildPluginAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *action) {
+static int BuildPluginAction(afb_api_t apiHandle, const char *uri, CtlActionT *action) {
     char *plugin = NULL, *function = NULL;
     json_object *callbackJ = NULL;
 
     if (!action) {
-        AFB_ApiError(apiHandle, "Action not valid");
+        AFB_API_ERROR(apiHandle, "Action not valid");
         return -1;
     }
 
@@ -193,13 +188,13 @@ static int BuildPluginAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *ac
                 "plugin", plugin,
                 "function", function,
                 "args", action->argsJ)) {
-            AFB_ApiError(apiHandle, "Error packing Callback JSON object for plugin %s and function %s", uri, function);
+            AFB_API_ERROR(apiHandle, "Error packing Callback JSON object for plugin %s and function %s", uri, function);
             return -1;
         } else {
             return PluginGetCB(apiHandle, action, callbackJ);
         }
     } else {
-        AFB_ApiError(apiHandle, "Miss something uri or function.");
+        AFB_API_ERROR(apiHandle, "Miss something uri or function.");
         return -1;
     }
 
@@ -214,18 +209,18 @@ static int BuildPluginAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *ac
  * unexpected result.
  *
  */
-static int BuildApiAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *action) {
+static int BuildApiAction(afb_api_t apiHandle, const char *uri, CtlActionT *action) {
     char *api = NULL, *verb = NULL;
 
     if (!action) {
-        AFB_ApiError(apiHandle, "Action not valid");
+        AFB_API_ERROR(apiHandle, "Action not valid");
         return -1;
     }
 
     ParseURI(uri, &api, &verb);
 
     if(!api || !verb) {
-        AFB_ApiError(apiHandle, "Error parsing the action string");
+        AFB_API_ERROR(apiHandle, "Error parsing the action string");
         return -1;
     }
 
@@ -246,18 +241,18 @@ static int BuildApiAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *actio
  */
 #ifdef CONTROL_SUPPORT_LUA
 
-static int BuildLuaAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *action) {
+static int BuildLuaAction(afb_api_t apiHandle, const char *uri, CtlActionT *action) {
     char *plugin = NULL, *function = NULL;
 
     if (!action) {
-        AFB_ApiError(apiHandle, "Action not valid");
+        AFB_API_ERROR(apiHandle, "Action not valid");
         return -1;
     }
 
     ParseURI(uri, &plugin, &function);
 
     if(!plugin || !function) {
-        AFB_ApiError(apiHandle, "Error parsing the action string");
+        AFB_API_ERROR(apiHandle, "Error parsing the action string");
         return -1;
     }
 
@@ -269,7 +264,7 @@ static int BuildLuaAction(AFB_ApiT apiHandle, const char *uri, CtlActionT *actio
 }
 #endif
 
-static int BuildOneAction(AFB_ApiT apiHandle, CtlActionT *action, const char *uri) {
+static int BuildOneAction(afb_api_t apiHandle, CtlActionT *action, const char *uri) {
     size_t lua_pre_len = strlen(LUA_ACTION_PREFIX);
     size_t api_pre_len = strlen(API_ACTION_PREFIX);
     size_t plugin_pre_len = strlen(PLUGIN_ACTION_PREFIX);
@@ -279,7 +274,7 @@ static int BuildOneAction(AFB_ApiT apiHandle, CtlActionT *action, const char *ur
 #ifdef CONTROL_SUPPORT_LUA
             return BuildLuaAction(apiHandle, &uri[lua_pre_len], action);
 #else
-            AFB_ApiError(apiHandle, "LUA support not selected at build. Feature disabled");
+            AFB_API_ERROR(apiHandle, "LUA support not selected at build. Feature disabled");
             return -1;
 #endif
         } else if (!strncasecmp(uri, API_ACTION_PREFIX, api_pre_len)) {
@@ -287,18 +282,18 @@ static int BuildOneAction(AFB_ApiT apiHandle, CtlActionT *action, const char *ur
         } else if (!strncasecmp(uri, PLUGIN_ACTION_PREFIX, plugin_pre_len)) {
             return BuildPluginAction(apiHandle, &uri[plugin_pre_len], action);
         } else {
-            AFB_ApiError(apiHandle, "Wrong uri specified. You have to specified 'lua://', 'plugin://' or 'api://'.");
+            AFB_API_ERROR(apiHandle, "Wrong uri specified. You have to specified 'lua://', 'plugin://' or 'api://'.");
             return -1;
         }
     }
 
-    AFB_ApiError(apiHandle, "Uri, Action or function not valid");
+    AFB_API_ERROR(apiHandle, "Uri, Action or function not valid");
     return -1;
 }
 
 // unpack individual action object
 
-int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
+int ActionLoadOne(afb_api_t apiHandle, CtlActionT *action, json_object *actionJ, int exportApi) {
     int err = 0;
     const char *uri = NULL;
 
@@ -312,33 +307,30 @@ int ActionLoadOne(AFB_ApiT apiHandle, CtlActionT *action, json_object *actionJ, 
                 "privileges", &action->privileges,
                 "args", &action->argsJ);
         if (!err) {
-            // in API V3 each control is optionally map to a verb
-#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
             if(!apiHandle)
                 return -1;
             action->api = apiHandle;
             if (exportApi) {
-                err = AFB_ApiAddVerb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0, 0);
+                err = afb_api_add_verb(apiHandle, action->uid, action->info, ActionDynRequest, action, NULL, 0, 0);
                 if (err) {
-                    AFB_ApiError(apiHandle, "ACTION-LOAD-ONE fail to register API verb=%s", action->uid);
+                    AFB_API_ERROR(apiHandle, "ACTION-LOAD-ONE fail to register API verb=%s", action->uid);
                     return -1;
                 }
             }
-#endif
             err = BuildOneAction(apiHandle, action, uri);
         } else {
-            AFB_ApiError(apiHandle, "Fail to parse action JSON : (%s)", json_object_to_json_string(actionJ));
+            AFB_API_ERROR(apiHandle, "Fail to parse action JSON : (%s)", json_object_to_json_string(actionJ));
             err = -1;
         }
     } else {
-        AFB_ApiError(apiHandle, "Wrong action JSON object parameter: (%s)", json_object_to_json_string(actionJ));
+        AFB_API_ERROR(apiHandle, "Wrong action JSON object parameter: (%s)", json_object_to_json_string(actionJ));
         err = -1;
     }
 
     return err;
 }
 
-CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportApi) {
+CtlActionT *ActionConfig(afb_api_t apiHandle, json_object *actionsJ, int exportApi) {
     int err;
     CtlActionT *actions;
 
@@ -365,7 +357,7 @@ CtlActionT *ActionConfig(AFB_ApiT apiHandle, json_object *actionsJ, int exportAp
     return actions;
 }
 
-int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi) {
+int AddActionsToSection(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi) {
     if (actionsJ || section) {
         CtlActionT *actions = NULL;
         if(section->actions) {
@@ -398,12 +390,12 @@ int AddActionsToSection(AFB_ApiT apiHandle, CtlSectionT *section, json_object *a
         section->actions = actions;
     }
     else {
-        AFB_ApiError (apiHandle, "Missing actions to add or the section object");
+        AFB_API_ERROR (apiHandle, "Missing actions to add or the section object");
         return 1;
     }
 
     if (!section->actions) {
-        AFB_ApiError (apiHandle, "Adding '%s' fails to section %s", json_object_get_string(actionsJ), section->uid);
+        AFB_API_ERROR (apiHandle, "Adding '%s' fails to section %s", json_object_get_string(actionsJ), section->uid);
         return 1;
     }
         return 0;

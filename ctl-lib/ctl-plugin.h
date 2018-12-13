@@ -31,7 +31,7 @@ extern "C" {
 #include <stdio.h>
 #include <json-c/json.h>
 
-#include "afb-definitions.h"
+#include <afb/afb-binding.h>
 
 #ifndef CTL_PLUGIN_MAGIC
   #define CTL_PLUGIN_MAGIC 852369147
@@ -60,7 +60,7 @@ typedef struct {
 typedef struct {
     const char *uid;
     const char *info;
-    AFB_ApiT api;
+    afb_api_t api;
     void *dlHandle;
     void *context;
     json_object *paramsJ;
@@ -85,8 +85,8 @@ typedef enum {
 
 typedef struct {
     const char *uid;
-    AFB_ApiT api;
-    AFB_ReqT request;
+    afb_api_t api;
+    afb_req_t request;
     void *context;
     CtlPluginT *plugin;
     CtlActionStatusT status;
@@ -96,7 +96,7 @@ typedef struct {
     const char *uid;
     const char *info;
     const char *privileges;
-    AFB_ApiT api;
+    afb_api_t api;
     json_object *argsJ;
     CtlActionTypeT type;
     union {
@@ -135,7 +135,7 @@ typedef int (*Lua2cWrapperT) (void*luaHandle, const char *funcname, Lua2cFunctio
         int lua2c_ ## funcname (void* luaState){return((*Lua2cWrap)(luaState, MACRO_STR_VALUE(funcname), funcname));};\
         int funcname (CtlSourceT* source, json_object* argsJ, json_object** responseJ)
 
-extern char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix);
+extern char *GetDefaultPluginSearchPath(afb_api_t apiHandle, const char *prefix);
 
 #ifdef __cplusplus
 }

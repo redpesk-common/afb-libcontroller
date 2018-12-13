@@ -24,24 +24,13 @@
 
 #include "ctl-config.h"
 
-void* getPluginContext(CtlPluginT *plugin) {
-    return plugin->context;
-}
-
-void setPluginContext(CtlPluginT *plugin, void *context) {
-    plugin->context = context;
-}
-
-int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ) {
+int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
     json_object *argsJ;
     int idx;
 
-    CtlConfigT *ctlConfig = (CtlConfigT *) AFB_ApiGetUserData(apiHandle);
-    CtlPluginT *ctlPlugins = ctlConfig ? ctlConfig->ctlPlugins : NULL;
-
     if (!ctlPlugins) {
-        AFB_ApiError(apiHandle, "PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
+        AFB_API_ERROR(apiHandle, "PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
         return 1;
     }
 
@@ -50,7 +39,7 @@ int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ
         "function", &function,
         "args", &argsJ);
     if (err) {
-        AFB_ApiError(apiHandle, "PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
+        AFB_API_ERROR(apiHandle, "PluginGet missing plugin|function|[args] in %s", json_object_get_string(callbackJ));
         return 1;
     }
 
@@ -59,7 +48,7 @@ int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ
     }
 
     if (!ctlPlugins[idx].uid) {
-        AFB_ApiError(apiHandle, "PluginGetCB no plugin with uid=%s", plugin);
+        AFB_API_ERROR(apiHandle, "PluginGetCB no plugin with uid=%s", plugin);
         return 1;
     }
 
@@ -68,7 +57,7 @@ int PluginGetCB (AFB_ApiT apiHandle, CtlActionT *action , json_object *callbackJ
     action->exec.cb.plugin= &ctlPlugins[idx];
 
     if (!action->exec.cb.callback) {
-       AFB_ApiError(apiHandle, "PluginGetCB no plugin=%s no function=%s", plugin, function);
+       AFB_API_ERROR(apiHandle, "PluginGetCB no plugin=%s no function=%s", plugin, function);
        return 1;
     }
     return 0;
@@ -85,31 +74,29 @@ static int DispatchOneL2c(void* luaState, char *funcname, Lua2cFunctionT callbac
 #endif
 }
 
-static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_object *lua2csJ, const char *lua2c_prefix, void * handle, CtlPluginT *ctlPlugin)
+static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_object *lua2csJ, const char *lua2c_prefix, void * handle, CtlPluginT *ctlPlugin)
 {
     void *dlHandle = dlopen(pluginpath, RTLD_NOW);
 
     if (!dlHandle) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Fail to load pluginpath=%s err= %s", pluginpath, dlerror());
+        AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE Fail to load pluginpath=%s err= %s", pluginpath, dlerror());
         return -1;
     }
 
     CtlPluginMagicT *ctlPluginMagic = (CtlPluginMagicT*) dlsym(dlHandle, "CtlPluginMagic");
-    if (!ctlPluginMagic || ctlPluginMagic->magic != CTL_PLUGIN_MAGIC) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE symbol'CtlPluginMagic' missing or !=  CTL_PLUGIN_MAGIC plugin=%s", pluginpath);
+    if (!ctlPluginMagic) {
+        AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE symbol'CtlPluginMagic' missing %s", pluginpath);
         return -1;
     } else {
-        AFB_ApiNotice(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->uid);
+        AFB_API_NOTICE(apiHandle, "CTL-PLUGIN-LOADONE %s successfully registered", ctlPluginMagic->uid);
     }
 
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
 
-#if (defined(AFB_BINDING_PREV3) || (AFB_BINDING_VERSION == 3))
     // Jose hack to make verbosity visible from sharelib with API-V2
     struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
     if (afbHidenData) *afbHidenData = afbBindingV2data;
-#endif
 
     // Push lua2cWrapper @ into plugin
     Lua2cWrapperT *lua2cInPlug = dlsym(dlHandle, "Lua2cWrap");
@@ -132,7 +119,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
             if (!l2cFunction) {
-                AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE symbol'%s' missing err=%s", funcName, dlerror());
+                AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE symbol'%s' missing err=%s", funcName, dlerror());
                 return 1;
             }
             l2cFunc[index].func = (void*) l2cFunction;
@@ -168,7 +155,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
             count++;
         }
         if (errCount) {
-            AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE %d symbols not found in plugin='%s'", errCount, pluginpath);
+            AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE %d symbols not found in plugin='%s'", errCount, pluginpath);
             return -1;
         }
         int total = ctlPlugin->ctlL2cFunc->l2cCount + count;
@@ -190,7 +177,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
     DispatchPluginInstallCbT ctlPluginOnload = dlsym(dlHandle, "CtlPluginOnload");
     if (ctlPluginOnload) {
         if((*ctlPluginOnload) (ctlPlugin, handle)) {
-            AFB_ApiError(apiHandle, "Plugin Onload function hasn't finish well. Abort initialization");
+            AFB_API_ERROR(apiHandle, "Plugin Onload function hasn't finish well. Abort initialization");
             return -1;
         }
     }
@@ -198,7 +185,7 @@ static int PluginLoadCOne(AFB_ApiT apiHandle, const char *pluginpath, json_objec
     return 0;
 }
 
-static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_object *lua2csJ, const char *lua2c_prefix, void *handle, CtlPluginT *ctlPlugin)
+static int LoadFoundPlugins(afb_api_t apiHandle, json_object *scanResult, json_object *lua2csJ, const char *lua2c_prefix, void *handle, CtlPluginT *ctlPlugin)
 {
     char pluginpath[CONTROL_MAXPATH_LEN];
     char *filename;
@@ -222,7 +209,7 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
                 "filename", &filename);
 
         if (err) {
-            AFB_ApiError(apiHandle, "HOOPs invalid plugin file path=\n-- %s", json_object_get_string(scanResult));
+            AFB_API_ERROR(apiHandle, "HOOPs invalid plugin file path=\n-- %s", json_object_get_string(scanResult));
             return -1;
         }
 
@@ -235,31 +222,26 @@ static int LoadFoundPlugins(AFB_ApiT apiHandle, json_object *scanResult, json_ob
             return -1;
         }
         else if(ext && !strcasecmp(ext, CTL_SCRIPT_EXT)) {
-#ifndef CONTROL_SUPPORT_LUA
-            AFB_ApiError(apiHandle, "LUA support not selected (cf:CONTROL_SUPPORT_LUA) in config.cmake");
-            return -1;
-#else
             ctlPlugin->api = apiHandle;
             ctlPlugin->context = handle;
             if(LuaLoadScript(apiHandle, pluginpath))
                 return -1;
-#endif
         }
     }
 
     if(len > 1)
-        AFB_ApiWarning(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
+        AFB_API_WARNING(apiHandle, "Plugin multiple instances in searchpath will use %s/%s", fullpath, filename);
 
     return 0;
 }
 
-char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
+char *GetDefaultPluginSearchPath(afb_api_t apiHandle, const char *prefix)
 {
     char *searchPath, *rootDir, *path;
     const char *bindingPath;
     const char *envDirList;
     size_t envDirList_len;
-    json_object *settings = AFB_GetApiSettings(apiHandle);
+    json_object *settings = afb_api_settings(apiHandle);
     json_object *bpath;
 
     if(json_object_object_get_ex(settings, "binding-path", &bpath)) {
@@ -284,32 +266,32 @@ char *GetDefaultPluginSearchPath(AFB_ApiT apiHandle, const char *prefix)
      * between bindingPath and envDirList concatenation.
      */
     if(envDirList)  {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(envDirList) + strlen(bindingPath) + strlen(rootDir) + 3;
+        envDirList_len = strlen(envDirList) + strlen(bindingPath) + strlen(rootDir) + 3;
         searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s:%s", rootDir, bindingPath, envDirList, CONTROL_PLUGIN_PATH);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", rootDir, bindingPath, envDirList);
     }
     else {
-        envDirList_len = strlen(CONTROL_PLUGIN_PATH) + strlen(bindingPath) + strlen(rootDir) + 2;
+        envDirList_len = strlen(bindingPath) + strlen(rootDir) + 2;
         searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", rootDir, bindingPath, CONTROL_PLUGIN_PATH);
+        snprintf(searchPath, envDirList_len + 1, "%s:%s", rootDir, bindingPath);
     }
 
     free(rootDir);
     return searchPath;
 }
 
-static int FindPlugins(AFB_ApiT apiHandle, const char *searchPath, const char *file, json_object **pluginPathJ)
+static int FindPlugins(afb_api_t apiHandle, const char *searchPath, const char *file, json_object **pluginPathJ)
 {
     *pluginPathJ = ScanForConfig(searchPath, CTL_SCAN_RECURSIVE, file, NULL);
     if (!*pluginPathJ || json_object_array_length(*pluginPathJ) == 0) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing plugin=%s* (config ldpath?) search=\n-- %s", file, searchPath);
+        AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE Missing plugin=%s* (config ldpath?) search=\n-- %s", file, searchPath);
         return -1;
     }
 
     return 0;
 }
 
-static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle, const char *prefix)
+static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle, const char *prefix)
 {
     int err = 0, i = 0;
     char *searchPath;
@@ -328,7 +310,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
             "params", &ctlPlugin->paramsJ
             );
     if (err) {
-        AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|libs|[spath]|[lua]|[params] in:\n-- %s", json_object_get_string(pluginJ));
+        AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE Plugin missing uid|[info]|libs|[spath]|[lua]|[params] in:\n-- %s", json_object_get_string(pluginJ));
         return 1;
     }
 
@@ -337,7 +319,7 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
             "prefix", &lua2c_prefix,
             "functions", &lua2csJ);
         if(err) {
-            AFB_ApiError(apiHandle, "CTL-PLUGIN-LOADONE Missing 'function' in:\n-- %s", json_object_get_string(pluginJ));
+            AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE Missing 'function' in:\n-- %s", json_object_get_string(pluginJ));
             return 1;
         }
     }
@@ -390,74 +372,88 @@ static int PluginLoad (AFB_ApiT apiHandle, CtlPluginT *ctlPlugin, json_object *p
     return 0;
 }
 
-static int PluginParse(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
-    int err = 0, idx = 0, pluginToAddNumber, totalPluginNumber;
-
-    CtlConfigT *ctlConfig = (CtlConfigT *) AFB_ApiGetUserData(apiHandle);
-    CtlPluginT *ctlPluginsNew, *ctlPluginsOrig = ctlConfig ? ctlConfig->ctlPlugins : NULL;
-
-    while(ctlPluginsOrig && ctlPluginsOrig[idx].uid != NULL)
-        idx++;
-
-    totalPluginNumber = idx;
+static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ, int *pluginNb) {
+    int idx = 0, err = 0;
 
     switch (json_object_get_type(pluginsJ)) {
         case json_type_array: {
-            pluginToAddNumber = (int) json_object_array_length(pluginsJ);
+            *pluginNb = (int)json_object_array_length(pluginsJ);
+            ctlPlugins = calloc (*pluginNb + 1, sizeof(CtlPluginT));
+            for (idx=0; idx < *pluginNb; idx++) {
+                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
+                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle, section->prefix);
+            }
             break;
         }
         case json_type_object: {
-            pluginToAddNumber = 1;
+            ctlPlugins = calloc (2, sizeof(CtlPluginT));
+            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle, section->prefix);
+            (*pluginNb)++;
             break;
         }
         default: {
-            AFB_ApiError(apiHandle, "Wrong JSON object passed: %s", json_object_get_string(pluginsJ));
-            return -1;
+            AFB_API_ERROR(apiHandle, "Wrong JSON object passed: %s", json_object_get_string(pluginsJ));
+            err = -1;
         }
     }
 
-    totalPluginNumber += pluginToAddNumber;
-
-    ctlPluginsNew = calloc (totalPluginNumber + 1, sizeof(CtlPluginT));
-    memcpy(ctlPluginsNew, ctlPluginsOrig, idx * sizeof(CtlPluginT));
-
-    while(idx < totalPluginNumber) {
-        json_object *pluginJ = json_object_is_type(pluginsJ, json_type_array) ?
-                               json_object_array_get_idx(pluginsJ, idx) : pluginsJ;
-        err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle, section->prefix);
-        idx++;
-    }
-
-    ctlConfig->ctlPlugins = ctlPluginsNew;
-    free(ctlPluginsOrig);
-
-    return err;
+        return err;
 }
 
-int PluginConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *pluginsJ) {
-    int err = 0, idx = 0;
+int PluginConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ) {
+    int err = 0;
+    int idx = 0, jdx = 0;
+    int pluginNb = 0, newPluginsNb = 0, totalPluginNb = 0;
 
-    CtlConfigT *ctlConfig = (CtlConfigT *) AFB_ApiGetUserData(apiHandle);
-    CtlPluginT *ctlPlugins = ctlConfig ? ctlConfig->ctlPlugins : NULL;
+    if (ctlPlugins)
+    {
+        // There is something to add let  that happens
+        if(pluginsJ) {
+            CtlPluginT *ctlPluginsNew = NULL, *ctlPluginsOrig = ctlPlugins;
+            err = PluginParse(apiHandle, section, pluginsJ, &newPluginsNb);
+            ctlPluginsNew = ctlPlugins;
 
-    // First plugins load
-    if(pluginsJ) {
-        err = PluginParse(apiHandle, section, pluginsJ);
-    }
-    // Code executed executed at Controller ConfigExec step
-    else if (ctlPlugins) {
+            while(ctlPlugins[pluginNb].uid != NULL) {
+                pluginNb++;
+            }
+
+            totalPluginNb = pluginNb + newPluginsNb;
+            ctlPlugins = calloc(totalPluginNb + 1, sizeof(CtlPluginT));
+            while(ctlPluginsOrig[idx].uid != NULL) {
+                ctlPlugins[idx] = ctlPluginsOrig[idx];
+                idx++;
+            }
+            while(ctlPluginsNew[jdx].uid != NULL && idx <= totalPluginNb) {
+                ctlPlugins[idx] = ctlPluginsNew[jdx];
+                idx++;
+                jdx++;
+            }
+
+            free(ctlPluginsOrig);
+            free(ctlPluginsNew);
+        }
+
         while(ctlPlugins[idx].uid != NULL)
         {
-            // Calling plugin Init function
+            // Jose hack to make verbosity visible from sharedlib and
+            // be able to call verb from others api inside the binder
+            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx].dlHandle, "afbBindingV2data");
+            if (afbHidenData) *afbHidenData = afbBindingV2data;
+
             DispatchPluginInstallCbT ctlPluginInit = dlsym(ctlPlugins[idx].dlHandle, "CtlPluginInit");
             if (ctlPluginInit) {
                 if((*ctlPluginInit) (&ctlPlugins[idx], ctlPlugins[idx].context)) {
-                    AFB_ApiError(apiHandle, "Plugin Init function hasn't finish well. Abort initialization");
+                    AFB_API_ERROR(apiHandle, "Plugin Init function hasn't finish well. Abort initialization");
                     return -1;
                 }
             }
             idx++;
         }
+        return 0;
+    }
+    else if(pluginsJ)
+    {
+        err = PluginParse(apiHandle, section, pluginsJ, &pluginNb);
     }
 
     return err;

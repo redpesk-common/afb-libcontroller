@@ -23,11 +23,11 @@
 #include "ctl-config.h"
 
 // onload section receive one action or an array of actions
-int ControlConfig(AFB_ApiT apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ) {
     int err = 0;
     if (actionsJ) {
         if ( (err= AddActionsToSection(apiHandle, section, actionsJ, 1)) ) {
-            AFB_ApiError (apiHandle, "ControlLoad config fail processing actions for section %s", section->uid);
+            AFB_API_ERROR (apiHandle, "ControlLoad config fail processing actions for section %s", section->uid);
             return err;
         }
     }
