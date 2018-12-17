@@ -26,9 +26,13 @@
 #include "filescan-utils.h"
 #include "ctl-config.h"
 
+extern void* getExternalData(CtlConfigT *ctlConfig) {
+    return ctlConfig->external;
+}
 
-// Load control config file
-
+extern void setExternalData(CtlConfigT *ctlConfig, void *data) {
+    ctlConfig->external = data;
+}
 int CtlConfigMagicNew() {
   static int InitRandomDone=0;
 
@@ -163,29 +167,25 @@ int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
 CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ, const char *prefix) {
     json_object *metadataJ;
     CtlConfigT *ctlHandle=NULL;
-    int err;
 
     int done = json_object_object_get_ex(ctlConfigJ, "metadata", &metadataJ);
     if (done) {
         ctlHandle = calloc(1, sizeof (CtlConfigT));
-        err = wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o,s?s,s?s !}",
-                "uid", &ctlHandle->uid,
-                "version", &ctlHandle->version,
-                "api", &ctlHandle->api,
-                "info", &ctlHandle->info,
-                "require", &ctlHandle->requireJ,
-                "author", &ctlHandle->author,
-                "date", &ctlHandle->date);
-        if (err) {
+        if (wrap_json_unpack(metadataJ, "{ss,ss,ss,s?s,s?o,s?s,s?s !}",
+                                        "uid", &ctlHandle->uid,
+                                        "version", &ctlHandle->version,
+                                        "api", &ctlHandle->api,
+                                        "info", &ctlHandle->info,
+                                        "require", &ctlHandle->requireJ,
+                                        "author", &ctlHandle->author,
+                                        "date", &ctlHandle->date)) {
             AFB_API_ERROR(apiHandle, "CTL-LOAD-CONFIG:METADATA Missing something uid|api|version|[info]|[require]|[author]|[date] in:\n-- %s", json_object_get_string(metadataJ));
             free(ctlHandle);
             return NULL;
         }
+        ctlHandle->configJ = ctlConfigJ;
+        ctlHandle->prefix = prefix;
     }
-
-    ctlHandle->configJ = ctlConfigJ;
-    ctlHandle->prefix = prefix;
-    ctlHandle->ctlPlugins = &ctlPlugins;
 
     return ctlHandle;
 }

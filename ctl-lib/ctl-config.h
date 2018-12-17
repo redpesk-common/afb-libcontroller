@@ -18,6 +18,7 @@
  *   Json load using json_unpack https://jansson.readthedocs.io/en/2.9/apiref.html#parsing-and-validating-values
  */
 
+
 #ifndef _CTL_CONFIG_INCLUDE_
 #define _CTL_CONFIG_INCLUDE_
 
@@ -75,7 +76,7 @@ typedef struct {
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
-    CtlPluginT **ctlPlugins;
+    CtlPluginT *ctlPlugins;
     void *external;
 } CtlConfigT;
 
@@ -100,6 +101,8 @@ extern int ActionLabelToIndex(CtlActionT* actions, const char* actionLabel);
 
 // ctl-config.c
 extern int CtlConfigMagicNew();
+extern void* getExternalData(CtlConfigT *ctlConfig);
+extern void setExternalData(CtlConfigT *ctlConfig, void *data);
 extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
 extern char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
@@ -124,6 +127,8 @@ extern int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *
 // ctl-plugin.c
 extern int PluginConfig(afb_api_t UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
 extern int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ);
+extern void* getPluginContext(CtlPluginT *plugin);
+extern void setPluginContext(CtlPluginT *plugin, void *context);
 #ifdef __cplusplus
 }
 #endif

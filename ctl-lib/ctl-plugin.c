@@ -24,10 +24,21 @@
 
 #include "ctl-config.h"
 
+void* getPluginContext(CtlPluginT *plugin) {
+    return plugin->context;
+}
+
+void setPluginContext(CtlPluginT *plugin, void *context) {
+    plugin->context = context;
+}
+
 int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ) {
     const char *plugin=NULL, *function=NULL;
     json_object *argsJ;
     int idx;
+
+    CtlConfigT *ctlConfig = (CtlConfigT *) afb_api_get_userdata(apiHandle);
+    CtlPluginT *ctlPlugins = ctlConfig ? ctlConfig->ctlPlugins : NULL;
 
     if (!ctlPlugins) {
         AFB_API_ERROR(apiHandle, "PluginGetCB plugin section missing cannot call '%s'", json_object_get_string(callbackJ));
@@ -115,7 +126,7 @@ static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_obje
             funcName = malloc(p_length + 1);
 
             strncpy(funcName, "lua2c_", p_length);
-            strncat(funcName, l2cName, p_length - strlen (funcName));
+            strncat(funcName, l2cName, sizeof(funcName) - strlen (funcName) + 1);
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
             if (!l2cFunction) {
@@ -372,74 +383,65 @@ static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *
     return 0;
 }
 
-static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ, int *pluginNb) {
-    int idx = 0, err = 0;
+static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ) {
+    int err = 0, idx = 0, pluginToAddNumber, totalPluginNumber;
+
+    CtlConfigT *ctlConfig = (CtlConfigT *) afb_api_get_userdata(apiHandle);
+    CtlPluginT *ctlPluginsNew, *ctlPluginsOrig = ctlConfig ? ctlConfig->ctlPlugins : NULL;
+
+    while(ctlPluginsOrig && ctlPluginsOrig[idx].uid != NULL)
+        idx++;
+
+    totalPluginNumber = idx;
 
     switch (json_object_get_type(pluginsJ)) {
         case json_type_array: {
-            *pluginNb = (int)json_object_array_length(pluginsJ);
-            ctlPlugins = calloc (*pluginNb + 1, sizeof(CtlPluginT));
-            for (idx=0; idx < *pluginNb; idx++) {
-                json_object *pluginJ = json_object_array_get_idx(pluginsJ, idx);
-                err += PluginLoad(apiHandle, &ctlPlugins[idx], pluginJ, section->handle, section->prefix);
-            }
+            pluginToAddNumber = (int) json_object_array_length(pluginsJ);
             break;
         }
         case json_type_object: {
-            ctlPlugins = calloc (2, sizeof(CtlPluginT));
-            err += PluginLoad(apiHandle, &ctlPlugins[0], pluginsJ, section->handle, section->prefix);
-            (*pluginNb)++;
+            pluginToAddNumber = 1;
             break;
         }
         default: {
             AFB_API_ERROR(apiHandle, "Wrong JSON object passed: %s", json_object_get_string(pluginsJ));
-            err = -1;
+            return -1;
         }
     }
 
-        return err;
+    totalPluginNumber += pluginToAddNumber;
+
+    ctlPluginsNew = calloc (totalPluginNumber + 1, sizeof(CtlPluginT));
+    memcpy(ctlPluginsNew, ctlPluginsOrig, idx * sizeof(CtlPluginT));
+
+    while(idx < totalPluginNumber) {
+        json_object *pluginJ = json_object_is_type(pluginsJ, json_type_array) ?
+                               json_object_array_get_idx(pluginsJ, idx) : pluginsJ;
+        err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle, section->prefix);
+        idx++;
+    }
+
+    ctlConfig->ctlPlugins = ctlPluginsNew;
+    free(ctlPluginsOrig);
+
+    return err;
 }
 
 int PluginConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ) {
-    int err = 0;
-    int idx = 0, jdx = 0;
-    int pluginNb = 0, newPluginsNb = 0, totalPluginNb = 0;
+    int err = 0, idx = 0;
 
-    if (ctlPlugins)
-    {
-        // There is something to add let  that happens
-        if(pluginsJ) {
-            CtlPluginT *ctlPluginsNew = NULL, *ctlPluginsOrig = ctlPlugins;
-            err = PluginParse(apiHandle, section, pluginsJ, &newPluginsNb);
-            ctlPluginsNew = ctlPlugins;
+    CtlConfigT *ctlConfig = (CtlConfigT *) afb_api_get_userdata(apiHandle);
+    CtlPluginT *ctlPlugins = ctlConfig ? ctlConfig->ctlPlugins : NULL;
 
-            while(ctlPlugins[pluginNb].uid != NULL) {
-                pluginNb++;
-            }
-
-            totalPluginNb = pluginNb + newPluginsNb;
-            ctlPlugins = calloc(totalPluginNb + 1, sizeof(CtlPluginT));
-            while(ctlPluginsOrig[idx].uid != NULL) {
-                ctlPlugins[idx] = ctlPluginsOrig[idx];
-                idx++;
-            }
-            while(ctlPluginsNew[jdx].uid != NULL && idx <= totalPluginNb) {
-                ctlPlugins[idx] = ctlPluginsNew[jdx];
-                idx++;
-                jdx++;
-            }
-
-            free(ctlPluginsOrig);
-            free(ctlPluginsNew);
-        }
-
+    // First plugins load
+    if(pluginsJ) {
+        err = PluginParse(apiHandle, section, pluginsJ);
+    }
+    // Code executed executed at Controller ConfigExec step
+    else if (ctlPlugins) {
         while(ctlPlugins[idx].uid != NULL)
         {
-            // Jose hack to make verbosity visible from sharedlib and
-            // be able to call verb from others api inside the binder
-            struct afb_binding_data_v2 *afbHidenData = dlsym(ctlPlugins[idx].dlHandle, "afbBindingV2data");
-            if (afbHidenData) *afbHidenData = afbBindingV2data;
-
+            // Calling plugin Init function
             DispatchPluginInstallCbT ctlPluginInit = dlsym(ctlPlugins[idx].dlHandle, "CtlPluginInit");
             if (ctlPluginInit) {
                 if((*ctlPluginInit) (&ctlPlugins[idx], ctlPlugins[idx].context)) {
@@ -449,11 +451,6 @@ int PluginConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *plugins
             }
             idx++;
         }
-        return 0;
-    }
-    else if(pluginsJ)
-    {
-        err = PluginParse(apiHandle, section, pluginsJ, &pluginNb);
     }
 
     return err;
