@@ -51,7 +51,7 @@ endforeach(PKG_CONFIG)
 
 
 set(CTL_LUA_SOURCE ctl-lua.c ctl-lua-utils.c)
-ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA)
+ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA -Wall -Wextra -Wconversion -Wno-unused-parameter -Wno-sign-compare -Wno-sign-conversion -Werror=maybe-uninitialized -Werror=implicit-function-declaration -ffunction-sections -fdata-sections -fPIC)
 
 set(CONTROLLER_HEADERS
     ctl-config.h
@@ -60,7 +60,7 @@ set(CONTROLLER_HEADERS
     )
 
 # Define project Targets
-ADD_LIBRARY(${TARGET_NAME} SHARED ctl-action.c ctl-config.c ctl-onload.c ctl-plugin.c ctl-control.c ctl-event.c ${CTL_LUA_SOURCE})
+ADD_LIBRARY(${TARGET_NAME} STATIC ctl-action.c ctl-config.c ctl-onload.c ctl-plugin.c ctl-control.c ctl-event.c ${CTL_LUA_SOURCE})
 
 # Library dependencies (include updates automatically)
 TARGET_LINK_LIBRARIES(${TARGET_NAME}
@@ -80,13 +80,9 @@ INSTALL(FILES
     ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )
 
-INSTALL(FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/lib${TARGET_NAME}.so
-    DESTINATION
-    ${CMAKE_INSTALL_LIBDIR}
-    )
-INSTALL(FILES
-    ${CONTROLLER_HEADERS}
-    DESTINATION
-    ${CMAKE_INSTALL_INCLUDEDIR}
-    )
+INSTALL(TARGETS ${TARGET_NAME}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}
+       )
+INSTALL(FILES ${CONTROLLER_HEADERS}
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+       )
