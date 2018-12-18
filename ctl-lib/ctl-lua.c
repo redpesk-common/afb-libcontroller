@@ -90,7 +90,7 @@ static CtlSourceT *LuaSourcePop(lua_State *luaState, int index) {
 static LuaAfbSourceT *LuaSourcePush(lua_State *luaState, CtlSourceT *source) {
     LuaAfbSourceT *afbSource = (LuaAfbSourceT *) calloc(1, sizeof (LuaAfbSourceT));
     if (!afbSource) {
-        AFB_API_ERROR(source->api, "LuaSourcePush fail to allocate user data context");
+        AFB_API_ERROR(source->api, "LuaSourcePush fails to allocate user data context");
         return NULL;
     }
 
@@ -435,7 +435,7 @@ static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *respo
 
     int err = lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
-        AFB_API_ERROR(apiHandle, "LUA-SERVICE-CB:FAIL response=%s err=%s", json_object_to_json_string(responseJ), lua_tostring(luaState, -1));
+        AFB_API_ERROR(apiHandle, "LuaAfbServiceCB: Fail response=%s err=%s", json_object_to_json_string(responseJ), lua_tostring(luaState, -1));
     }
 
     free(handleCb->source);
@@ -447,14 +447,14 @@ static int LuaAfbService(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbService-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbService: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
 
     // note: argument start at 2 because of AFB: table
     if (count < 6 || !lua_isstring(luaState, 3) || !lua_isstring(luaState, 4) || !lua_isstring(luaState, 6)) {
-        lua_pushliteral(luaState, "ERROR: syntax AFB:service(source, api, verb, {[Lua Table]})");
+        lua_pushliteral(luaState, "LuaAfbService: syntax AFB:service(source, api, verb, {[Lua Table]})");
         lua_error(luaState);
         return 1;
     }
@@ -484,7 +484,7 @@ static int LuaAfbServiceSync(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbServiceSync-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbServiceSync: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
@@ -493,7 +493,7 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     if (count != 5 ||
         ! lua_isstring(luaState, LUA_FIRST_ARG + 1) ||
         ! lua_isstring(luaState, LUA_FIRST_ARG + 2)) {
-        lua_pushliteral(luaState, "ERROR: syntax AFB:servsync(source, api, verb, {[Lua Table]})");
+        lua_pushliteral(luaState, "LuaAfbServiceSync: syntax AFB:servsync(source, api, verb, {[Lua Table]})");
         lua_error(luaState);
         return 1;
     }
@@ -522,14 +522,14 @@ static int LuaAfbEventPush(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbMakePush: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
 
     // if no private event handle then use default binding event
     if (!lua_islightuserdata(luaState, LUA_FIRST_ARG + 1)) {
-        lua_pushliteral(luaState, "LuaAfbMakePush-Fail missing event handle");
+        lua_pushliteral(luaState, "LuaAfbMakePush: Fail missing event handle");
         lua_error(luaState);
         return 1;
     }
@@ -537,22 +537,22 @@ static int LuaAfbEventPush(lua_State* luaState) {
     afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIRST_ARG + 1);
 
     if (!afb_event_is_valid(afbevt->event)) {
-        lua_pushliteral(luaState, "LuaAfbMakePush-Fail invalid event");
+        lua_pushliteral(luaState, "LuaAfbMakePush: Fail invalid event");
         lua_error(luaState);
         return 1;
     }
 
     json_object *ctlEventJ = LuaTableToJson(source, luaState, LUA_FIRST_ARG + 2);
     if (!ctlEventJ) {
-        lua_pushliteral(luaState, "LuaAfbEventPush-Syntax is AFB:signal ([evtHandle], {lua table})");
+        lua_pushliteral(luaState, "LuaAfbEventPush: Syntax is AFB:signal ([evtHandle], {lua table})");
         lua_error(luaState);
         return 1;
     }
 
     int done = afb_event_push(afbevt->event, ctlEventJ);
     if (!done) {
-        lua_pushliteral(luaState, "LuaAfbEventPush-Fail No Subscriber to event");
-        AFB_API_ERROR(source->api, "LuaAfbEventPush-Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
+        lua_pushliteral(luaState, "LuaAfbEventPush: Fail No Subscriber to event");
+        AFB_API_ERROR(source->api, "LuaAfbEventPush: Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
         lua_error(luaState);
         return 1;
     }
@@ -565,14 +565,14 @@ static int LuaAfbEventSubscribe(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbEventSubscribe: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
 
     // if no private event handle then use default binding event
     if (!lua_islightuserdata(luaState, LUA_FIRST_ARG + 1)) {
-        lua_pushliteral(luaState, "LuaAfbMakePush-Fail missing event handle");
+        lua_pushliteral(luaState, "LuaAfbEventSubscribe: Fail missing event handle");
         lua_error(luaState);
         return 1;
     }
@@ -580,29 +580,35 @@ static int LuaAfbEventSubscribe(lua_State* luaState) {
     afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIRST_ARG + 1);
 
     if (!afb_event_is_valid(afbevt->event)) {
-        lua_pushliteral(luaState, "LuaAfbMakePush-Fail invalid event handle");
+        lua_pushliteral(luaState, "LuaAfbEventSubscribe: Fail invalid event handle");
         lua_error(luaState);
         return 1;
     }
 
     int err = afb_req_subscribe(source->request, afbevt->event);
     if (err) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail No Subscriber to event");
-        AFB_API_ERROR(source->api, "LuaAfbEventPush-Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
+        lua_pushliteral(luaState, "LuaAfbEventSubscribe: Fail No Subscriber to event");
+        AFB_API_ERROR(source->api, "LuaAfbEventSubscribe: Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
+        lua_error(luaState);
+        return 1;
+    }
+    afbevt->count++;
+    return 0;
+}
 
 static int LuaAfbEventUnsubscribe(lua_State* luaState) {
     LuaAfbEvent *afbevt;
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
 
     // if no private event handle then use default binding event
     if (!lua_islightuserdata(luaState, LUA_FIRST_ARG + 1)) {
-        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail missing event handle");
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe: Fail missing event handle");
         lua_error(luaState);
         return 1;
     }
@@ -610,15 +616,15 @@ static int LuaAfbEventUnsubscribe(lua_State* luaState) {
     afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIRST_ARG + 1);
 
     if (!afb_event_is_valid(afbevt->event)) {
-        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail invalid event handle");
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe: Fail invalid event handle");
         lua_error(luaState);
         return 1;
     }
 
     int err = afb_req_unsubscribe(source->request, afbevt->event);
     if (err) {
-        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail No Subscriber to event");
-        AFB_API_ERROR(source->api, "LuaAfbEventUnsubscribe-Fail name unsubscriber event=%s count=%d", afbevt->name, afbevt->count);
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe: Fail No Subscriber to event");
+        AFB_API_ERROR(source->api, "LuaAfbEventUnsubscribe: Fail name unsubscriber event=%s count=%d", afbevt->name, afbevt->count);
         lua_error(luaState);
         return 1;
     }
@@ -632,7 +638,7 @@ static int LuaLockWait(lua_State* luaState) {
 
     CtlSourceT *source = (CtlSourceT *)LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaLockWait-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaLockWait: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
@@ -649,13 +655,13 @@ static int LuaAfbEventMake(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventMake-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbEventMake: Fail Invalid request handle");
         lua_error(luaState);
         return 1;
     }
 
     if (count != LUA_FIRST_ARG + 1 || !lua_isstring(luaState, LUA_FIRST_ARG + 1)) {
-        lua_pushliteral(luaState, "LuaAfbEventMake-Syntax is evtHandle= AFB:event ('myEventName')");
+        lua_pushliteral(luaState, "LuaAfbEventMake: Syntax is evtHandle= AFB:event ('myEventName')");
         lua_error(luaState);
         return 1;
     }
@@ -667,7 +673,7 @@ static int LuaAfbEventMake(lua_State* luaState) {
     afbevt->event = afb_api_make_event(source->api, afbevt->name);
     if (!afb_event_is_valid(afbevt->event)) {
         AFB_API_ERROR(source->api, "Fail to CreateEvent evtname=%s", afbevt->name);
-        lua_pushliteral(luaState, "LuaAfbEventMake-Fail to Create Binder event");
+        lua_pushliteral(luaState, "LuaAfbEventMake: Fail to Create Binder event");
         lua_error(luaState);
         return 1;
     }
@@ -681,7 +687,7 @@ static int LuaAfbGetApiName(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbGetApiName: Fail Invalid request handle");
         return 0;
     }
 
@@ -695,7 +701,7 @@ static int LuaAfbGetUid(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbGetUid: Fail Invalid request handle");
         return 0;
     }
 
@@ -709,7 +715,7 @@ static int LuaAfbGetRootDir(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbGetRootDir: Fail Invalid request handle");
         return 0;
     }
 
@@ -723,7 +729,7 @@ static int LuaAfbGetStatus(lua_State* luaState) {
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
-        lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail Invalid request handle");
+        lua_pushliteral(luaState, "LuaAfbGetStatus: Fail Invalid request handle");
         return 0;
     }
 
@@ -790,7 +796,7 @@ int LuaCallFunc(CtlSourceT *source, CtlActionT *action, json_object *queryJ) {
     // effectively exec LUA script code
     err = lua_pcall(luaState, count, 1, 0);
     if (err) {
-        AFB_API_ERROR(source->api, "LuaCallFunc Fail calling %s error=%s", func, lua_tostring(luaState, -1));
+        AFB_API_ERROR(source->api, "LuaCallFunc: Fail calling %s error=%s", func, lua_tostring(luaState, -1));
         return -1;
     }
 
