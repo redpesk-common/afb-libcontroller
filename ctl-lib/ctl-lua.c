@@ -589,6 +589,36 @@ static int LuaAfbEventSubscribe(lua_State* luaState) {
     if (err) {
         lua_pushliteral(luaState, "LuaAfbEventSubscribe-Fail No Subscriber to event");
         AFB_API_ERROR(source->api, "LuaAfbEventPush-Fail name subscriber event=%s count=%d", afbevt->name, afbevt->count);
+
+static int LuaAfbEventUnsubscribe(lua_State* luaState) {
+    LuaAfbEvent *afbevt;
+
+    CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
+    if (!source) {
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail Invalid request handle");
+        lua_error(luaState);
+        return 1;
+    }
+
+    // if no private event handle then use default binding event
+    if (!lua_islightuserdata(luaState, LUA_FIRST_ARG + 1)) {
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail missing event handle");
+        lua_error(luaState);
+        return 1;
+    }
+
+    afbevt = (LuaAfbEvent*) lua_touserdata(luaState, LUA_FIRST_ARG + 1);
+
+    if (!afb_event_is_valid(afbevt->event)) {
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail invalid event handle");
+        lua_error(luaState);
+        return 1;
+    }
+
+    int err = afb_req_unsubscribe(source->request, afbevt->event);
+    if (err) {
+        lua_pushliteral(luaState, "LuaAfbEventUnsubscribe-Fail No Subscriber to event");
+        AFB_API_ERROR(source->api, "LuaAfbEventUnsubscribe-Fail name unsubscriber event=%s count=%d", afbevt->name, afbevt->count);
         lua_error(luaState);
         return 1;
     }
@@ -1288,6 +1318,7 @@ static const luaL_Reg afbFunction[] = {
     {"success", LuaAfbSuccess},
     {"fail", LuaAfbFail},
     {"subscribe", LuaAfbEventSubscribe},
+    {"unsubscribe", LuaAfbEventUnsubscribe},
     {"evtmake", LuaAfbEventMake},
     {"evtpush", LuaAfbEventPush},
     {"getapiname", LuaAfbGetApiName},
