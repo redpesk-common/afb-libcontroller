@@ -25,7 +25,7 @@ Name: @TARGET_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 URL: @PROJECT_URL@
-Libs.private:
+Libs.private: -lafb-helpers
 Libs: -L@CMAKE_INSTALL_LIBDIR@ -l@TARGET_NAME@
 Cflags: -I${includedir}
 
