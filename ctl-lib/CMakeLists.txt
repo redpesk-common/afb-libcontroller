@@ -18,7 +18,7 @@
 set(TARGET_NAME "ctl-utilities")
 set(PROJECT_PRETTY_NAME "Controller")
 set(PROJECT_DESCRIPTION "controller")
-set(PROJECT_URL "https://gerrit.automotivelinux.org:29418/apps/app-controller-submodule")
+set(PROJECT_URL "https://gerrit.automotivelinux.org:29418/src/libappcontroller")
 set(PROJECT_AUTHOR "Ar Foll, Fulup")
 set(PROJECT_AUTHOR_MAIL "fulup@iot.bzh")
 set(PROJECT_LICENSE "APL2.0")

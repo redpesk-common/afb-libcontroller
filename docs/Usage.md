@@ -1,22 +1,50 @@
 # Usage
 
-## 1) Add app-controller-submodule as a submodule to include in your project
+## (Optional) Remove the git submodule version
+
+If you already use the controller component but use the submodule version then
+you have to get rid of it to be sure to link and use the library version. To do
+so, you have to do the following:
+
+* deinitialize the submodule using `git`
 
 ```bash
-git submodule add https://gerrit.automotivelinux.org/gerrit/apps/app-controller-submodule
+# This example assumes that the git submodule is named app-afb-helpers-submodule
+# and is located at your root project repository.
+git submodule deinit app-afb-helpers-submodule
 ```
 
-## 2) Add app-controller-submodule as a static library to your binding
+* remove the relative submodule lines from the `.gitmodules` file
 
-```cmake
-    # Library dependencies (include updates automatically)
-    TARGET_LINK_LIBRARIES(${TARGET_NAME}
-        ctl-utilities
-        ... other dependencies ....
+```bash
+vim .gitmodules
+```
+
+* remove the `ctl-utilities` target link from any CMake target you specified.
+ Those lines look like:
+
+```bash
+TARGET_LINK_LIBRARIES(${TARGET_NAME}
+    ctl-utilities # REMOVE THIS LINE
+    ${link_libraries}
     )
 ```
 
-## 3) Declare your controller config section in your binding
+## Add libappcontroller as a static library to your binding
+
+In your `config.cmake` file, add a dependency to the controller library, i.e:
+
+```cmake
+set(PKG_REQUIRED_LIST
+	json-c
+	afb-daemon
+	ctl-utilities --> this is the controller library dependency name
+)
+```
+
+Or you can also use the `FIND_PACKAGE` CMake command to add it.
+
+## Declare your controller config section in your binding
 
 ```C
 // CtlSectionT syntax:
@@ -32,7 +60,7 @@ static CtlSectionT ctlSections[]= {
 
 ```
 
-## 4) Do the controller config parsing at binding pre-init
+## Do the controller config parsing at binding pre-init
 
 ```C
    // check if config file exist
@@ -46,7 +74,7 @@ static CtlSectionT ctlSections[]= {
     if (!ctlConfig) return -1;
 ```
 
-## 5) Execute the controller config during binding init
+## Execute the controller config during binding init
 
 ```C
   int err = CtlConfigExec (ctlConfig);

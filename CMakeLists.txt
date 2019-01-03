@@ -16,7 +16,6 @@
 # limitations under the License.
 ###########################################################################
 
-# This component should be included as a submodule and wont compile as standalone
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 include(GNUInstallDirs)
 add_subdirectory("ctl-lib")

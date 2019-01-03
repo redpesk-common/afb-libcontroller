@@ -43,7 +43,7 @@ Each block in the configuration file is defined with
 * **event**: a collection of actions meant to be executed when receiving a given signal
 * **personnal sections**: personnal section
 
-Callbacks to parse sections are documented in [Declare your controller config section in your binding](<#3_Declare_your_controller_config_section_in_your_binding>) section. You can use the callback defined in controller or define your own callback.
+Callbacks to parse sections are documented in [Declare your controller config section in your binding](./Usage.html#declare-your-controller-config-section-in-your-binding) section. You can use the callback defined in controller or define your own callback.
 
 ## Metadata
 
