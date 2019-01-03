@@ -24,6 +24,38 @@ set(PROJECT_AUTHOR_MAIL "fulup@iot.bzh")
 set(PROJECT_LICENSE "APL2.0")
 set(PROJECT_LANGUAGES "C")
 
+
+if(DEFINED ENV{SDKTARGETSYSROOT})
+file(STRINGS $ENV{SDKTARGETSYSROOT}/usr/include/linux/version.h LINUX_VERSION_CODE_LINE REGEX "LINUX_VERSION_CODE")
+set(BUILD_ENV_SYSROOT $ENV{SDKTARGETSYSROOT})
+elseif(DEFINED ENV{PKG_CONFIG_SYSROOT_DIR})
+file(STRINGS $ENV{PKG_CONFIG_SYSROOT_DIR}/usr/include/linux/version.h LINUX_VERSION_CODE_LINE REGEX "LINUX_VERSION_CODE")
+set(BUILD_ENV_SYSROOT $ENV{PKG_CONFIG_SYSROOT_DIR})
+else()
+file(STRINGS /usr/include/linux/version.h LINUX_VERSION_CODE_LINE REGEX "LINUX_VERSION_CODE")
+set(BUILD_ENV_SYSROOT "")
+endif()
+
+# Get the os type
+# Used to package .deb
+set(OS_RELEASE_PATH "${BUILD_ENV_SYSROOT}/etc/os-release")
+if(EXISTS ${OS_RELEASE_PATH})
+	execute_process(COMMAND bash "-c" "grep -E '^ID(_LIKE)?=' ${OS_RELEASE_PATH} | tail -n 1"
+		OUTPUT_VARIABLE TMP_OSRELEASE
+	)
+
+	if (NOT TMP_OSRELEASE STREQUAL "")
+		string(REGEX REPLACE ".*=\"?([0-9a-z\._-]*)( .*)?\"?\n" "\\1" OSDETECTED ${TMP_OSRELEASE})
+	else()
+		set(OSDETECTED "NOT COMPATIBLE !")
+	endif()
+elseif("${BUILD_ENV_SYSROOT}" STREQUAL "$ENV{PKG_CONFIG_SYSROOT_DIR}")
+	set(OSDETECTED "yocto-build")
+else()
+	set(OSDETECTED "NOT COMPATIBLE ! Missing ${OS_RELEASE_PATH} file.")
+endif()
+message("Distribution detected ${OSDETECTED}")
+
 if(NOT CMAKE_INSTALL_PREFIX)
     set(CMAKE_INSTALL_PREFIX "/usr")
 endif()
@@ -31,13 +63,18 @@ add_definitions(-DAFB_BINDING_VERSION=3)
 add_definitions(-DLUA_GLOB_PATTERN="/var/?.lua\\\;")
 add_definitions(-DSUSE_LUA_INCDIR)
 
-
 INCLUDE(FindPkgConfig)
+
 set (PKG_REQUIRED_LIST
-    afb-daemon
-    afb-helpers
-    lua
+        afb-daemon
+        afb-helpers
     )
+
+if(${OSDETECTED} STREQUAL "debian")
+    list(APPEND PKG_REQUIRED_LIST lua53)
+else()
+    list(APPEND PKG_REQUIRED_LIST lua)
+endif()
 
 # Loop on required package and add options
 foreach (PKG_CONFIG ${PKG_REQUIRED_LIST})

@@ -1,0 +1,2 @@
+/opt/AGL/lib/*/pkgconfig/*.pc
+/opt/AGL/lib/*/*.a
