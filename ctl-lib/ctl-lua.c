@@ -48,12 +48,6 @@ static int CTX_MAGIC = CTX_MAGIC_VALUE;
 static int CTX_MAGIC;
 #endif
 
-#if TIMER_MAGIC_VALUE
-static int TIMER_MAGIC = TIMER_MAGIC_VALUE;
-#else
-static int TIMER_MAGIC;
-#endif
-
 typedef struct {
     char *name;
     int count;
@@ -1017,7 +1011,7 @@ static TimerHandleT *LuaTimerPop(lua_State *luaState, int index) {
     luaL_checktype(luaState, index, LUA_TLIGHTUSERDATA);
     timerHandle = (TimerHandleT *) lua_touserdata(luaState, index);
 
-    if (timerHandle == NULL && timerHandle->magic != TIMER_MAGIC) {
+    if (timerHandle == NULL) {
         luaL_error(luaState, "Invalid source handle");
         fprintf(stderr, "LuaSourcePop error retrieving afbSource");
         return NULL;
@@ -1156,7 +1150,6 @@ static int LuaTimerSet(lua_State* luaState) {
 
     // everything look fine create timer structure
     TimerHandleT *timerHandle = malloc(sizeof (TimerHandleT));
-    timerHandle->magic = TIMER_MAGIC;
     timerHandle->delay = delay;
     timerHandle->count = count;
     timerHandle->uid = uid;
