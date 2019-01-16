@@ -15,7 +15,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-set(TARGET_NAME "ctl-utilities")
+set(TARGET_NAME "appcontroller")
+set(LEGACY_NAME "ctl-utilities")
+set(AGLVERSION 6.99 CACHE STRING "Current AGL Version")
+set(PROJECT_VERSION ${AGLVERSION} CACHE STRING "Project version can override AGLVERSION")
 set(PROJECT_PRETTY_NAME "Controller")
 set(PROJECT_DESCRIPTION "controller")
 set(PROJECT_URL "https://gerrit.automotivelinux.org:29418/src/libappcontroller")
@@ -23,7 +26,6 @@ set(PROJECT_AUTHOR "Ar Foll, Fulup")
 set(PROJECT_AUTHOR_MAIL "fulup@iot.bzh")
 set(PROJECT_LICENSE "APL2.0")
 set(PROJECT_LANGUAGES "C")
-
 
 if(DEFINED ENV{SDKTARGETSYSROOT})
 file(STRINGS $ENV{SDKTARGETSYSROOT}/usr/include/linux/version.h LINUX_VERSION_CODE_LINE REGEX "LINUX_VERSION_CODE")
@@ -111,8 +113,10 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME}
     )
 
 CONFIGURE_FILE(${TARGET_NAME}.pc.in ${TARGET_NAME}.pc @ONLY)
+CONFIGURE_FILE(${LEGACY_NAME}.pc.in ${LEGACY_NAME}.pc @ONLY)
 INSTALL(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.pc
+    ${CMAKE_CURRENT_BINARY_DIR}/${LEGACY_NAME}.pc
     DESTINATION
     ${CMAKE_INSTALL_LIBDIR}/pkgconfig
     )

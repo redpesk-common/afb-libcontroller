@@ -4,6 +4,7 @@
 * Status: Release Candidate
 * Author: Fulup Ar Foll fulup@iot.bzh
 * Date  : May-2018
+* Require : af-binder version >= FF (handle only bindings v3)
 
 ## Features
 
@@ -23,8 +24,19 @@
  and [libafb-helpers](https://gerrit.automotivelinux.org/gerrit/p/src/libafb-helpers.git).
 * Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
-The controller library is integrated by default in the AGL SDK since GG (>=7)
-and is also available as a package for the AGL supported linux distributions.
+The controller library is integrated by default in the AGL SDK since the Guppy
+version (>=7) and is also available as a package for the AGL supported linux
+distributions.
+
+You could find the SDK build from Yocto which embed the afb-helpers library
+here:
+
+* For [releases](https://download.automotivelinux.org/AGL/release/) >= Guppy, in
+ the latest machine's deploy directory. (e.g for Guppy in
+ `latest/<yourmachine>/deploy/sdk` directory)
+* For the [master](https://download.automotivelinux.org/AGL/snapshots/master/)
+ development branch, in the latest machine's deploy directory. (e.g in
+ `latest/<yourmachine>/deploy/sdk` directory)
 
 To install the native package please refer to [this chapter](../host-configuration/docs/1_Prerequisites.md)
 in the AGL documentation to install the AGL repository for your distribution.
