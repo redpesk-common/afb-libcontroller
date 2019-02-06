@@ -1,4 +1,5 @@
 [gerrit]
 host=gerrit.automotivelinux.org
 port=29418
-project=apps/app-controller-submodule
+project=src/libappcontroller
+defaultbranch=master
