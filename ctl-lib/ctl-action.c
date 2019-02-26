@@ -51,13 +51,74 @@ void ActionExecUID(afb_req_t request, CtlConfigT *ctlConfig, const char *uid, js
     }
 }
 
+void HandleApiCallActionResponseFromVerbCall(void *data, struct json_object *responseJ, const char *error, const char *info, afb_req_t request) {
+    CtlActionT *action = (CtlActionT *) data;
+
+    if (!action) {
+        afb_req_fail_f(request,
+                       "Action is null, won't be able to handle the response, error=%s info=%s response=%s",
+                       error ? error : "NULL",
+                       info ? info : "NULL",
+                       responseJ ? json_object_get_string(responseJ) : "NULL");
+    }
+    else if (error) {
+        afb_req_fail_f(request,
+                       "subcall-fail",
+                       "An error happened during verb call, error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
+                       error ? error : "NULL",
+                       info ? info : "NULL",
+                       action->uid,
+                       action->exec.subcall.api,
+                       action->exec.subcall.verb,
+                       json_object_get_string(action->argsJ),
+                       responseJ ? json_object_get_string(responseJ) : "NULL");
+    }
+    else {
+        afb_req_success(request, responseJ ? json_object_get(responseJ) : NULL, info);
+    }
+}
+
+void HandleApiCallActionResponseFromEvent(void *data, struct json_object *responseJ, const char *error, const char *info, afb_api_t apiHandle) {
+    CtlActionT *action = (CtlActionT *) data;
+
+    if (!action) {
+        AFB_API_ERROR(apiHandle,
+                      "Action is null, won't be able to handle the response, error=%s info=%s response=%s",
+                      error ? error : "NULL",
+                      info ? info : "NULL",
+                      responseJ ? json_object_get_string(responseJ) : "NULL");
+    }
+    else if (error) {
+        AFB_API_ERROR(apiHandle,
+                      "An error happened during verb call, error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
+                      error ? error : "NULL",
+                      info ? info : "NULL",
+                      action->uid,
+                      action->exec.subcall.api,
+                      action->exec.subcall.verb,
+                      json_object_get_string(action->argsJ),
+                      responseJ ? json_object_get_string(responseJ) : "NULL");
+    }
+    else {
+        AFB_API_DEBUG(apiHandle,
+                      "Seems that everything went fine during verb call, error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
+                      error ? error : "NULL",
+                      info ? info : "NULL",
+                      action->uid,
+                      action->exec.subcall.api,
+                      action->exec.subcall.verb,
+                      json_object_get_string(action->argsJ),
+                      responseJ ? json_object_get_string(responseJ) : "NULL");
+    }
+}
+
 int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
     int err = 0;
 
     switch (action->type) {
         case CTL_TYPE_API:
         {
-            json_object *returnJ, *toReturnJ, *extendedQueryJ = NULL;
+            json_object *extendedQueryJ = NULL;
 
             if (action->argsJ) {
                 switch(json_object_get_type(queryJ)) {
@@ -82,16 +143,22 @@ int ActionExecOne(CtlSourceT *source, CtlActionT* action, json_object *queryJ) {
             }
 
             /* AFB Subcall will release the json_object doing the json_object_put() call */
-            err = afb_api_call_sync_legacy(action->api, action->exec.subcall.api, action->exec.subcall.verb, extendedQueryJ, &returnJ);
-            if(err && afb_req_is_valid(source->request))
-                afb_req_fail_f(source->request, "subcall-fail", "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(err && ! afb_req_is_valid(source->request))
-                AFB_API_ERROR(action->api, "ActionExecOne(AppFw) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-            else if(afb_req_is_valid(source->request)) {
-                if(wrap_json_unpack(returnJ, "{s:o}", "response", &toReturnJ))
-                    AFB_API_ERROR(action->api, "ActionExecOne(Can't unpack response) uid=%s api=%s verb=%s args=%s", source->uid, action->exec.subcall.api, action->exec.subcall.verb, json_object_get_string(action->argsJ));
-                else
-                    afb_req_success(source->request, toReturnJ, NULL);
+            if (!source->request) {
+                afb_api_call(action->api,
+                             action->exec.subcall.api,
+                             action->exec.subcall.verb,
+                             extendedQueryJ,
+                             &HandleApiCallActionResponseFromEvent,
+                             (void *) action);
+            }
+            else {
+                afb_req_subcall(source->request,
+                                action->exec.subcall.api,
+                                action->exec.subcall.verb,
+                                extendedQueryJ,
+                                afb_req_subcall_pass_events | afb_req_subcall_on_behalf,
+                                &HandleApiCallActionResponseFromVerbCall,
+                                (void *) action);
             }
             break;
         }
