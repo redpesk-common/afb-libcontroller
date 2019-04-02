@@ -790,7 +790,7 @@ int LuaCallFunc(CtlSourceT *source, CtlActionT *action, json_object *queryJ) {
     // effectively exec LUA script code
     err = lua_pcall(luaState, count, 1, 0);
     if (err) {
-        AFB_API_ERROR(source->api, "LuaCallFunc: Fail calling %s error=%s", func, lua_tostring(luaState, -1));
+        AFB_API_ERROR(action->api, "LuaCallFunc: Fail calling %s error=%s", func, lua_tostring(luaState, -1));
         return -1;
     }
 
