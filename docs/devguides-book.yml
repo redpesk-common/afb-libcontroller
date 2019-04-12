@@ -1,0 +1,19 @@
+type: books
+books:
+-
+    id: libappcontroller-guides
+    title: Controller Guides
+    description: Controller Guides documentation
+    keywords:
+    author: "IotBzh"
+    version: master
+    chapters:
+    - url: controller.md
+      name: Installation
+    - url: controllerConfig.md
+      name: Controller Configuration
+    - url: Usage.md
+      name: Usage
+    - url: configSample.md
+      name: Config Sample
+
