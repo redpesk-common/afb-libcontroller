@@ -64,7 +64,7 @@ done
 > homologue `afb_api_call_legacy` and `afb_api_call_sync_legacy` respectively
 > but you have to be aware that they are *legacy* functions and you should use
 > the news call functions `afb_api_call` and `afb_api_call_sync` instead.
-> Cf [Binder API functions reference](../af-binder/reference-v3/func-api.html#calls-and-job-functions)
+> Cf [Binder API functions reference](../../../apis_services/reference/af-binder/reference-v3/func-api.html#calls-and-job-functions)
 > for more details on these functions.
 
 As a reminder, here are the old controller's functions definitions that you
