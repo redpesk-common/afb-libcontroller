@@ -38,7 +38,7 @@ here:
  development branch, in the latest machine's deploy directory. (e.g in
  `latest/<yourmachine>/deploy/sdk` directory)
 
-To install the native package please refer to [this chapter](../host-configuration/docs/1_Prerequisites.md)
+To install the native package please refer to [this chapter](../1-verify-build-host.html)
 in the AGL documentation to install the AGL repository for your distribution.
 
 Then use your package manager to install the library.
