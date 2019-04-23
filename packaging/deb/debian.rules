@@ -5,7 +5,7 @@
 export VERSION=$(shell grep -E "^Version" ../*dsc | sed -r 's/^.*: (.*)-.*/\1/')
 
 %:
-	bash /etc/profile.d/AGL-app-framework-binder.sh
+	bash /etc/profile.d/agl-app-framework-binder.sh
 	dh $@
 
 override_dh_auto_configure:
