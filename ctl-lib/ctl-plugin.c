@@ -125,8 +125,8 @@ static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_obje
             size_t p_length = 6 + strlen(l2cName);
             funcName = malloc(p_length + 1);
 
-            strncpy(funcName, "lua2c_", p_length);
-            strncat(funcName, l2cName, sizeof(funcName) - strlen (funcName) + 1);
+            strncpy(funcName, "lua2c_", p_length + 1);
+            strncat(funcName, l2cName, p_length - strlen (funcName) + 1);
 
             Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
             if (!l2cFunction) {
