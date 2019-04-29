@@ -105,9 +105,12 @@ static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_obje
     // store dlopen handle to enable onload action at exec time
     ctlPlugin->dlHandle = dlHandle;
 
-    // Jose hack to make verbosity visible from sharelib with API-V2
-    struct afb_binding_data_v2 *afbHidenData = dlsym(dlHandle, "afbBindingV2data");
-    if (afbHidenData) *afbHidenData = afbBindingV2data;
+    // Plugins using the binder are weakly link the symbol "afbBindingV3root" that is used as the
+    // default API handle for any afb_api_... operation. To allow the plugins to use default API
+    // features (verbosity LOG by example), this is needed to supply a correct value for the plugin.
+    // The default API is a good default choice.
+    afb_api_t *afbHidenData = dlsym(dlHandle, "afbBindingV3root");
+    if (afbHidenData) *afbHidenData = afbBindingV3root;
 
     // Push lua2cWrapper @ into plugin
     Lua2cWrapperT *lua2cInPlug = dlsym(dlHandle, "Lua2cWrap");
