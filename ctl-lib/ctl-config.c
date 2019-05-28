@@ -153,15 +153,24 @@ int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
 #endif
 
     // Loop on every section and process config
-    int errcount=0;
+    int error;
     for (int idx = 0; ctlConfig->sections[idx].key != NULL; idx++) {
-        if (!ctlConfig->sections[idx].loadCB)
-            AFB_API_NOTICE(apiHandle, "CtlConfigLoad: notice empty section '%s'", ctlConfig->sections[idx].key);
-        else
-            errcount += ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
+        if (!ctlConfig->sections[idx].loadCB) {
+            AFB_API_NOTICE(apiHandle, "Notice empty section '%s'", ctlConfig->sections[idx].key);
+            continue;
+        }
+
+        error = ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
+        if (error < 0) {
+            AFB_API_ERROR(apiHandle, "Error %i caught during call to '%s' section callback", error, ctlConfig->sections[idx].key);
+            return -idx;
+        }
+        else if (error > 0) {
+            AFB_API_WARNING(apiHandle, "Warning %i raised during call to '%s' section callback", error, ctlConfig->sections[idx].key);
+        }
     }
 
-    return errcount;
+    return 0;
 }
 
 CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ, const char *prefix) {
