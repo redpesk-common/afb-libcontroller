@@ -314,27 +314,35 @@ json_object* LoadAdditionalsFiles(afb_api_t apiHandle, CtlConfigT *ctlHandle, co
 }
 
 int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections) {
-    int err;
+    int error;
 
 #ifdef CONTROL_SUPPORT_LUA
-    err= LuaConfigLoad(apiHandle, ctlHandle->prefix);
-    if (err)
-        return 1;
+    if (LuaConfigLoad(apiHandle, ctlHandle->prefix))
+        return -1;
 #endif
 
-    err = 0;
     ctlHandle->sections = sections;
     for (int idx = 0; sections[idx].key != NULL; idx++) {
         json_object * sectionJ;
-        int done = json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ);
-        if (done) {
+        if (json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ)) {
             sections[idx].prefix = ctlHandle->prefix;
             json_object* updatedSectionJ = LoadAdditionalsFiles(apiHandle, ctlHandle, sections[idx].key, sectionJ);
-            err += sections[idx].loadCB(apiHandle, &sections[idx], updatedSectionJ);
+
+            if (!sections[idx].loadCB) {
+                AFB_API_NOTICE(apiHandle, "Notice empty section '%s'", sections[idx].key);
+                continue;
+            }
+
+            error = sections[idx].loadCB(apiHandle, &sections[idx], updatedSectionJ);
+            if (error < 0) {
+                AFB_API_ERROR(apiHandle, "Error %i caught during call to '%s' section callback", error, sections[idx].key);
+                return -(idx + 1);
+            }
+            else if (error > 0) {
+                AFB_API_WARNING(apiHandle, "Warning %i raised during call to '%s' section callback", error, sections[idx].key);
+            }
         }
     }
-    if (err)
-        return 1;
 
     return 0;
 }
