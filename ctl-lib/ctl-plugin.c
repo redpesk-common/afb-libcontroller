@@ -85,6 +85,27 @@ static int DispatchOneL2c(void* luaState, char *funcname, Lua2cFunctionT callbac
 #endif
 }
 
+int Lua2cAddOne(afb_api_t apiHandle, CtlPluginT *ctlPlugin, void *dlHandle, luaL_Reg *l2cFunc, const char* l2cName, int index) {
+    if(ctlPlugin->ctlL2cFunc->l2cCount)
+        {index += ctlPlugin->ctlL2cFunc->l2cCount+1;}
+    char *funcName;
+    size_t p_length = 6 + strlen(l2cName);
+    funcName = malloc(p_length + 1);
+
+    strncpy(funcName, "lua2c_", p_length + 1);
+    strncat(funcName, l2cName, p_length - strlen (funcName) + 1);
+
+    Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
+    if (!l2cFunction) {
+        AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE symbol'%s' missing err=%s", funcName, dlerror());
+        return 1;
+    }
+    l2cFunc[index].func = (void*) l2cFunction;
+    l2cFunc[index].name = strdup(l2cName);
+
+    return 0;
+}
+
 static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_object *lua2csJ, const char *lua2c_prefix, void * handle, CtlPluginT *ctlPlugin)
 {
     void *dlHandle = dlopen(pluginpath, RTLD_NOW);
@@ -121,27 +142,6 @@ static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_obje
     if (lua2csJ && lua2cInPlug) {
         *lua2cInPlug = (Lua2cWrapperT)DispatchOneL2c;
 
-        int Lua2cAddOne(luaL_Reg *l2cFunc, const char* l2cName, int index) {
-            if(ctlPlugin->ctlL2cFunc->l2cCount)
-                {index += ctlPlugin->ctlL2cFunc->l2cCount+1;}
-            char *funcName;
-            size_t p_length = 6 + strlen(l2cName);
-            funcName = malloc(p_length + 1);
-
-            strncpy(funcName, "lua2c_", p_length + 1);
-            strncat(funcName, l2cName, p_length - strlen (funcName) + 1);
-
-            Lua2cFunctionT l2cFunction = (Lua2cFunctionT) dlsym(dlHandle, funcName);
-            if (!l2cFunction) {
-                AFB_API_ERROR(apiHandle, "CTL-PLUGIN-LOADONE symbol'%s' missing err=%s", funcName, dlerror());
-                return 1;
-            }
-            l2cFunc[index].func = (void*) l2cFunction;
-            l2cFunc[index].name = strdup(l2cName);
-
-            return 0;
-        }
-
         int count = 0, errCount = 0;
         luaL_Reg *l2cFunc = NULL;
         if(!ctlPlugin->ctlL2cFunc) {
@@ -159,13 +159,13 @@ static int PluginLoadCOne(afb_api_t apiHandle, const char *pluginpath, json_obje
             for (count = 0; count < length; count++) {
                 int err;
                 const char *l2cName = json_object_get_string(json_object_array_get_idx(lua2csJ, count));
-                err = Lua2cAddOne(l2cFunc, l2cName, count);
+                err = Lua2cAddOne(apiHandle, ctlPlugin, dlHandle, l2cFunc, l2cName, count);
                 if (err) errCount++;
             }
         } else {
             l2cFunc = calloc(2 + ctlPlugin->ctlL2cFunc->l2cCount, sizeof (luaL_Reg));
             const char *l2cName = json_object_get_string(lua2csJ);
-            errCount = Lua2cAddOne(l2cFunc, l2cName, count);
+            errCount = Lua2cAddOne(apiHandle, ctlPlugin, dlHandle, l2cFunc, l2cName, count);
             count++;
         }
         if (errCount) {
