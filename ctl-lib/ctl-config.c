@@ -163,7 +163,7 @@ int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
         error = ctlConfig->sections[idx].loadCB(apiHandle, &ctlConfig->sections[idx], NULL);
         if (error < 0) {
             AFB_API_ERROR(apiHandle, "Error %i caught during call to '%s' section callback", error, ctlConfig->sections[idx].key);
-            return -idx;
+            return -(idx + 1);
         }
         else if (error > 0) {
             AFB_API_WARNING(apiHandle, "Warning %i raised during call to '%s' section callback", error, ctlConfig->sections[idx].key);
