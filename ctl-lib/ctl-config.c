@@ -225,7 +225,7 @@ json_object* CtlUpdateSectionConfig(afb_api_t apiHandle, CtlConfigT *ctlHandle, 
 
     json_object *sectionArrayJ;
     char *oneFile = NULL;
-    const char *bindingPath = GetBindingDirPath(apiHandle);
+    const char *bindingParentPath = GetBindingParentDirPath(apiHandle);
 
     if(! json_object_is_type(sectionJ, json_type_array)) {
         sectionArrayJ = json_object_new_array();
@@ -243,9 +243,9 @@ json_object* CtlUpdateSectionConfig(afb_api_t apiHandle, CtlConfigT *ctlHandle, 
         for (int idx=0; idx < length; idx++) {
             json_object *oneFileJ = json_object_array_get_idx(filesJ, idx);
             json_object *responseJ =
-                ScanForConfig(bindingPath, CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
+                ScanForConfig(bindingParentPath, CTL_SCAN_RECURSIVE, json_object_get_string(oneFileJ), ".json");
             if(!responseJ) {
-                AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingPath);
+                AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingParentPath);
                 return sectionArrayJ;
             }
             oneFile = ConfigSearch(apiHandle, responseJ);
@@ -261,9 +261,9 @@ json_object* CtlUpdateSectionConfig(afb_api_t apiHandle, CtlConfigT *ctlHandle, 
         }
     } else {
         json_object *responseJ =
-            ScanForConfig(bindingPath, CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
+            ScanForConfig(bindingParentPath, CTL_SCAN_RECURSIVE, json_object_get_string(filesJ), ".json");
         if(!responseJ) {
-            AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingPath);
+            AFB_API_ERROR(apiHandle, "No config files found in search path. No changes has been made\n -- %s", bindingParentPath);
             return sectionArrayJ;
         }
         oneFile = ConfigSearch(apiHandle, responseJ);

@@ -713,7 +713,7 @@ static int LuaAfbGetRootDir(lua_State* luaState) {
     }
 
     // extract and return afbSource from timer handle
-    lua_pushstring(luaState, GetBindingDirPath(source->api));
+    lua_pushstring(luaState, GetAFBRootDirPath(source->api));
 
     return 1; // return argument
 }
@@ -1377,7 +1377,7 @@ int LuaConfigLoad(afb_api_t apiHandle, const char *prefix) {
 
     // set package.path lua variable use the CONTROL_PLUGIN_PATH as it could
     // have to find external lua packages in those directories
-    spath = GetDefaultPluginSearchPath(apiHandle, prefix);
+    spath = GetDefaultPluginSearchPath(apiHandle);
     base_len = strlen(LUA_PATH_VALUE);
     spath_len = strlen(spath);
 

@@ -249,49 +249,297 @@ static int LoadFoundPlugins(afb_api_t apiHandle, json_object *scanResult, json_o
     return 0;
 }
 
-char *GetDefaultPluginSearchPath(afb_api_t apiHandle, const char *prefix)
+char *GetBindingParentDirPath(afb_api_t apiHandle)
 {
-    char *searchPath, *rootDir, *path;
-    const char *bindingPath;
-    const char *envDirList;
-    size_t envDirList_len;
-    json_object *settings = afb_api_settings(apiHandle);
-    json_object *bpath;
+    int ret;
+    char *bindingDirPath, *bindingParentDirPath = NULL;
 
-    if(json_object_object_get_ex(settings, "binding-path", &bpath)) {
-        rootDir = strdup(json_object_get_string(bpath));
-        path = rindex(rootDir, '/');
-        if(strlen(path) < 3)
-			return NULL;
-        *++path = '.';
-        *++path = '.';
-        *++path = '\0';
+    if(! apiHandle)
+        return NULL;
+
+    bindingDirPath = GetRunningBindingDirPath(apiHandle);
+    if(! bindingDirPath)
+        return NULL;
+
+    ret = asprintf(&bindingParentDirPath, "%s/..", bindingDirPath);
+    free(bindingDirPath);
+    if(ret <= 3)
+        return NULL;
+
+    return bindingParentDirPath;
+}
+
+char *GetDefaultPluginSearchPath(afb_api_t apiHandle)
+{
+    size_t searchPathLength;
+    char *searchPath, *binderRootDirPath, *bindingParentDirPath;
+
+    if(! apiHandle)
+        return NULL;
+
+    binderRootDirPath = GetAFBRootDirPath(apiHandle);
+    if(! binderRootDirPath)
+        return NULL;
+
+    bindingParentDirPath = GetBindingParentDirPath(apiHandle);
+    if(! bindingParentDirPath) {
+        free(binderRootDirPath);
+        return NULL;
     }
-    else {
-        rootDir = malloc(1);
-        strcpy(rootDir, "");
-    }
 
-    bindingPath = GetBindingDirPath(apiHandle);
-    envDirList = getEnvDirList(prefix, "PLUGIN_PATH");
-
-    /* Allocating with the size of binding root dir path + environment if found
-     * for the NULL terminating character and the additional separator
-     * between bindingPath and envDirList concatenation.
+    /* Allocating with the size of binding root dir path + binding parent directory path
+     * + 1 character for the NULL terminating character + 1 character for the additional separator
+     * between binderRootDirPath and bindingParentDirPath.
      */
-    if(envDirList)  {
-        envDirList_len = strlen(envDirList) + strlen(bindingPath) + strlen(rootDir) + 3;
-        searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s:%s", rootDir, bindingPath, envDirList);
-    }
-    else {
-        envDirList_len = strlen(bindingPath) + strlen(rootDir) + 2;
-        searchPath = malloc(envDirList_len + 1);
-        snprintf(searchPath, envDirList_len + 1, "%s:%s", rootDir, bindingPath);
+    searchPathLength = strlen(binderRootDirPath) + strlen(bindingParentDirPath) + 2;
+
+    searchPath = malloc(searchPathLength);
+    if(! searchPath) {
+        free(binderRootDirPath);
+        free(bindingParentDirPath);
+        return NULL;
     }
 
-    free(rootDir);
+    snprintf(searchPath, searchPathLength, "%s:%s", binderRootDirPath, bindingParentDirPath);
+
+    free(binderRootDirPath);
+    free(bindingParentDirPath);
+
     return searchPath;
+}
+
+int isCharIsAllowedInEnvironmentVariable(char envChar)
+{
+    if(envChar < '0')
+        return 0;
+
+    if((envChar >= '0' && envChar <= '9') ||
+       (envChar >= 'A' && envChar <= 'Z') ||
+       (envChar >= 'a' && envChar <= 'z') ||
+       envChar == '_')
+        return 1;
+
+    return 0;
+}
+
+char *ExpandPath(const char *path)
+{
+    int cpt,
+        pathLength,
+        pathPartCount = 0,
+        currentPartNb = -1,
+        currentPartBegin,
+        currentlyInEnvVar,
+        newPartDetected = 1,
+        expandedPathLength = 0,
+        expandedPathIdx = 0;
+    int *pathPartLengths;
+
+    char currentChar;
+    char *pathToExpand, *expandedpath;
+    char **pathPartStrings;
+
+    if(! path)
+        return NULL;
+
+    pathLength = (int) strlen(path);
+    if(! pathLength)
+        return NULL;
+
+    pathToExpand = strdup(path);
+    if(! pathToExpand)
+        return NULL;
+
+    for(cpt = 1; cpt <= pathLength; cpt++) {
+        if(newPartDetected) {
+            newPartDetected = 0;
+            currentlyInEnvVar = (pathToExpand[cpt - 1] == '$') ? 1 : 0;
+            pathPartCount++;
+        }
+
+        if((currentlyInEnvVar && ! isCharIsAllowedInEnvironmentVariable(pathToExpand[cpt])) ||
+           (! currentlyInEnvVar && pathToExpand[cpt] == '$'))
+            newPartDetected = 1;
+    }
+
+    if(pathPartCount == 1) {
+        if(currentlyInEnvVar) {
+            expandedpath = getenv(&pathToExpand[1]);
+            free(pathToExpand);
+            if(! expandedpath)
+                return NULL;
+            return strdup(expandedpath);
+        }
+        else {
+            return pathToExpand;
+        }
+    }
+
+    pathPartLengths = (int *) alloca(pathPartCount * (sizeof(int)));
+    if(! pathPartLengths) {
+        free(pathToExpand);
+        return NULL;
+    }
+
+    pathPartStrings = (char **) alloca(pathPartCount * (sizeof(char *)));
+    if(! pathPartStrings) {
+        free(pathToExpand);
+        return NULL;
+    }
+
+    newPartDetected = 1;
+    currentChar = pathToExpand[0];
+
+    for(cpt = 1; cpt <= pathLength; cpt++) {
+        if(newPartDetected) {
+            newPartDetected = 0;
+            currentlyInEnvVar = (currentChar == '$') ? 1 : 0;
+            currentPartNb++;
+            currentPartBegin = cpt - 1;
+        }
+
+        currentChar = pathToExpand[cpt];
+
+        if(currentlyInEnvVar && ! isCharIsAllowedInEnvironmentVariable(currentChar)) {
+            newPartDetected = 1;
+
+            pathToExpand[cpt] = '\0';
+
+            pathPartStrings[currentPartNb] = getenv(&pathToExpand[currentPartBegin + 1]);
+            if(! pathPartStrings[currentPartNb]) {
+                free(pathToExpand);
+                return NULL;
+            }
+
+            pathToExpand[cpt] = currentChar;
+
+            pathPartLengths[currentPartNb] = (int) strlen(pathPartStrings[currentPartNb]);
+        }
+
+        if(! currentlyInEnvVar &&
+           (! currentChar || currentChar == '$')) {
+            newPartDetected = 1;
+
+            pathToExpand[cpt] = '\0';
+
+            pathPartStrings[currentPartNb] = &pathToExpand[currentPartBegin];
+            pathPartLengths[currentPartNb] = cpt - currentPartBegin;
+        }
+
+        if(newPartDetected)
+            expandedPathLength += pathPartLengths[currentPartNb];
+    }
+
+    expandedPathLength++;
+
+    expandedpath = malloc(expandedPathLength * sizeof(char));
+    if(! expandedpath) {
+        free(pathToExpand);
+        return NULL;
+    }
+
+    for(cpt = 0; cpt < pathPartCount; cpt++) {
+        strcpy(&expandedpath[expandedPathIdx], pathPartStrings[cpt]);
+        expandedPathIdx += pathPartLengths[cpt];
+    }
+
+    free(pathToExpand);
+
+    return expandedpath;
+}
+
+char *ExpandPluginSearchPath(afb_api_t apiHandle, const char *sPath)
+{
+    char *binderRootDirPath = NULL,
+         *bindingParentDirPath = NULL,
+         *sPathToExpand = NULL,
+         *currentPathToExpand,
+         *expandedPath = NULL,
+         *expandedAbsolutePath,
+         *expandedSearchPath = NULL,
+         *newExpandedSearchPath;
+
+    if(! apiHandle || ! sPath) {
+        AFB_API_ERROR(apiHandle, "Invalid argument(s)");
+        goto OnErrorExit;
+    }
+
+    binderRootDirPath = GetAFBRootDirPath(apiHandle);
+    if(! binderRootDirPath) {
+        AFB_API_ERROR(apiHandle, "An error happened when tried to get binder root directory path");
+        goto OnErrorExit;
+    }
+
+    bindingParentDirPath = GetBindingParentDirPath(apiHandle);
+    if(! bindingParentDirPath) {
+        AFB_API_ERROR(apiHandle, "An error happened when tried to get binding parent directory path");
+        goto OnErrorExit;
+    }
+
+    sPathToExpand = strdup(sPath);
+    if(! sPathToExpand) {
+        AFB_API_ERROR(apiHandle, "Error while allocating copy of paths to expand");
+        goto OnErrorExit;
+    }
+
+    for(currentPathToExpand = strtok(sPathToExpand, ":");
+        currentPathToExpand && *currentPathToExpand;
+        currentPathToExpand = strtok(NULL, ":")) {
+        expandedPath = ExpandPath(currentPathToExpand);
+        if(! expandedPath) {
+            AFB_API_NOTICE(apiHandle,
+                           "An error happened when tried to expand plugin path '%s' string, will be ignored when searching for plugins",
+                           currentPathToExpand);
+            continue;
+        }
+
+        expandedAbsolutePath = NULL;
+        if(expandedPath[0] == '/') {
+            expandedAbsolutePath = strdup(expandedPath);
+        }
+        else if(asprintf(&expandedAbsolutePath, "%s/%s:%s/%s", binderRootDirPath, expandedPath, bindingParentDirPath, expandedPath) < 7) {
+            AFB_API_ERROR(apiHandle, "Error while allocating whole absolute expanded path");
+            goto OnErrorExit;
+        }
+
+        if(! expandedAbsolutePath) {
+            AFB_API_ERROR(apiHandle, "Error while allocating absolute expanded path");
+            goto OnErrorExit;
+        }
+
+        free(expandedPath);
+        expandedPath = NULL;
+
+        newExpandedSearchPath = NULL;
+        if(! expandedSearchPath) {
+            newExpandedSearchPath = strdup(expandedAbsolutePath);
+        }
+        else if((asprintf(&newExpandedSearchPath, "%s:%s", expandedSearchPath, expandedAbsolutePath) < 3) ||
+                ! newExpandedSearchPath) {
+            AFB_API_ERROR(apiHandle, "Error while allocating new search paths string");
+            free(expandedAbsolutePath);
+            goto OnErrorExit;
+        }
+
+        free(expandedAbsolutePath);
+        free(expandedSearchPath);
+
+        expandedSearchPath = newExpandedSearchPath;
+    }
+
+    free(binderRootDirPath);
+    free(bindingParentDirPath);
+    free(sPathToExpand);
+
+    return expandedSearchPath;
+
+OnErrorExit:
+    free(binderRootDirPath);
+    free(bindingParentDirPath);
+    free(sPathToExpand);
+    free(expandedPath);
+    free(expandedSearchPath);
+    return NULL;
 }
 
 static int FindPlugins(afb_api_t apiHandle, const char *searchPath, const char *file, json_object **pluginPathJ)
@@ -308,7 +556,7 @@ static int FindPlugins(afb_api_t apiHandle, const char *searchPath, const char *
 static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle, const char *prefix)
 {
     int err = 0, i = 0;
-    char *searchPath;
+    char *searchPath = NULL;
     const char *sPath = NULL, *file = NULL, *lua2c_prefix = NULL;
     json_object *luaJ = NULL, *lua2csJ = NULL, *fileJ = NULL, *pluginPathJ = NULL;
 
@@ -339,9 +587,13 @@ static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *
     }
 
     // if search path not in Json config file, then try default
-    searchPath = (sPath) ?
-        strdup(sPath) :
-        GetDefaultPluginSearchPath(apiHandle, prefix);
+    if(sPath)
+        searchPath = ExpandPluginSearchPath(apiHandle, sPath);
+
+    if(!searchPath)
+        searchPath = GetDefaultPluginSearchPath(apiHandle);
+
+    AFB_API_DEBUG(apiHandle, "Plugin search path : '%s'", searchPath);
 
     // default file equal uid
     if (!fileJ) {
