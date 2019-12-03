@@ -173,7 +173,7 @@ int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
     return 0;
 }
 
-CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ, const char *prefix) {
+CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ) {
     json_object *metadataJ;
     CtlConfigT *ctlHandle=NULL;
 
@@ -193,13 +193,12 @@ CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle, json_object *ctlConfigJ, co
             return NULL;
         }
         ctlHandle->configJ = ctlConfigJ;
-        ctlHandle->prefix = prefix;
     }
 
     return ctlHandle;
 }
 
-CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath, const char *prefix) {
+CtlConfigT *CtlLoadMetaData(afb_api_t apiHandle,const char* filepath) {
     json_object *ctlConfigJ;
 
 
@@ -212,7 +211,7 @@ CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath,
 
     AFB_API_INFO(apiHandle, "CTL-LOAD-CONFIG: loading config filepath=%s", filepath);
 
-    return CtlLoadMetaDataJson(apiHandle, ctlConfigJ, prefix);
+    return CtlLoadMetaDataJson(apiHandle, ctlConfigJ);
 }
 
 void wrap_json_array_add(void* array, json_object *val) {
@@ -317,7 +316,7 @@ int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sec
     int error;
 
 #ifdef CONTROL_SUPPORT_LUA
-    if (LuaConfigLoad(apiHandle, ctlHandle->prefix))
+    if (LuaConfigLoad(apiHandle))
         return -1;
 #endif
 
@@ -325,7 +324,6 @@ int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sec
     for (int idx = 0; sections[idx].key != NULL; idx++) {
         json_object * sectionJ;
         if (json_object_object_get_ex(ctlHandle->configJ, sections[idx].key, &sectionJ)) {
-            sections[idx].prefix = ctlHandle->prefix;
             json_object* updatedSectionJ = LoadAdditionalsFiles(apiHandle, ctlHandle, sections[idx].key, sectionJ);
 
             if (!sections[idx].loadCB) {

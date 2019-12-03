@@ -53,7 +53,7 @@ typedef enum {
 
 extern const char *lua_utils;
 extern int LuaLoadScript(afb_api_t apiHandle, const char *luaScriptPath);
-extern int LuaConfigLoad (afb_api_t apiHandle, const char *prefix);
+extern int LuaConfigLoad (afb_api_t apiHandle);
 extern void LuaL2cNewLib(luaL_Reg *l2cFunc, int count, const char *prefix);
 extern int Lua2cWrapper(void* luaHandle, char *funcname, Lua2cFunctionT callback);
 extern int LuaCallFunc (CtlSourceT *source, CtlActionT *action, json_object *queryJ) ;

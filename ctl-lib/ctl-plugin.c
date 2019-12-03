@@ -553,7 +553,7 @@ static int FindPlugins(afb_api_t apiHandle, const char *searchPath, const char *
     return 0;
 }
 
-static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle, const char *prefix)
+static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *pluginJ, void *handle)
 {
     int err = 0, i = 0;
     char *searchPath = NULL;
@@ -672,7 +672,7 @@ static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *p
     while(idx < totalPluginNumber) {
         json_object *pluginJ = json_object_is_type(pluginsJ, json_type_array) ?
                                json_object_array_get_idx(pluginsJ, idx) : pluginsJ;
-        err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle, section->prefix);
+        err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle);
         idx++;
     }
 

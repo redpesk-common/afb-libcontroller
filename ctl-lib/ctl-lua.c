@@ -1350,7 +1350,7 @@ int LuaConfigExec(afb_api_t apiHandle) {
 
 // Load Lua Interpreter
 
-int LuaConfigLoad(afb_api_t apiHandle, const char *prefix) {
+int LuaConfigLoad(afb_api_t apiHandle) {
     size_t total_len = 0, base_len = 0, spath_len = 0;
     static int luaLoaded = 0;
     int token_nb = 0, i = 0;

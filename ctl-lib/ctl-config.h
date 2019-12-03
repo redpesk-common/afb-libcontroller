@@ -59,7 +59,6 @@ typedef struct ConfigSectionS {
   const char *key;
   const char *uid;
   const char *info;
-  const char *prefix;
   int (*loadCB)(afb_api_t apihandle, struct ConfigSectionS *section, json_object *sectionJ);
   void *handle;
   CtlActionT *actions;
@@ -72,7 +71,6 @@ typedef struct {
     const char *version;
     const char *author;
     const char *date;
-    const char *prefix;
     json_object *configJ;
     json_object *requireJ;
     CtlSectionT *sections;
@@ -108,11 +106,11 @@ extern char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
 extern void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ);
 extern int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) ;
-extern CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle,json_object *ctlConfigJ, const char *prefix) ;
-extern CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath, const char *prefix) ;
+extern CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle,json_object *ctlConfigJ);
+extern CtlConfigT *CtlLoadMetaData(afb_api_t apiHandle,const char* filepath);
 extern int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
 extern char *GetDefaultConfigSearchPath(afb_api_t apiHandle);
-#define CtlLoadMetaData(api, filepath) CtlLoadMetaDataUsingPrefix(api, filepath, NULL)
+#define CtlLoadMetaDataUsingPrefix(apiHandle, filepath, prefix) CtlLoadMetaData(apiHandle, filepath)
 
 // ctl-event.c
 extern int EventConfig(afb_api_t apihandle, CtlSectionT *section, json_object *actionsJ);
