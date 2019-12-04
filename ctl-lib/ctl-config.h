@@ -111,6 +111,7 @@ extern int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) ;
 extern CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle,json_object *ctlConfigJ, const char *prefix) ;
 extern CtlConfigT *CtlLoadMetaDataUsingPrefix(afb_api_t apiHandle,const char* filepath, const char *prefix) ;
 extern int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sections);
+extern char *GetDefaultConfigSearchPath(afb_api_t apiHandle);
 #define CtlLoadMetaData(api, filepath) CtlLoadMetaDataUsingPrefix(api, filepath, NULL)
 
 // ctl-event.c
@@ -129,6 +130,7 @@ extern int PluginConfig(afb_api_t UNUSED_ARG(apiHandle), CtlSectionT *section, j
 extern int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ);
 extern void* getPluginContext(CtlPluginT *plugin);
 extern void setPluginContext(CtlPluginT *plugin, void *context);
+
 #ifdef __cplusplus
 }
 #endif

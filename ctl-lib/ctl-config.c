@@ -346,3 +346,42 @@ int CtlLoadSections(afb_api_t apiHandle, CtlConfigT *ctlHandle, CtlSectionT *sec
 
     return 0;
 }
+
+char *GetDefaultConfigSearchPath(afb_api_t apiHandle)
+{
+    size_t searchPathLength;
+    char *searchPath, *binderRootDirPath, *bindingParentDirPath;
+
+    if(! apiHandle)
+        return NULL;
+
+    binderRootDirPath = GetAFBRootDirPath(apiHandle);
+    if(! binderRootDirPath)
+        return NULL;
+
+    bindingParentDirPath = GetBindingParentDirPath(apiHandle);
+    if(! bindingParentDirPath) {
+        free(binderRootDirPath);
+        return NULL;
+    }
+
+    /* Allocating with the size of binding root dir path + binding parent directory path
+     * + 1 character for the NULL terminating character + 1 character for the additional separator
+     * between binderRootDirPath and bindingParentDirPath + 2*4 char for '/etc suffixes'.
+     */
+    searchPathLength = strlen(binderRootDirPath) + strlen(bindingParentDirPath) + 10;
+
+    searchPath = malloc(searchPathLength);
+    if(! searchPath) {
+        free(binderRootDirPath);
+        free(bindingParentDirPath);
+        return NULL;
+    }
+
+    snprintf(searchPath, searchPathLength, "%s/etc:%s/etc", binderRootDirPath, bindingParentDirPath);
+
+    free(binderRootDirPath);
+    free(bindingParentDirPath);
+
+    return searchPath;
+}
