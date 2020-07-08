@@ -1,3 +1,3 @@
-/opt/AGL/lib/*/pkgconfig/*.pc
-/opt/AGL/lib/*/*.a
-/opt/AGL/include/*
+/opt/RP/lib/*/pkgconfig/*.pc
+/opt/RP/lib/*/*.a
+/opt/RP/include/*

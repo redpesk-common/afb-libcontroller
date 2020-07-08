@@ -15,7 +15,7 @@ Name:           rp-libappcontroller
 Version:        2.0
 Release:        0
 License:        Apache-2.0
-Summary:        AGL libappcontroller
+Summary:        RP libappcontroller
 Group:          Development/Libraries/C and C++
 Url:            https://gerrit.automotivelinux.org/gerrit/#/admin/projects/src/libappcontroller
 Source:         libappcontroller-%{version}.tar.gz
@@ -38,7 +38,7 @@ Application Framework Binder
 Group:          Development/Libraries/C and C++
 Requires:       %{name} = %{version}
 Provides:       pkgconfig(%{name}) = %{version}
-Summary:        AGL libappcontroller-devel
+Summary:        RP libappcontroller-devel
 %description devel
 libappcontroller provides helpful functions to be used in a binding for the
 Application Framework Binder
@@ -50,7 +50,7 @@ Application Framework Binder
 export PKG_CONFIG_PATH=%{_libdir}/pkgconfig
 [ ! -d build ] && mkdir build
 cd build
-cmake -DCMAKE_INSTALL_PREFIX=/opt/AGL -DCMAKE_BUILD_TYPE=DEBUG -DVERSION=%{version} ..
+cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} -DCMAKE_BUILD_TYPE=DEBUG -DVERSION=%{version} ..
 %__make %{?_smp_mflags}
 
 %install
