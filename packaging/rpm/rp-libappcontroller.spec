@@ -2,14 +2,14 @@
 # spec file for package libappcontroller
 #
 
-%define _prefix /opt/AGL
+%define _prefix /opt/RP
 %define __cmake cmake
 
 %if 0%{?fedora_version}
 %global debug_package %{nil}
 %endif
 
-Name:           agl-libappcontroller
+Name:           rp-libappcontroller
 # WARNING {name} is not used for tar file name in source nor for setup
 #         Check hard coded values required to match git directory naming
 Version:        2.0
