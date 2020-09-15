@@ -121,7 +121,7 @@ typedef struct {
 typedef int(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg
-#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC}; struct afb_binding_data_v2;
+#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC};
 #define CTLP_ONLOAD(plugin, handle) int CtlPluginOnload(CtlPluginT *plugin, void* handle)
 #define CTLP_INIT(plugin, handle) int CtlPluginInit(CtlPluginT *plugin, void* handle)
 #define CTLP_CAPI(funcname, source, argsJ, queryJ) int funcname(CtlSourceT *source, json_object* argsJ, json_object* queryJ)
