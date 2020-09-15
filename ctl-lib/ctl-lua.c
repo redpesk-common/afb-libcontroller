@@ -269,7 +269,7 @@ static json_object *LuaPopArgs(CtlSourceT *source, lua_State* luaState, int star
     return responseJ;
 }
 
-static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
+static int LuaFormatMessage(lua_State* luaState, int level) {
     char *message;
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
@@ -277,7 +277,7 @@ static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
         return 1;
 
     // if log level low then silently ignore message
-    if (!afb_api_x3_wants_log_level(source->api, level)) return 0;
+    if (!afb_api_wants_log_level(source->api, level)) return 0;
 
     json_object *responseJ = LuaPopArgs(source, luaState, LUA_FIRST_ARG + 1);
 
@@ -356,27 +356,27 @@ PrintMessage:
 }
 
 static int LuaPrintInfo(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_INFO, AFB_SYSLOG_LEVEL_INFO);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_INFO);
     return err;
 }
 
 static int LuaPrintError(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_ERROR, AFB_SYSLOG_LEVEL_ERROR);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_ERROR);
     return err; // no value return
 }
 
 static int LuaPrintWarning(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_WARNING, AFB_SYSLOG_LEVEL_WARNING);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_WARNING);
     return err;
 }
 
 static int LuaPrintNotice(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_NOTICE, AFB_SYSLOG_LEVEL_NOTICE);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_NOTICE);
     return err;
 }
 
 static int LuaPrintDebug(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_DEBUG, AFB_SYSLOG_LEVEL_DEBUG);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_DEBUG);
     return err;
 }
 
