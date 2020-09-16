@@ -13,7 +13,7 @@ CtlConfigSearch(AFB_ApiT apiHandle, const char *dirList, const char *prefix)
 
 You may overload the config search path with environment variables
 
-* **CONTROL_CONFIG_PATH**: change default reserch path for configuration. You may provide multiple directories separated by ':'.
+* **CONTROL_CONFIG_PATH**: change default search path for configuration. You may provide multiple directories separated by ':'.
 * **CONTROL_LUA_PATH**: same as CONTROL_CONFIG_PATH but for Lua script files.
 
 Example: to load a config named '(prefix-)myconfig-test.json' do
@@ -34,20 +34,20 @@ Each block in the configuration file is defined with
 > **Note**: by default the controller config search path is defined at compilation time, but the path might be overloaded with the **CONTROL_CONFIG_PATH**
 > environment variable.
 
-## Config is organised in sections
+## Config is organized in sections
 
 * **metadata**: describes the configuration
-* **plugins or resources**: defines the set of functions provided by the plugins allowing to load additionnal resources (compiled C or lua)
+* **plugins or resources**: defines the set of functions provided by the plugins allowing to load additional resources (compiled C or lua)
 * **onload**: a collection of actions meant to be executed at startup time
 * **control**: sets the controls with a collection of actions, in dynamic api it could also specify the verbs of the api
 * **event**: a collection of actions meant to be executed when receiving a given signal
-* **personnal sections**: personnal section
+* **personal sections**: personal section
 
 Callbacks to parse sections are documented in [Declare your controller config section in your binding](./Usage.html#declare-your-controller-config-section-in-your-binding) section. You can use the callback defined in controller or define your own callback.
 
 ## Metadata
 
-As today matadata is only used for documentation purpose.
+As today metadata is only used for documentation purpose.
 
 * **uid**: mandatory
 * **version**: mandatory
@@ -59,7 +59,7 @@ As today matadata is only used for documentation purpose.
 
 ## OnLoad section
 
-Onload section defines startup time configuration. Onload may provide multiple initialisation
+Onload section defines startup time configuration. Onload may provide multiple initialization
 profiles, each with a different uid.
 
 You can define the following keys or arrays of the following keys:
@@ -67,7 +67,7 @@ You can define the following keys or arrays of the following keys:
 * **uid**: mandatory.
 * **info**: optional
 * **action**: mandatory
-* **args**: optionnal
+* **args**: optional
 
 ## Control section
 
@@ -96,23 +96,23 @@ You can define the following keys or arrays of the following keys, moreover you 
 ## Plugin section
 
 Plugin section defines plugins used with this controller. A plugin is a C/C++ program meant to
-execute some tasks after an event or on demand. This easily extends intrinsec
+execute some tasks after an event or on demand. This easily extends intrinsic
 binding logic for ad-hoc needs.
 
 You can define the following keys or arrays of the following keys:
 
 * **uid**: mandatory
-* **info**: optionnal
-* **spath**: optionnal, semicolon separated paths where to find the plugin. This could be a compiled shared library or LUA scripts. Could be specified using CONTROL_PLUGIN_PATH environment variable also.
+* **info**: optional
+* **spath**: optional, semicolon separated paths where to find the plugin. This could be a compiled shared library or LUA scripts. Could be specified using CONTROL_PLUGIN_PATH environment variable also.
 * **libs**: mandatory, Plugin file or LUA scripts to load
-* **lua**: optionnal, C functions that could be called from a LUA script
+* **lua**: optional, C functions that could be called from a LUA script
 
-## Personnal sections
+## Personal sections
 
 * **uid**: mandatory
-* **info**: optionnal
+* **info**: optional
 * **action**: mandatory
-* **any keys wanted**: optionnal
+* **any keys wanted**: optional
 
 You can define your own sections and add your own callbacks into the
 CtlSectionT structure, see
@@ -123,7 +123,7 @@ CtlSectionT structure, see
 Controller supports three categories of actions. Each action returns a status
 where 0=success and 1=failure.
 
-* **AppFw API** provides a generic model to request other bindings. Requested bindings can be local (eg: ALSA/UCM) or external (eg: vehicle signalling).
+* **AppFw API** provides a generic model to request other bindings. Requested bindings can be local (eg: ALSA/UCM) or external (eg: vehicle signaling).
   * `"action": "api://API_NAME#verb_name"`
 * C-API, when defined in the onload section, the plugin may provide C native API with `CTLP-CAPI(apiname, uid, args, query, context)`. Plugin may also create Lua command with `CTLP-LUA2C(LuaFuncName, uid, args, query, context)`. Where `args`+`query` are JSON-C object and context is the returned value from `CTLP_ONLOAD` function. Any missing value is set to NULL.
   * `"action": "plugin://plugin_name#function_name"`
