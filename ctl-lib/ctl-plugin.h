@@ -43,13 +43,14 @@ extern "C" {
 #endif
 
 #ifdef CONTROL_SUPPORT_LUA
-  typedef struct luaL_Reg luaL_Reg;
-
-  typedef struct CtlLua2cFuncT {
+# ifndef __cplusplus
+   typedef struct luaL_Reg luaL_Reg;
+# endif
+  typedef struct {
     luaL_Reg *l2cFunc;
     const char *prefix;
     int l2cCount;
-} CtlLua2cFuncT;
+  } CtlLua2cFuncT;
 #endif
 
 typedef struct {
