@@ -68,7 +68,6 @@ add_definitions(-DSUSE_LUA_INCDIR)
 INCLUDE(FindPkgConfig)
 
 set (PKG_REQUIRED_LIST
-        afb-daemon
         afb-helpers
     )
 
@@ -87,6 +86,15 @@ foreach (PKG_CONFIG ${PKG_REQUIRED_LIST})
     list(APPEND link_libraries ${${XPREFIX}_LDFLAGS})
     add_compile_options (${${XPREFIX}_CFLAGS})
 endforeach(PKG_CONFIG)
+
+# add dependency to afb-binding or afb-daemon
+pkg_check_modules(AFB afb-binding)
+if(NOT ${AFB_FOUND})
+    pkg_check_modules(AFB REQUIRED afb-daemon)
+endif()
+INCLUDE_DIRECTORIES(${AFB_INCLUDE_DIRS})
+list(APPEND link_libraries ${AFB_LDFLAGS})
+add_compile_options (${AFB_CFLAGS})
 
 
 set(CTL_LUA_SOURCE ctl-lua.c ctl-lua-utils.c)
