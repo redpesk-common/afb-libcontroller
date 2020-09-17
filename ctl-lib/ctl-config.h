@@ -123,7 +123,7 @@ extern int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object 
 extern int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-extern int PluginConfig(afb_api_t UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+extern int PluginConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ);
 extern int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ);
 extern void* getPluginContext(CtlPluginT *plugin);
 extern void setPluginContext(CtlPluginT *plugin, void *context);
