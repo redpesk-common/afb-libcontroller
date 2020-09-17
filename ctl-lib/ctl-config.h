@@ -78,17 +78,6 @@ typedef struct {
     void *external;
 } CtlConfigT;
 
-// This should not be global as application may want to define their own sections
-typedef enum {
-  CTL_SECTION_PLUGIN,
-  CTL_SECTION_ONLOAD,
-  CTL_SECTION_CONTROL,
-  CTL_SECTION_EVENT,
-  CTL_SECTION_HAL,
-
-  CTL_SECTION_ENDTAG,
-} SectionEnumT;
-
 // ctl-action.c
 extern int AddActionsToSection(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi);
 extern CtlActionT *ActionConfig(afb_api_t apiHandle, json_object *actionsJ,  int exportApi);
