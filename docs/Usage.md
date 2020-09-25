@@ -31,6 +31,13 @@ static CtlSectionT ctlSections[]= {
 
 ```
 
+The count of section is unlimited. When declaring sections, the
+rules below must be followed:
+
+- the end of the array is marked with a section having a NULL key.
+- if more than one section have the same key, this is an error silently
+  ignored but only the first section of that name is used.
+
 ## Do the controller config parsing at binding pre-init
 
 ```C
@@ -41,8 +48,11 @@ static CtlSectionT ctlSections[]= {
     const char *configPath = CtlConfigSearch(apiHandle, dirList, "prefix");
     if(!confiPath) return -1;
 
-    ctlConfig = CtlConfigLoad(dirList, ctlSections);
+    ctlConfig = CtlLoadMetaData(apiHandle, configPath);
     if (!ctlConfig) return -1;
+
+    sts = CtlLoadSections(apiHandle, ctlConfig, ctlSections);
+    if (sts < 0) return -1;
 ```
 
 ## Execute the controller config during binding init

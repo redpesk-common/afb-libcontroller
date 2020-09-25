@@ -269,7 +269,7 @@ static json_object *LuaPopArgs(CtlSourceT *source, lua_State* luaState, int star
     return responseJ;
 }
 
-static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
+static int LuaFormatMessage(lua_State* luaState, int level) {
     char *message;
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
@@ -277,7 +277,7 @@ static int LuaFormatMessage(lua_State* luaState, int verbosity, int level) {
         return 1;
 
     // if log level low then silently ignore message
-    if (!afb_api_x3_wants_log_level(source->api, level)) return 0;
+    if (!afb_api_wants_log_level(source->api, level)) return 0;
 
     json_object *responseJ = LuaPopArgs(source, luaState, LUA_FIRST_ARG + 1);
 
@@ -356,27 +356,27 @@ PrintMessage:
 }
 
 static int LuaPrintInfo(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_INFO, AFB_SYSLOG_LEVEL_INFO);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_INFO);
     return err;
 }
 
 static int LuaPrintError(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_ERROR, AFB_SYSLOG_LEVEL_ERROR);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_ERROR);
     return err; // no value return
 }
 
 static int LuaPrintWarning(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_WARNING, AFB_SYSLOG_LEVEL_WARNING);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_WARNING);
     return err;
 }
 
 static int LuaPrintNotice(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_NOTICE, AFB_SYSLOG_LEVEL_NOTICE);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_NOTICE);
     return err;
 }
 
 static int LuaPrintDebug(lua_State* luaState) {
-    int err = LuaFormatMessage(luaState, AFB_VERBOSITY_LEVEL_DEBUG, AFB_SYSLOG_LEVEL_DEBUG);
+    int err = LuaFormatMessage(luaState, AFB_SYSLOG_LEVEL_DEBUG);
     return err;
 }
 
@@ -406,7 +406,7 @@ static int LuaAfbFail(lua_State* luaState) {
     json_object *responseJ = LuaPopArgs(source, luaState, LUA_FIRST_ARG + 1);
     if (responseJ == JSON_ERROR) return 1;
 
-    afb_req_success(source->request, json_object_new_string(source->uid), json_object_get_string(responseJ));
+    afb_req_fail(source->request, source->uid, json_object_get_string(responseJ));
 
     json_object_put(responseJ);
     return 0;
@@ -978,7 +978,7 @@ static void LuaDoAction(LuaDoActionT action, afb_req_t request) {
 
         default:
             AFB_API_ERROR(source->api, "LUA-DOSCRIPT-ACTION unknown query=%s", json_object_to_json_string(queryJ));
-            afb_req_success(request, json_object_new_string("LUA:ERROR"), lua_tostring(luaState, -1));
+            afb_req_fail(request, "LUA:ERROR", lua_tostring(luaState, -1));
             return;
     }
 
@@ -986,7 +986,7 @@ static void LuaDoAction(LuaDoActionT action, afb_req_t request) {
         err = lua_pcall(luaState, count + 1, 0, 0);
     if (err) {
         AFB_API_ERROR(source->api, "LUA-DO-EXEC:FAIL query=%s err=%s", json_object_to_json_string(queryJ), lua_tostring(luaState, -1));
-        afb_req_success(request, json_object_new_string("LUA:ERROR"), lua_tostring(luaState, -1));
+        afb_req_fail(request, "LUA:ERROR", lua_tostring(luaState, -1));
         return;
     }
     return;

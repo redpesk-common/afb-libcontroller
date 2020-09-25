@@ -37,19 +37,15 @@ extern "C" {
   #define CTL_PLUGIN_MAGIC 852369147
 #endif
 
-#ifndef UNUSED_ARG
-  #define UNUSED_ARG(x) UNUSED_ ## x __attribute__((__unused__))
-  #define UNUSED_FUNCTION(x) __attribute__((__unused__)) UNUSED_ ## x
-#endif
-
 #ifdef CONTROL_SUPPORT_LUA
-  typedef struct luaL_Reg luaL_Reg;
-
-  typedef struct CtlLua2cFuncT {
+# ifndef __cplusplus
+   typedef struct luaL_Reg luaL_Reg;
+# endif
+  typedef struct {
     luaL_Reg *l2cFunc;
     const char *prefix;
     int l2cCount;
-} CtlLua2cFuncT;
+  } CtlLua2cFuncT;
 #endif
 
 typedef struct {
@@ -121,7 +117,7 @@ typedef struct {
 typedef int(*DispatchPluginInstallCbT)(CtlPluginT *plugin, void* handle);
 
 #define MACRO_STR_VALUE(arg) #arg
-#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC}; struct afb_binding_data_v2;
+#define CTLP_CAPI_REGISTER(pluglabel) CtlPluginMagicT CtlPluginMagic={.uid=pluglabel,.magic=CTL_PLUGIN_MAGIC};
 #define CTLP_ONLOAD(plugin, handle) int CtlPluginOnload(CtlPluginT *plugin, void* handle)
 #define CTLP_INIT(plugin, handle) int CtlPluginInit(CtlPluginT *plugin, void* handle)
 #define CTLP_CAPI(funcname, source, argsJ, queryJ) int funcname(CtlSourceT *source, json_object* argsJ, json_object* queryJ)

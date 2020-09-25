@@ -215,7 +215,7 @@ CtlConfigT *CtlLoadMetaData(afb_api_t apiHandle,const char* filepath) {
 }
 
 void wrap_json_array_add(void* array, json_object *val) {
-    json_object_array_add(array, (json_object*)val);
+    json_object_array_add((json_object*)array, val);
 }
 
 json_object* LoadAdditionalsFiles(afb_api_t apiHandle, CtlConfigT *ctlHandle, const char *key, json_object *sectionJ);

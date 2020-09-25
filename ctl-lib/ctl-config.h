@@ -78,17 +78,6 @@ typedef struct {
     void *external;
 } CtlConfigT;
 
-// This should not be global as application may want to define their own sections
-typedef enum {
-  CTL_SECTION_PLUGIN,
-  CTL_SECTION_ONLOAD,
-  CTL_SECTION_CONTROL,
-  CTL_SECTION_EVENT,
-  CTL_SECTION_HAL,
-
-  CTL_SECTION_ENDTAG,
-} SectionEnumT;
-
 // ctl-action.c
 extern int AddActionsToSection(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ, int exportApi);
 extern CtlActionT *ActionConfig(afb_api_t apiHandle, json_object *actionsJ,  int exportApi);
@@ -115,7 +104,6 @@ extern char *GetDefaultConfigSearchPath(afb_api_t apiHandle);
 // ctl-event.c
 extern int EventConfig(afb_api_t apihandle, CtlSectionT *section, json_object *actionsJ);
 extern void CtrlDispatchApiEvent (afb_api_t apiHandle, const char *evtLabel, struct json_object *eventJ);
-extern void CtrlDispatchV2Event(const char *evtLabel, json_object *eventJ);
 
 // ctl-control.c
 extern int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
@@ -124,7 +112,7 @@ extern int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object 
 extern int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
 
 // ctl-plugin.c
-extern int PluginConfig(afb_api_t UNUSED_ARG(apiHandle), CtlSectionT *section, json_object *pluginsJ);
+extern int PluginConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ);
 extern int PluginGetCB (afb_api_t apiHandle, CtlActionT *action , json_object *callbackJ);
 extern void* getPluginContext(CtlPluginT *plugin);
 extern void setPluginContext(CtlPluginT *plugin, void *context);
