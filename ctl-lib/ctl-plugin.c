@@ -639,7 +639,7 @@ static int PluginLoad (afb_api_t apiHandle, CtlPluginT *ctlPlugin, json_object *
 }
 
 static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *pluginsJ) {
-    int err = 0, idx = 0, pluginToAddNumber, totalPluginNumber;
+    int err = 0, idx = 0, pluginToAddNumber, totalPluginNumber, initialPluginNumber;
 
     CtlConfigT *ctlConfig = (CtlConfigT *) afb_api_get_userdata(apiHandle);
     CtlPluginT *ctlPluginsNew, *ctlPluginsOrig = ctlConfig ? ctlConfig->ctlPlugins : NULL;
@@ -647,7 +647,7 @@ static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *p
     while(ctlPluginsOrig && ctlPluginsOrig[idx].uid != NULL)
         idx++;
 
-    totalPluginNumber = idx;
+    initialPluginNumber = idx;
 
     switch (json_object_get_type(pluginsJ)) {
         case json_type_array: {
@@ -664,14 +664,14 @@ static int PluginParse(afb_api_t apiHandle, CtlSectionT *section, json_object *p
         }
     }
 
-    totalPluginNumber += pluginToAddNumber;
+    totalPluginNumber = initialPluginNumber + pluginToAddNumber;
 
     ctlPluginsNew = calloc (totalPluginNumber + 1, sizeof(CtlPluginT));
     memcpy(ctlPluginsNew, ctlPluginsOrig, idx * sizeof(CtlPluginT));
 
     while(idx < totalPluginNumber) {
         json_object *pluginJ = json_object_is_type(pluginsJ, json_type_array) ?
-                               json_object_array_get_idx(pluginsJ, idx) : pluginsJ;
+                               json_object_array_get_idx(pluginsJ, idx - initialPluginNumber) : pluginsJ;
         err += PluginLoad(apiHandle, &ctlPluginsNew[idx], pluginJ, section->handle);
         idx++;
     }
