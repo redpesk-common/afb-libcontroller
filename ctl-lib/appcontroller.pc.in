@@ -25,6 +25,7 @@ Name: @TARGET_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 URL: @PROJECT_URL@
-Requires.private: afb-helpers
+Requires: afb-helpers
 Libs: -L${libdir} -l@TARGET_NAME@
+Libs.private: -lafb-helpers
 Cflags: -I${includedir}
