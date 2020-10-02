@@ -71,11 +71,11 @@ set (PKG_REQUIRED_LIST
         afb-helpers
     )
 
+set(LUA_PKGCONFIG lua)
 if(${OSDETECTED} STREQUAL "debian")
-    list(APPEND PKG_REQUIRED_LIST lua53)
-else()
-    list(APPEND PKG_REQUIRED_LIST lua)
+    set(LUA_PKGCONFIG lua53)
 endif()
+list(APPEND PKG_REQUIRED_LIST ${LUA_PKGCONFIG})
 
 # Loop on required package and add options
 foreach (PKG_CONFIG ${PKG_REQUIRED_LIST})

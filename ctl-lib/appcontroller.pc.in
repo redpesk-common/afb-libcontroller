@@ -25,7 +25,6 @@ Name: @TARGET_NAME@
 Description: @PROJECT_DESCRIPTION@
 Version: @PROJECT_VERSION@
 URL: @PROJECT_URL@
-Requires: afb-helpers
+Requires: afb-helpers @LUA_PKGCONFIG@ >= 5.3
 Libs: -L${libdir} -l@TARGET_NAME@
-Libs.private: -lafb-helpers
 Cflags: -I${includedir}
