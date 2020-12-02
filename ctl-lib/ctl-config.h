@@ -93,7 +93,7 @@ extern void setExternalData(CtlConfigT *ctlConfig, void *data);
 extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
 extern char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
-extern void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ);
+extern int DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ);
 extern int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) ;
 extern CtlConfigT *CtlLoadMetaDataJson(afb_api_t apiHandle,json_object *ctlConfigJ);
 extern CtlConfigT *CtlLoadMetaData(afb_api_t apiHandle,const char* filepath);

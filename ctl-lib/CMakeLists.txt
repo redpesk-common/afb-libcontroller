@@ -15,12 +15,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ###########################################################################
-set(TARGET_NAME "appcontroller")
+set(TARGET_NAME "afb-libcontroller")
 set(AGLVERSION 6.99 CACHE STRING "Current AGL Version")
 set(PROJECT_VERSION ${AGLVERSION} CACHE STRING "Project version can override AGLVERSION")
 set(PROJECT_PRETTY_NAME "Controller")
 set(PROJECT_DESCRIPTION "controller")
-set(PROJECT_URL "https://gerrit.automotivelinux.org:29418/src/libappcontroller")
+set(PROJECT_URL "http://git.ovh.iot/redpesk/redpesk-common/afb-libcontroller.git")
 set(PROJECT_AUTHOR "Ar Foll, Fulup")
 set(PROJECT_AUTHOR_MAIL "fulup@iot.bzh")
 set(PROJECT_LICENSE "APL2.0")

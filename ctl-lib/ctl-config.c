@@ -127,7 +127,7 @@ static int DispatchRequireOneApi(afb_api_t apiHandle, json_object * bindindJ) {
  * @param apiHandle : a afb_daemon api handle, see afb_api_t in afb_definitions.h
  * @param requireJ : json_object array of api name required.
  */
-void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ) {
+int DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ) {
     static int init = 0, err = 0;
     int idx;
 
@@ -142,11 +142,13 @@ void DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ) {
     }
 
     init = 1;
+    return err;
 }
 
 int CtlConfigExec(afb_api_t apiHandle, CtlConfigT *ctlConfig) {
 
-    DispatchRequireApi(apiHandle, ctlConfig->requireJ);
+    if(DispatchRequireApi(apiHandle, ctlConfig->requireJ))
+        return -1;
 #ifdef CONTROL_SUPPORT_LUA
     // load static LUA utilities
     LuaConfigExec(apiHandle);
