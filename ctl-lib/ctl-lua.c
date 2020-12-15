@@ -421,8 +421,9 @@ static struct json_object *make_legacy_response(
     wrap_json_pack(&o, "{ss so? s{ss ss*}}",
                 "jtype", "afb-reply",
                 "response", reply,
-                "request", error?:"success",
-                "info", info);
+                "request",
+                    "status", error?:"success",
+                    "info", info);
     return o;
 }
 
