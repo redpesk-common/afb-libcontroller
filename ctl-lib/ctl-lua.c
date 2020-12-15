@@ -412,9 +412,24 @@ static int LuaAfbFail(lua_State* luaState) {
     return 0;
 }
 
+static struct json_object *make_legacy_response(
+                struct json_object *reply,
+                const char *error,
+                const char *info
+) {
+    struct json_object *o = NULL;
+    wrap_json_pack(&o, "{ss so? s{ss ss*}}",
+                "jtype", "afb-reply",
+                "response", reply,
+                "request", error?:"success",
+                "info", info);
+    return o;
+}
+
 static void LuaAfbServiceCB(void *handle, struct json_object *responseJ,
                 const char *error, const char *info, afb_api_t apiHandle) {
     LuaCbHandleT *handleCb = (LuaCbHandleT*) handle;
+    struct json_object *resp;
     int count = 1;
 
     lua_getglobal(luaState, handleCb->callback);
@@ -425,14 +440,16 @@ static void LuaAfbServiceCB(void *handle, struct json_object *responseJ,
     LuaSourcePush(luaState, handleCb->source);
 
     // push response
-    count += LuaPushArgument(handleCb->source, responseJ);
+    resp = make_legacy_response(json_object_get(responseJ), error, info);
+    count += LuaPushArgument(handleCb->source, resp);
     if (handleCb->context) count += LuaPushArgument(handleCb->source, handleCb->context);
 
     int err = lua_pcall(luaState, count, LUA_MULTRET, 0);
     if (err) {
-        AFB_API_ERROR(apiHandle, "LuaAfbServiceCB: Fail response=%s err=%s", json_object_to_json_string(responseJ), lua_tostring(luaState, -1));
+        AFB_API_ERROR(apiHandle, "LuaAfbServiceCB: Fail response=%s err=%s", json_object_to_json_string(resp), lua_tostring(luaState, -1));
     }
 
+    json_object_put(resp);
     free(handleCb->source);
     free(handleCb);
 }
@@ -475,8 +492,8 @@ static int LuaAfbService(lua_State* luaState) {
 
 static int LuaAfbServiceSync(lua_State* luaState) {
     int count = lua_gettop(luaState);
-    json_object *responseJ;
-    char *error;
+    json_object *responseJ, *resp;
+    char *error, *info;
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
@@ -502,15 +519,17 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     if (queryJ == JSON_ERROR) return 1;
 
     error = NULL;
-    int iserror = afb_api_call_sync(source->api, api, verb, queryJ, &responseJ, &error, NULL);
+    int iserror = afb_api_call_sync(source->api, api, verb, queryJ, &responseJ, &error, &info);
+    resp = make_legacy_response(responseJ, error, info);
 
     // push error status & response
     count = 1;
     lua_pushboolean(luaState, iserror < 0 || error != NULL);
-    count += LuaPushArgument(source, responseJ);
+    count += LuaPushArgument(source, resp);
 
-    json_object_put(responseJ);
+    json_object_put(resp);
     free(error);
+    free(info);
     return count; // return count values
 }
 
