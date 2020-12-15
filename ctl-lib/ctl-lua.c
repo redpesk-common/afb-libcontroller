@@ -412,14 +412,15 @@ static int LuaAfbFail(lua_State* luaState) {
     return 0;
 }
 
-static void LuaAfbServiceCB(void *handle, int iserror, struct json_object *responseJ, afb_api_t apiHandle) {
+static void LuaAfbServiceCB(void *handle, struct json_object *responseJ,
+                const char *error, const char *info, afb_api_t apiHandle) {
     LuaCbHandleT *handleCb = (LuaCbHandleT*) handle;
     int count = 1;
 
     lua_getglobal(luaState, handleCb->callback);
 
     // Push AFB client context on the stack
-    if (iserror) handleCb->source->status = CTL_STATUS_ERR;
+    if (error) handleCb->source->status = CTL_STATUS_ERR;
     else handleCb->source->status = CTL_STATUS_DONE;
     LuaSourcePush(luaState, handleCb->source);
 
@@ -467,7 +468,7 @@ static int LuaAfbService(lua_State* luaState) {
     handleCb->source = malloc(sizeof (CtlSourceT));
     handleCb->source = memcpy(handleCb->source, source, sizeof (CtlSourceT));
 
-    afb_api_call_legacy(source->api, api, verb, queryJ, LuaAfbServiceCB, handleCb);
+    afb_api_call(source->api, api, verb, queryJ, LuaAfbServiceCB, handleCb);
 
     return 0; // no value return
 }
@@ -475,6 +476,7 @@ static int LuaAfbService(lua_State* luaState) {
 static int LuaAfbServiceSync(lua_State* luaState) {
     int count = lua_gettop(luaState);
     json_object *responseJ;
+    char *error;
 
     CtlSourceT *source = LuaSourcePop(luaState, LUA_FIRST_ARG);
     if (!source) {
@@ -499,14 +501,16 @@ static int LuaAfbServiceSync(lua_State* luaState) {
     json_object *queryJ = LuaPopOneArg(source, luaState, LUA_FIRST_ARG + 3);
     if (queryJ == JSON_ERROR) return 1;
 
-    int iserror = afb_api_call_sync_legacy(source->api, api, verb, queryJ, &responseJ);
+    error = NULL;
+    int iserror = afb_api_call_sync(source->api, api, verb, queryJ, &responseJ, &error, NULL);
 
     // push error status & response
     count = 1;
-    lua_pushboolean(luaState, iserror);
+    lua_pushboolean(luaState, iserror < 0 || error != NULL);
     count += LuaPushArgument(source, responseJ);
 
     json_object_put(responseJ);
+    free(error);
     return count; // return count values
 }
 
