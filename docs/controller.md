@@ -24,9 +24,8 @@
  and [afb-libhelpers](https://github.com/redpesk-common/afb-libhelpers).
 * Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
-The controller library is integrated by default in the AGL SDK since the Guppy
-version (>=7) and is also available as a package for the AGL supported linux
-distributions.
+The controller library is integrated by default in the Redpesk SDK and is also
+available as a package for the Redpesk supported linux distributions.
 
 You could find the SDK build which embed the afb-libhelpers library in our
 packages repositories for the major Linux distribution OS:
