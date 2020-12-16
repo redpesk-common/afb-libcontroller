@@ -3,8 +3,8 @@
 * Object: Generic Controller to handle Policy,Small Business Logic, Glue in between components, ...
 * Status: Release Candidate
 * Author: Fulup Ar Foll fulup@iot.bzh
-* Date  : May-2018
-* Require : af-binder version >= FF (handle only bindings v3)
+* Date  : Dec-2020
+* Require : afb-binder version >= 4.0.0 (handle only bindings at least v3)
 
 ## Features
 
@@ -20,26 +20,23 @@
 ## Installation
 
 * Controller can easily be included as a separate library in any AGL service or application binder.
-* Dependencies: the only dependencies are [AGL application framework](https://gerrit.automotivelinux.org/gerrit/p/src/app-framework-binder.git)
- and [libafb-helpers](https://gerrit.automotivelinux.org/gerrit/p/src/libafb-helpers.git).
+* Dependencies: the only dependencies are [Application Framework](./afb-overview.html)
+ and [afb-libhelpers](https://github.com/redpesk-common/afb-libhelpers).
 * Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
 The controller library is integrated by default in the AGL SDK since the Guppy
 version (>=7) and is also available as a package for the AGL supported linux
 distributions.
 
-You could find the SDK build from Yocto which embed the afb-helpers library
-here:
+You could find the SDK build which embed the afb-libhelpers library in our
+packages repositories for the major Linux distribution OS:
 
-* For [releases](https://download.automotivelinux.org/AGL/release/) >= Guppy, in
- the latest machine's deploy directory. (e.g for Guppy in
- `latest/<yourmachine>/deploy/sdk` directory)
-* For the [master](https://download.automotivelinux.org/AGL/snapshots/master/)
- development branch, in the latest machine's deploy directory. (e.g in
- `latest/<yourmachine>/deploy/sdk` directory)
+* **[Ubuntu 20.04](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/xUbuntu_20.04/)**
+* **[Fedora 33](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/Fedora_33/)**
+* **[openSUSE Leap 15.2](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/openSUSE_Leap_15.2/)**
 
-To install the native package please refer to [this chapter](../1-verify-build-host.html)
-in the AGL documentation to install the AGL repository for your distribution.
+To install the native package please refer to [this chapter](./host-configuration/docs/1-Setup-your-build-host.html)
+in the Redpesk documentation to install the Redpesk native repositories for your distribution.
 
 Then use your package manager to install the library.
 
@@ -47,21 +44,21 @@ Then use your package manager to install the library.
 
 ```bash
 sudo zypper ref
-sudo zypper install agl-libappcontroller-devel
+sudo zypper install afb-libcontroller-devel
 ```
 
 ### Fedora
 
 ```bash
 sudo dnf ref
-sudo dnf install agl-libappcontroller-devel
+sudo dnf install afb-libcontroller-devel
 ```
 
 ### Ubuntu/Debian
 
 ```bash
 sudo apt-get update
-sudo apt-get install agl-libappcontroller-dev
+sudo apt-get install afb-libcontroller-dev
 ```
 
 ## Monitoring
@@ -71,5 +68,5 @@ sudo apt-get install agl-libappcontroller-dev
 * The monitoring HTML pages are installed with the app framework binder in a subdirectory called
  monitoring.
 * You can add other HTML pages with the alias options e.g:
- afb-daemon --port=1234 --monitoring --alias=/path1/to/htmlpages:/path2/to/htmlpages --ldpaths=. --workdir=. --roothttp=../htdocs
+ afb-binder --port=1234 --monitoring --alias=/path1/to/htmlpages:/path2/to/htmlpages --ldpaths=. --workdir=. --roothttp=../htdocs
 * The monitoring is accessible at http://localhost:1234/monitoring.
