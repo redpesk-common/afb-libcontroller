@@ -67,7 +67,7 @@ add_definitions(-DSUSE_LUA_INCDIR)
 INCLUDE(FindPkgConfig)
 
 set (PKG_REQUIRED_LIST
-        afb-helpers
+        afb-libhelpers
     )
 
 set(LUA_PKGCONFIG lua)
@@ -110,7 +110,7 @@ ADD_LIBRARY(${TARGET_NAME} STATIC ctl-action.c ctl-config.c ctl-onload.c ctl-plu
 
 # Library dependencies (include updates automatically)
 TARGET_LINK_LIBRARIES(${TARGET_NAME}
-    afb-helpers
+    afb-libhelpers
     ${link_libraries}
     )
 
