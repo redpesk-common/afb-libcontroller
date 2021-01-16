@@ -35,7 +35,7 @@ int OnloadConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actions
     } else {
         // Exec time process onload action now
         if (!section->actions) {
-            AFB_API_WARNING (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
+            AFB_API_NOTICE (apiHandle, "OnloadConfig Cannot Exec Non Existing Onload Action");
             return 1;
         }
 

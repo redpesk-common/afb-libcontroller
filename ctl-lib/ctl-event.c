@@ -22,48 +22,31 @@
 
 #include "ctl-config.h"
 
-// Event dynamic API-V3 mode
-void CtrlDispatchApiEvent (afb_api_t apiHandle, const char *evtLabel, struct json_object *eventJ) {
-    int idx = 0;
-    CtlActionT* actions = NULL;
-    AFB_API_DEBUG (apiHandle, "Received event=%s, query=%s", evtLabel, json_object_get_string(eventJ));
-
-    // retrieve section config from api handle
-    CtlConfigT *ctrlConfig = (CtlConfigT*) afb_api_get_userdata(apiHandle);
-
-    for (idx = 0; ctrlConfig->sections[idx].key != NULL; ++idx)
-    {
-        if(! strcasecmp(ctrlConfig->sections[idx].key, "events")) {
-            actions = ctrlConfig->sections[idx].actions;
-            break;
-        }
-    }
-
-    idx = ActionLabelToIndex(actions, evtLabel);
-    if (idx < 0) {
-        AFB_API_WARNING(apiHandle, "CtlDispatchEvent: fail to find uid=%s in action event section", evtLabel);
-        return;
-    }
-
-    // create a dummy source for action
+// in V3+V4 event are call directly by afb-binder
+void ExecOneEvent (void *ctx, const char *name, json_object *eventJ, afb_api_t apiHandle) {
+    CtlActionT *action = (CtlActionT*) ctx;
     CtlSourceT source;
-    source.uid = actions[idx].uid;
-    source.api = actions[idx].api;
+    source.uid = action->uid;
+    source.api  = action->api;
     source.request = NULL;
 
-    // Best effort ignoring error to exec corresponding action
-    (void) ActionExecOne (&source, &actions[idx], json_object_get(eventJ));
-
+    (void) ActionExecOne (&source, action, eventJ);
 }
 
 // onload section receive one action or an array of actions
-int EventConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ) {
+int EventConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *eventsJ) {
     int err = 0;
     // Load time parse actions in config file
-    if (actionsJ != NULL) {
-        if ( (err= AddActionsToSection(apiHandle, section, actionsJ, 0)) ) {
+    if (eventsJ != NULL) {
+        if ( (err= AddActionsToSection(apiHandle, section, eventsJ, 0)) ) {
             AFB_API_ERROR (apiHandle, "EventLoad config fail processing actions for section %s", section->uid);
             return err;
+        }
+    } else if (section->actions){
+        // register event to corresponding actions
+        CtlActionT* actions= section->actions;
+        for (int idx=0; actions[idx].uid; idx++) {
+            afb_api_event_handler_add (apiHandle, actions[idx].uid, ExecOneEvent, &actions[idx]);
         }
     }
 
