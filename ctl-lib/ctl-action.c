@@ -30,7 +30,6 @@ int ActionLabelToIndex(CtlActionT*actions, const char* actionLabel) {
             if (!strcasecmp(actionLabel, actions[idx].uid)) return idx;
         }
     }
-
     return -1;
 }
 
@@ -83,14 +82,14 @@ void HandleApiCallActionResponseFromEvent(void *data, struct json_object *respon
 
     if (!action) {
         AFB_API_ERROR(apiHandle,
-                      "Action is null, won't be able to handle the response, error=%s info=%s response=%s",
+                      "[action-null], won't be able to handle the response, error=%s info=%s response=%s",
                       error ? error : "NULL",
                       info ? info : "NULL",
                       responseJ ? json_object_get_string(responseJ) : "NULL");
     }
     else if (error) {
         AFB_API_ERROR(apiHandle,
-                      "An error happened during verb call, error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
+                      "[subcall-fail], error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
                       error ? error : "NULL",
                       info ? info : "NULL",
                       action->uid,
@@ -101,7 +100,7 @@ void HandleApiCallActionResponseFromEvent(void *data, struct json_object *respon
     }
     else {
         AFB_API_DEBUG(apiHandle,
-                      "Seems that everything went fine during verb call, error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
+                      "[subcall-ok], error=%s info=%s uid=%s api=%s verb=%s args=%s response=%s",
                       error ? error : "NULL",
                       info ? info : "NULL",
                       action->uid,

@@ -97,7 +97,7 @@ add_compile_options (${AFB_CFLAGS})
 
 
 set(CTL_LUA_SOURCE ctl-lua.c ctl-lua-utils.c)
-ADD_COMPILE_OPTIONS(-DCONTROL_SUPPORT_LUA -Wall -Wextra -Wconversion -Wno-unused-parameter -Wno-sign-compare -Wno-sign-conversion -Werror=maybe-uninitialized -Werror=implicit-function-declaration -ffunction-sections -fdata-sections -fPIC)
+ADD_COMPILE_OPTIONS(-g -DCONTROL_SUPPORT_LUA -Wall -Wextra -Wconversion -Wno-unused-parameter -Wno-sign-compare -Wno-sign-conversion -Werror=maybe-uninitialized -Werror=implicit-function-declaration -ffunction-sections -fdata-sections -fPIC)
 
 set(CONTROLLER_HEADERS
     ctl-config.h
