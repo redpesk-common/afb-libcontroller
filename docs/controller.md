@@ -20,7 +20,7 @@
 ## Installation
 
 * Controller can easily be included as a separate library in any AGL service or application binder.
-* Dependencies: the only dependencies are [Application Framework](./afb-overview.html)
+* Dependencies: the only dependencies are [Application Framework]({% chapter_link afb_binder.overview %})
  and [afb-libhelpers](https://github.com/redpesk-common/afb-libhelpers).
 * Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
@@ -34,7 +34,7 @@ packages repositories for the major Linux distribution OS:
 * **[Fedora 33](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/Fedora_33/)**
 * **[openSUSE Leap 15.2](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/openSUSE_Leap_15.2/)**
 
-To install the native package please refer to [this chapter](./host-configuration/docs/1-Setup-your-build-host.html)
+To install the native package please refer to [this chapter]({% chapter_link host-configuration-doc.setup-your-build-host %})
 in the Redpesk documentation to install the Redpesk native repositories for your distribution.
 
 Then use your package manager to install the library.
