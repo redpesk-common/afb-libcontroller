@@ -1,6 +1,6 @@
 # Usage
 
-## Add libappcontroller as a static library to your binding
+## Add afb-libcontroller as a static library to your binding
 
 In your `config.cmake` file, add a dependency to the controller library, i.e:
 
@@ -8,7 +8,7 @@ In your `config.cmake` file, add a dependency to the controller library, i.e:
 set(PKG_REQUIRED_LIST
 	json-c
 	afb-daemon
-	appcontroller --> this is the controller library dependency name.
+	afb-libcontroller --> this is the controller library dependency name.
 )
 ```
 
@@ -31,7 +31,7 @@ static CtlSectionT ctlSections[]= {
 
 ```
 
-The count of section is unlimited. When declaring sections, the
+The section count is unlimited. When declaring sections, the
 rules below must be followed:
 
 - the end of the array is marked with a section having a NULL key.
