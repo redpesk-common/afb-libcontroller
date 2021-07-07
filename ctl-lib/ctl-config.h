@@ -103,7 +103,6 @@ extern char *GetDefaultConfigSearchPath(afb_api_t apiHandle);
 
 // ctl-event.c
 extern int EventConfig(afb_api_t apihandle, CtlSectionT *section, json_object *actionsJ);
-extern void CtrlDispatchApiEvent (afb_api_t apiHandle, const char *evtLabel, struct json_object *eventJ);
 
 // ctl-control.c
 extern int ControlConfig(afb_api_t apiHandle, CtlSectionT *section, json_object *actionsJ);
