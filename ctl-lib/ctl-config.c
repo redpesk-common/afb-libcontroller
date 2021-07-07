@@ -47,6 +47,10 @@ int CtlConfigMagicNew() {
 }
 
 json_object* CtlConfigScan(const char *dirList, const char *prefix) {
+    return CtlConfigScanForApi(afbBindingV3root, dirList, prefix);
+}
+
+json_object* CtlConfigScanForApi(afb_api_t apiHandle, const char *dirList, const char *prefix) {
     char controlFile[CONTROL_MAXPATH_LEN];
     const char *binderName = GetBinderName();
 
@@ -61,6 +65,7 @@ json_object* CtlConfigScan(const char *dirList, const char *prefix) {
         strncpy(controlFile, binderName, CONTROL_MAXPATH_LEN - 1);
     }
     // search for default dispatch config file
+    AFB_API_DEBUG(apiHandle, "%s: searching for config file named '%s.json'", __func__, controlFile);
     json_object* responseJ = ScanForConfig(dirList, CTL_SCAN_RECURSIVE, controlFile, ".json");
 
     return responseJ;
@@ -100,7 +105,7 @@ char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ) {
 
 char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) {
     // search for default dispatch config file
-    json_object* responseJ = CtlConfigScan (dirList, prefix);
+    json_object* responseJ = CtlConfigScanForApi(apiHandle, dirList, prefix);
 
     if(responseJ)
         return ConfigSearch(apiHandle, responseJ);
@@ -207,7 +212,7 @@ CtlConfigT *CtlLoadMetaData(afb_api_t apiHandle,const char* filepath) {
     // Load JSON file
     ctlConfigJ = json_object_from_file(filepath);
     if (!ctlConfigJ) {
-        AFB_API_ERROR(apiHandle, "CTL-LOAD-CONFIG Not invalid JSON %s ", filepath);
+        AFB_API_ERROR(apiHandle, "CTL-LOAD-CONFIG Error while reading JSON configuration from %s ", filepath);
         return NULL;
     }
 

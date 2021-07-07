@@ -91,6 +91,7 @@ extern int CtlConfigMagicNew();
 extern void* getExternalData(CtlConfigT *ctlConfig);
 extern void setExternalData(CtlConfigT *ctlConfig, void *data);
 extern json_object* CtlConfigScan(const char *dirList, const char *prefix) ;
+extern json_object* CtlConfigScanForApi(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
 extern char* ConfigSearch(afb_api_t apiHandle, json_object *responseJ);
 extern char* CtlConfigSearch(afb_api_t apiHandle, const char *dirList, const char *prefix) ;
 extern int DispatchRequireApi(afb_api_t apiHandle, json_object * requireJ);

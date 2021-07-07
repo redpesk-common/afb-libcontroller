@@ -7,7 +7,7 @@ In your `config.cmake` file, add a dependency to the controller library, i.e:
 ```cmake
 set(PKG_REQUIRED_LIST
 	json-c
-	afb-daemon
+	afb-binder
 	afb-libcontroller --> this is the controller library dependency name.
 )
 ```
