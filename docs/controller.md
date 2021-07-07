@@ -24,8 +24,8 @@
  and [afb-libhelpers](https://github.com/redpesk-common/afb-libhelpers).
 * Controller relies on Lua-5.3, when not needed Lua might be removed at compilation time.
 
-The controller library is integrated by default in the Redpesk SDK and is also
-available as a package for the Redpesk supported linux distributions.
+The controller library is integrated by default in the redpesk SDK and is also
+available as a package for the redpesk supported linux distributions.
 
 You could find the SDK build which embed the afb-libhelpers library in our
 packages repositories for the major Linux distribution OS:
@@ -35,7 +35,7 @@ packages repositories for the major Linux distribution OS:
 * **[openSUSE Leap 15.2](https://download.redpesk.bzh/redpesk-devel/releases/33/sdk/openSUSE_Leap_15.2/)**
 
 To install the native package please refer to [this chapter]({% chapter_link host-configuration-doc.setup-your-build-host %})
-in the Redpesk documentation to install the Redpesk native repositories for your distribution.
+in the redpesk documentation to install the redpesk native repositories for your distribution.
 
 Then use your package manager to install the library.
 
