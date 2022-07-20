@@ -1387,8 +1387,8 @@ int LuaConfigLoad(afb_api_t apiHandle) {
     // open a new LUA interpretor
     luaState = luaL_newstate();
     if (!luaState) {
-        AFB_API_ERROR(apiHandle, "LUA_INIT: Fail to open lua interpretor");
-        free(luaState);
+        AFB_API_ERROR(apiHandle, "LUA_INIT: Fail to open new lua interpreter");
+        lua_close (luaState);
         return 1;
     }
 
@@ -1401,7 +1401,21 @@ int LuaConfigLoad(afb_api_t apiHandle) {
 
     // set package.path lua variable use the CONTROL_PLUGIN_PATH as it could
     // have to find external lua packages in those directories
+    //
+    // GetDefaultPluginSearchPath() makes use of GetAFBRootDirPath() which can
+    // return NULL in v4 mode. This normally does not happen (the controller is
+    // not supported in v4) but having a check on the return value avoids
+    // crashes in case a binding ends up being linked against the wrong
+    // library.
     spath = GetDefaultPluginSearchPath(apiHandle);
+    if (spath == NULL) {
+        AFB_API_ERROR(apiHandle, "LUA_INIT: failed to get default plugin search "
+                      "path! You are likely wrongly linked against v4 "
+                      "afb-libhelpers...");
+        lua_close (luaState);
+        return 1;
+
+    }
     base_len = strlen(LUA_PATH_VALUE);
     spath_len = strlen(spath);
 
