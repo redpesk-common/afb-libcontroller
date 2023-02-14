@@ -30,9 +30,9 @@ available as a package for the redpesk supported linux distributions.
 You could find the SDK build which embed the afb-libhelpers library in our
 packages repositories for the major Linux distribution OS:
 
-* **[Ubuntu 20.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Ubuntu_20.04/)**
-* **[Fedora 33](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_33/)**
-* **[openSUSE Leap 15.2](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.2/)**
+* **Ubuntu [20.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Ubuntu_20.04/), [22.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Ubuntu_22.04/)**
+* **Fedora [36](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_36/), [37](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_37/)**
+* **openSUSE Leap [15.3](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.3/), [15.4](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.4/)**
 
 To install the native package please refer to [this chapter]({% chapter_link host-configuration-doc.setup-your-build-host %})
 in the redpesk documentation to install the redpesk native repositories for your distribution.
