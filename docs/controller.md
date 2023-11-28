@@ -31,7 +31,7 @@ You could find the SDK build which embed the afb-libhelpers library in our
 packages repositories for the major Linux distribution OS:
 
 * **Ubuntu [20.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/xUbuntu_20.04/), [22.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/xUbuntu_22.04/)**
-* **Fedora [36](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_36/), [37](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_37/)**
+* **Fedora [38](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_38/), [39](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_39/)**
 * **openSUSE Leap [15.3](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.3/), [15.4](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.4/)**
 
 To install the native package please refer to [this chapter]({% chapter_link host-configuration-doc.setup-your-build-host %})
