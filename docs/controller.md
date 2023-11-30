@@ -1,4 +1,4 @@
-# Controller
+# Controller (Not recommended for new design)
 
 * Object: Generic Controller to handle Policy,Small Business Logic, Glue in between components, ...
 * Status: Release Candidate
@@ -27,12 +27,7 @@
 The controller library is integrated by default in the redpesk SDK and is also
 available as a package for the redpesk supported linux distributions.
 
-You could find the SDK build which embed the afb-libhelpers library in our
-packages repositories for the major Linux distribution OS:
-
-* **Ubuntu [20.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/xUbuntu_20.04/), [22.04](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/xUbuntu_22.04/)**
-* **Fedora [38](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_38/), [39](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/Fedora_39/)**
-* **openSUSE Leap [15.3](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.3/), [15.4](https://download.redpesk.bzh/redpesk-lts/{{ site.redpesk-os.latest }}/sdk/openSUSE_Leap_15.4/)**
+You could find the SDK build which embed the afb-libhelpers library in [our packages repositories](https://download.redpesk.bzh/redpesk-lts) for the major Linux distribution OS.
 
 To install the native package please refer to [this chapter]({% chapter_link host-configuration-doc.setup-your-build-host %})
 in the redpesk documentation to install the redpesk native repositories for your distribution.
