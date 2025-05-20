@@ -18,7 +18,7 @@
 
 CMAKE_MINIMUM_REQUIRED(VERSION 3.3)
 project(afb-libcontroller
-	VERSION 10.0.1
+	VERSION 10.0.2
 	HOMEPAGE_URL "http://git.ovh.iot/redpesk/redpesk-common/afb-libcontroller.git"
 	LANGUAGES "C")
 
